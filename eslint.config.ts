@@ -1,4 +1,5 @@
 import antfu from '@antfu/eslint-config'
+// @ts-ignore
 import tailwindcssPlugin from 'eslint-plugin-tailwindcss'
 
 export default antfu(
