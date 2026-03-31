@@ -28,7 +28,7 @@ const MainMenuSelect: MenuItem[] = [
 </script>
 
 <template>
-    <div class="flex flex-row items-center w-full">
+    <div class="flex flex-row items-center w-full bg-[#009ae0]">
         <ElButton
             class="!size-10 !px-8"
             link
