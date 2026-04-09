@@ -1,0 +1,3 @@
+<template>
+  SYSTEM PAGE
+</template>

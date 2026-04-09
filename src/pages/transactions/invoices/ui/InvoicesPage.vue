@@ -1,0 +1,3 @@
+<template>
+  Invoices PAGE
+</template>

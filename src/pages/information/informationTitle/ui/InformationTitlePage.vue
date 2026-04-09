@@ -1,0 +1,3 @@
+<template>
+    название
+</template>

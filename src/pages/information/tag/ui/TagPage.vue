@@ -1,0 +1,3 @@
+<template>
+    теги
+</template>

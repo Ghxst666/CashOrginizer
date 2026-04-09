@@ -3,8 +3,11 @@ import { BaseTransitionProps, ref, TransitionProps } from 'vue';
 import { useEventListener } from '@vueuse/core'
 import { DArrowLeft } from '@element-plus/icons-vue';
 import { menuItems } from '../const/menu.const';
+import { useRouter } from 'vue-router';
 
 const BREAKPOINT_COLLAPSE = 1327
+
+const router = useRouter()
 
 const isCollapsed = ref<boolean>(window.innerWidth <= BREAKPOINT_COLLAPSE)
 
@@ -14,7 +17,7 @@ function toggleMenu() {
 
 function handleGoTo(pageName: string | undefined) {
   if (pageName) {
-    console.log('попа')
+    router.push({ name: pageName })
   }
 }
 
