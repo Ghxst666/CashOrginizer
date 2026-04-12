@@ -1,3 +1,10 @@
+<script setup lang="ts">
+import PaymentsTable from '@/entities/payments/PaymentsTable.vue';
+import PaymentsHeader from './PaymentsHeader.vue';
+
+</script>
+
 <template>
-  Payments PAGE
+  <PaymentsHeader />
+  <PaymentsTable />
 </template>

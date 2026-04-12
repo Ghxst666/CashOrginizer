@@ -5,11 +5,11 @@ import MainMenu from './MainMenu/ui/MainMenu.vue';
 </script>
 
 <template>
-    <div class="flex flex-col h-screen w-full bg-[#eef3f4]">
+    <div class="flex flex-col h-screen w-full bg-[#eef3f4] overflow-hidden">
         <MainHeader />
-        <div class="flex h-full">
+        <div class="flex h-full overflow-hidden">
             <MainMenu />
-            <div class="h-full w-full">
+            <div class="h-full w-full min-h-0">
                 <RouterView />
             </div>
         </div>
