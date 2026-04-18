@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { api } from '@/shared/service/api';
+import { onMounted } from 'vue';
+
 
 const tableData = [
     {
@@ -151,6 +154,11 @@ const tableData = [
         balance: -500,
     },
 ]
+
+onMounted(() => {
+    const res = api.get('/accounts')
+    console.log(res.data)
+})
 </script>
 
 <template>
