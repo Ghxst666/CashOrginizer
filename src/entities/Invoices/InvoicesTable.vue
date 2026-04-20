@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { api } from '@/shared/service/api';
-import { onMounted } from 'vue';
+import { Delete, EditPen } from '@element-plus/icons-vue';
+
+// import { api } from '@/shared/service/api';
+// import { onMounted } from 'vue';
 
 
 const tableData = [
@@ -155,10 +157,10 @@ const tableData = [
     },
 ]
 
-onMounted(() => {
-    const res = api.get('/accounts')
-    console.log(res.data)
-})
+// onMounted(() => {
+//     const res = api.get('/accounts')
+//     console.log(res.data)
+// })
 </script>
 
 <template>
@@ -167,6 +169,13 @@ onMounted(() => {
             <ElTableColumn width="50" prop="id" label="№"/>
             <ElTableColumn prop="name" label="Название счета" />
             <ElTableColumn width="500" prop="balance" label="Общий баланс" />
+            <ElTableColumn
+                width="140px"
+                align="center"
+            >
+                <ElButton type="primary" :icon="EditPen" />
+                <ElButton type="danger" :icon="Delete" />
+            </ElTableColumn>
         </ElTable>
     </div>
 </template>

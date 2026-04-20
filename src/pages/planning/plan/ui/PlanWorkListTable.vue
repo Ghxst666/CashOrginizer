@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue';
+import { CircleCheckFilled, CircleCloseFilled, Delete, EditPen } from '@element-plus/icons-vue';
 
 
 const tableData = [
@@ -44,6 +44,14 @@ const tableData = [
             <ElTableColumn prop="name" label="Имя" />
             <ElTableColumn width="100" prop="shablon" label="Шаблон" />
             <ElTableColumn width="100" prop="sum" label="Сумма" />
+
+            <ElTableColumn
+                width="140px"
+                align="center"
+            >
+                <ElButton type="primary" :icon="EditPen" />
+                <ElButton type="danger" :icon="Delete" />
+            </ElTableColumn>
         </ElTable>
     </div>
 </template>
