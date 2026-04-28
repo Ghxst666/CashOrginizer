@@ -2,6 +2,9 @@
 import { ArrowDown, Plus, Setting } from '@element-plus/icons-vue';
 import { ElButton } from 'element-plus';
 
+const emits = defineEmits<{
+    addCategory: []
+}>()
 </script>
 
 <template>
@@ -28,6 +31,7 @@ import { ElButton } from 'element-plus';
             </ElDropdown>
 
             <ElButton
+                @click="emits('addCategory')"
                 :icon="Plus" 
                 class="h-[40px]" 
                 type="primary" 

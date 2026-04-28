@@ -5,6 +5,7 @@ const props = defineProps<{
     title: string
     firstStepTitle?: string
     secondStepTitle?: string
+    threeStepTitle?: string
 }>()
 
 const emits = defineEmits<{
@@ -14,7 +15,7 @@ const emits = defineEmits<{
 const activeStep = ref(0)
 
 const nextStep = () => {
-  if (activeStep.value < 1) {
+  if (activeStep.value < 2) {
     activeStep.value++
   }
 }
@@ -38,6 +39,7 @@ const newPayDialogVisible = defineModel<boolean>('newPay', { required: true })
         >
             <ElStep :title="props.firstStepTitle || 'Шаг 1'" />
             <ElStep :title="props.secondStepTitle || 'Шаг 2'" />
+            <ElStep :title="props.threeStepTitle || 'Шаг 3'" />
         </ElSteps>
 
         <div class="step-content">
@@ -49,6 +51,11 @@ const newPayDialogVisible = defineModel<boolean>('newPay', { required: true })
             <slot
                 v-if="activeStep === 1"
                 name="step-2"
+            />
+
+            <slot
+                v-if="activeStep === 2"
+                name="step-3"
             />
         </div>
 
@@ -67,7 +74,7 @@ const newPayDialogVisible = defineModel<boolean>('newPay', { required: true })
                     </ElButton>
 
                     <ElButton
-                        v-if="activeStep === 0"
+                        v-if="activeStep < 2"
                         type="primary"
                         @click="nextStep"
                     >

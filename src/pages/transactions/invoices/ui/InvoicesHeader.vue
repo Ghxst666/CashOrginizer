@@ -2,6 +2,9 @@
 import { ArrowDown, Filter, Plus, Setting } from '@element-plus/icons-vue';
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus';
 
+const emits = defineEmits<{
+    newInvoice: []
+}>()
 
 </script>
 
@@ -22,7 +25,7 @@ import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-pl
                 </template>
             </ElDropdown>
 
-            <ElButton :icon="Plus" class="h-[40px]" type="primary" round>
+            <ElButton @click="emits('newInvoice')" :icon="Plus" class="h-[40px]" type="primary" round>
                 Новый счет
             </ElButton>
         </div>
@@ -52,7 +55,6 @@ import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-pl
                 </ElButton>
                 <template #dropdown>
                     <ElDropdownMenu>
-                        <ElDropdownItem>Редактировать счет</ElDropdownItem>
                         <ElDropdownItem>Показать свойства</ElDropdownItem>
                         <ElDropdownItem>Отчеты</ElDropdownItem>
                     </ElDropdownMenu>

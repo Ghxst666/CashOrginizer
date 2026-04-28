@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ArrowDown, Delete, EditPen, Plus } from '@element-plus/icons-vue';
 
+const emits = defineEmits<{
+    newShablonDialog: [],
+    newShablonGroupDialog: [],
+}>()
 </script>
 
 <template>
@@ -20,10 +24,10 @@ import { ArrowDown, Delete, EditPen, Plus } from '@element-plus/icons-vue';
         </ElDropdown>
 
         <div class="flex gap-2">
-            <ElButton :icon="Plus" class="h-[40px]" type="primary" round>
+            <ElButton @click="emits('newShablonGroupDialog')" :icon="Plus" class="h-[40px]" type="primary" round>
                 Создать группу шаблонов
             </ElButton>
-            <ElButton :icon="Plus" class="h-[40px]" type="primary" round>
+            <ElButton @click="emits('newShablonDialog')" :icon="Plus" class="h-[40px]" type="primary" round>
                 Новый шаблон
             </ElButton>
         </div>

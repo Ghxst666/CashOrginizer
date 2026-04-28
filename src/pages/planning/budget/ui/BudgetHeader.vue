@@ -3,6 +3,11 @@ import { Plus, Setting } from '@element-plus/icons-vue';
 import { ref } from 'vue';
 
 const value = ref('')
+
+const emits = defineEmits<{
+    addCategory: [],
+    addGroup: []
+}>()
 </script>
 
 <template>
@@ -18,20 +23,22 @@ const value = ref('')
             />
 
             <ElButton
+                @click="emits('addGroup')"
                 :icon="Plus" 
                 class="h-[40px]" 
                 type="primary" 
                 round
             >
-                Добавить категорию в группу
+                Новая бюджетная группа
             </ElButton>
             <ElButton
+                @click="emits('addCategory')"
                 :icon="Plus" 
                 class="h-[40px]" 
                 type="primary" 
                 round
             >
-                Добавить бюджетную группу
+                Новая бюджетная категория
             </ElButton>
         </div>
 
