@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Delete, EditPen } from '@element-plus/icons-vue';
+import { ElPopconfirm } from 'element-plus';
+import { ref } from 'vue';
 
 // import { api } from '@/shared/service/api';
 // import { onMounted } from 'vue';
@@ -157,6 +159,16 @@ const tableData = [
     },
 ]
 
+const emits = defineEmits<{
+    edit: [],
+    delete: []
+}>()
+
+const clicked = ref(false)
+function onCancel() {
+  clicked.value = true
+}
+
 // onMounted(() => {
 //     const res = api.get('/accounts')
 //     console.log(res.data)
@@ -173,8 +185,22 @@ const tableData = [
                 width="140px"
                 align="center"
             >
-                <ElButton type="primary" :icon="EditPen" />
-                <ElButton type="danger" :icon="Delete" />
+                <ElButton @click="emits('edit')" type="primary" :icon="EditPen" />
+                <ElPopconfirm
+                    width="220"
+                    :icon="undefined"
+                    title="Вы хотите удалить счет?"
+                    @cancel="onCancel"
+                >
+                    <template #reference>
+                        <ElButton type="danger" :icon="Delete" />
+                    </template>
+
+                    <template #actions="{ cancel }">
+                        <ElButton size="small" @click="cancel">Нет</ElButton>
+                        <ElButton type="danger" size="small" @click="emits('delete')">Да</ElButton>
+                    </template>
+                </ElPopconfirm>
             </ElTableColumn>
         </ElTable>
     </div>

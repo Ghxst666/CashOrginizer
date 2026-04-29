@@ -26,7 +26,7 @@ function handleCloseCategoryDialog() {
 <template>
     <NewShablonGroupDialog
         v-model:new-pay="newCategory"
-        title="Новая бюджетная категория"
+        title="Новая категория"
         @close="handleCloseCategoryDialog"
     >
         <ElForm 

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ArrowDown, Plus, Setting } from '@element-plus/icons-vue';
 import { ElButton } from 'element-plus';
-
+const emits = defineEmits<{
+    openDialog: []
+}>()
 </script>
 
 <template>
@@ -32,6 +34,7 @@ import { ElButton } from 'element-plus';
                 class="h-[40px]" 
                 type="primary" 
                 round
+                @click="emits('openDialog')"
             >
                 Новый тег
             </ElButton>

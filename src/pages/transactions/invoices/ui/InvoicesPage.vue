@@ -3,7 +3,10 @@ import InvoicesTable from '@/entities/Invoices/InvoicesTable.vue';
 import InvoicesHeader from './InvoicesHeader.vue';
 import { ref } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
+import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
+
 const newPayDialogVisible = ref<boolean>(false)
+const updateDialogVisible = ref<boolean>(false)
 
 const formData = ref({
   name: '',
@@ -18,6 +21,10 @@ function handleOpenDialog() {
   newPayDialogVisible.value = true
 }
 
+function handleOpenUpdateDialog() {
+  updateDialogVisible.value = true
+}
+
 function handleCloseDialog() {
   newPayDialogVisible.value = false
   formData.value = {
@@ -29,9 +36,29 @@ function handleCloseDialog() {
     invoicesGroup: '',
   }
 }
+
+function handleClosUpdateDialog() {
+  updateDialogVisible.value = false
+}
+
+function handleDelete() {
+  console.log('удалить')
+}
 </script>
 
 <template>
+  <InvoicuesEditDialog 
+    v-model:new-pay="updateDialogVisible"
+    v-model="formData"
+    title="Редактирование счета"
+    :name="formData.name"
+    :type="formData.type"
+    :nach_balance="formData.nach_balance"
+    :min_balance="formData.min_balance"
+    :note="formData.note"
+    :invoicesGroup="formData.invoicesGroup"
+    @close="handleClosUpdateDialog"
+  />
   <NewInvoicesDialog
     v-model:new-pay="newPayDialogVisible"
     title="Новый счет"
@@ -73,7 +100,7 @@ function handleCloseDialog() {
   </NewInvoicesDialog>
   <div class="h-full">
     <InvoicesHeader @new-invoice="handleOpenDialog" />
-    <InvoicesTable />
+    <InvoicesTable @delete="handleDelete" @edit="handleOpenUpdateDialog" />
   </div>
 </template>
 
