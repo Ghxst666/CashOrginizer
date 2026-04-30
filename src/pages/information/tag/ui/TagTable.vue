@@ -1,25 +1,12 @@
 <script setup lang="ts">
+import { TagsResponse } from '@/entities/tags/types/tags.types';
 import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElButton } from 'element-plus';
 
+defineProps<{
+    data: TagsResponse
+}>()
 
-const tableData = [
-    {
-        name: "Название 1",
-        color: "#ff0000",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        color: "#66ff00",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        color: "#0014ff",
-        Period: "-5 000",
-    },
-]
 </script>
 
 <template>
@@ -27,7 +14,7 @@ const tableData = [
         <ElTable 
             height="100%"
             border 
-            :data="tableData"
+            :data="data.rows"
         >
             <ElTableColumn width="58" prop="name" label="Цвет" align="center">
                 <template #default = "{ row }">
@@ -37,8 +24,8 @@ const tableData = [
                     />
                 </template>
             </ElTableColumn>
-            <ElTableColumn prop="category" label="Тег" />
-            <ElTableColumn width="300" prop="Period" label="Период" />
+            <ElTableColumn prop="title" label="Тег" />
+            <ElTableColumn width="300" prop="total_formatted" label="Период" />
 
             <ElTableColumn
                 width="140px"

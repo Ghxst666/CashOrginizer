@@ -2,60 +2,30 @@
 import { ref } from 'vue';
 import TagHeader from './TagHeader.vue';
 import TagTable from './TagTable.vue';
-import { NewShablonGroupDialog } from '@/shared/ui';
+import { useTagsQuery } from '@/entities/tags';
+import NewTagDialog from '@/shared/ui/NewTagDialog.vue';
 
-const newTag = ref<boolean>(false)
-const newTagData = ref({
-    name: '',
-    color: '',
-    sort: ''
-})
+const { data } = useTagsQuery()
+
+const isOpenCreate = ref(false)
+
 function handleOpenCategoryDialog() {
-    newTag.value = true
-}
-function handleCloseCategoryDialog() {
-    newTag.value = false
-    newTagData.value = {
-        name: '',
-        color: '',
-        sort: ''
-    }
+    isOpenCreate.value = true
 }
 </script>
 
 <template>
-    <NewShablonGroupDialog
-        v-model:new-pay="newTag"
+    <NewTagDialog
+        v-model="isOpenCreate"
         title="Новый тег"
-        @close="handleCloseCategoryDialog"
-    >
-        <ElForm 
-            :model="newTagData" 
-            label-position="top"
-            class="payment-form"
-        >
-            <ElFormItem label="Название">
-                <ElInput v-model="newTagData.name" />
-            </ElFormItem>
-            <ElFormItem label="Цвет">
-                <ElSelect v-model="newTagData.color">
-                    <ElOption label="красный" value="red" />
-                    <ElOption label="синий" value="blue" />
-                    <ElOption label="зеленый" value="green" />
-                </ElSelect>
-            </ElFormItem> 
-            <ElFormItem label="Сортировка">
-                <ElSelect v-model="newTagData.sort">
-                    <ElOption label="1" value="1" />
-                    <ElOption label="2" value="2" />
-                </ElSelect>
-            </ElFormItem>           
-        </ElForm>
-    </NewShablonGroupDialog>
+    />
     <div class="h-full flex flex-col bg-[#ffffff]">
         <TagHeader @open-dialog="handleOpenCategoryDialog" />
         <div class="flex-1 min-h-0">
-            <TagTable />
+            <TagTable
+                v-if="data"
+                :data="data"
+            />
         </div>
     </div>
 </template>
