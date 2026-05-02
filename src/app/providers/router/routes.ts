@@ -5,6 +5,11 @@ import MainLayout from "../../../widgets/layouts/MainLayout.vue";
 import { TRANSACTION_ROUTES } from "./routes/transactions";
 import { PLANNING_ROUTES } from "./routes/planning";
 import { INFORMATION_ROUTES } from "./routes/information";
+import { AUTH_ROUTES } from "./routes/auth";
+
+const publicRoutes: RouteRecordRaw[] = [
+  ...AUTH_ROUTES,
+]
 
 const protectedRoutes: RouteRecordRaw[] = [
     {
@@ -21,5 +26,6 @@ const protectedRoutes: RouteRecordRaw[] = [
 ]
 
 export const routes: readonly RouteRecordRaw[] = [
+    ...publicRoutes,
     ...protectedRoutes
 ]

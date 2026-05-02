@@ -1,5 +1,6 @@
 import { RouteRecordRaw } from "vue-router";
 import { TRANSACTION_ROUTE } from "../../../../shared/router";
+import { requireAuth } from "../guard";
 
 export const TRANSACTION_ROUTES: readonly RouteRecordRaw[] = [
     {
@@ -11,11 +12,13 @@ export const TRANSACTION_ROUTES: readonly RouteRecordRaw[] = [
                 path: TRANSACTION_ROUTE.INVOICES.PATH,
                 name: TRANSACTION_ROUTE.INVOICES.NAME,
                 component: () => import('@/pages/transactions/invoices/ui/InvoicesPage.vue'),
+                beforeEnter: requireAuth,
             },
             {
                 path: TRANSACTION_ROUTE.PAYMENTS.PATH,
                 name: TRANSACTION_ROUTE.PAYMENTS.NAME,
                 component: () => import('@/pages/transactions/payments/ui/PaymentsPage.vue'),
+                beforeEnter: requireAuth,
             }
         ]
     }
