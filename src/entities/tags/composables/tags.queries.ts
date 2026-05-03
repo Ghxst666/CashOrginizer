@@ -36,3 +36,56 @@ export function useCreateTag(): UseMutationReturnType<
     },
   })
 }
+
+export function useDeleteTag(): UseMutationReturnType<
+  any,
+  Error,
+  { tag_id: string },
+  unknown
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationKey: ['tag_delete'],
+    mutationFn: (data: { tag_id: string }) => TagsService.deleteTag(data.tag_id),
+    onSuccess: () => {
+      ElMessage.success({
+        message: 'Тег успешно удален',
+        plain: true,
+      })
+      queryClient.invalidateQueries({ queryKey: [ENDPOINTS.BASE] })
+    },
+    onError: () => {
+      ElMessage.error({
+        message: 'Не удалось удалить тег. Попробуйте ещё раз.',
+        plain: true,
+      })
+    },
+  })
+}
+
+export function useUpdateTag(): UseMutationReturnType<
+  any,
+  Error,
+  { data: CreateTagRequestData, tag_id: string },
+  unknown
+> {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ['tag_update'],
+    mutationFn: (data: { data: CreateTagRequestData, tag_id: string }) => TagsService.updateTag(data.tag_id, data.data),
+    onSuccess: () => {
+      ElMessage.success({
+        message: 'Тег успешно редактирован',
+        plain: true,
+      })
+      queryClient.invalidateQueries({ queryKey: [ENDPOINTS.BASE] })
+    },
+    onError: () => {
+      ElMessage.error({
+        message: 'Не удалось редактировать тег. Попробуйте ещё раз.',
+        plain: true,
+      })
+    },
+  })
+}

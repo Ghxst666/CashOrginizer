@@ -1,3 +1,4 @@
 export const ENDPOINTS = {
-    BASE: 'tags'
+    BASE: 'tags/me',
+    CREATE: 'tags'
 } as const

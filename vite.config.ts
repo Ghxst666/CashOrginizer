@@ -37,5 +37,15 @@ export default defineConfig(async () => ({
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
+
+    proxy: {
+      '/api': {
+        target: 'https://basically-register-spreading-scientists.trycloudflare.com',
+        changeOrigin: true,
+        secure: false,
+
+        rewrite: (path: any) => path.replace(/^\/api/, ''),
+      },
+    },
   },
 }));

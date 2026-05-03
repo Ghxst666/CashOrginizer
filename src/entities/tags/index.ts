@@ -1,8 +1,10 @@
 import { useCreateTag, 
-    useTagsQuery
+    useTagsQuery,
+    useDeleteTag
  } from "./composables/tags.queries";
 
 export { 
     useTagsQuery,
-    useCreateTag
+    useCreateTag,
+    useDeleteTag
  }

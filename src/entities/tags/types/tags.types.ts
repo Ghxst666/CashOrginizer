@@ -66,3 +66,7 @@ export interface CreateTagResponseData {
     sorting: number
     id: number
 }
+
+export interface DeleteTagResponse {
+    status: string
+}
