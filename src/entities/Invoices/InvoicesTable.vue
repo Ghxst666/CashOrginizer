@@ -10,151 +10,37 @@ import { ref } from 'vue';
 const tableData = [
     {
         id: 1,
-        name: "jopa",
+        name: "test1",
         balance: -1000,
     },
     {
         id: 2,
-        name: "popa",
+        name: "test2",
         balance: -2000,
     },
     {
         id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 4,
-        name: "pipa",
-        balance: -1000,
-    },
-    {
-        id: 3,
-        name: "dopa",
+        name: "test3",
         balance: -500,
     },
     {
         id: 3,
-        name: "dopa",
+        name: "test3",
         balance: -500,
     },
     {
         id: 3,
-        name: "dopa",
+        name: "test3",
         balance: -500,
     },
     {
         id: 3,
-        name: "dopa",
+        name: "test3",
         balance: -500,
     },
     {
         id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 3,
-        name: "dopa",
-        balance: -500,
-    },
-    {
-        id: 2,
-        name: "opa",
+        name: "test3",
         balance: -500,
     },
 ]
