@@ -7,10 +7,6 @@ const props = defineProps<{
     title: string
 }>()
 
-const emits = defineEmits<{
-    close: []
-}>()
-
 const { mutate, isPending, isSuccess } = useCreateTag()
 
 const newTagData = ref<CreateTagRequestData>({

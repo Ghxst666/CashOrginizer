@@ -2,70 +2,29 @@
 import { ref } from 'vue';
 import ProjectHeader from './ProjectHeader.vue';
 import ProjectTable from './ProjectTable.vue';
-import { NewShablonGroupDialog } from '@/shared/ui';
+import { useProjectsQuery } from '@/entities/project';
+import NewProject from '@/shared/ui/NewProject.vue';
+
+const { data } = useProjectsQuery()
 
 const newProject = ref<boolean>(false)
-const newProjectData = ref({
-    name: '',
-    podProject: '',
-    limit: '',
-    note: '',
-    conditions: ''
-})
+
 function handleOpenProjectDialog() {
     newProject.value = true
-}
-function handleCloseProjectDialog() {
-    newProject.value = false
-    newProjectData.value = {
-        name: '',
-        podProject: '',
-        limit: '',
-        note: '',
-        conditions: ''
-    }
 }
 </script>
 
 <template>
-    <NewShablonGroupDialog
-        v-model:new-pay="newProject"
+    <NewProject 
+        v-model="newProject"
         title="Новый проект"
-        @close="handleCloseProjectDialog"
-    >
-        <ElForm 
-            :model="newProjectData" 
-            label-position="top"
-            class="payment-form"
-        >
-            <ElFormItem label="Название">
-                <ElInput v-model="newProjectData.name" />
-            </ElFormItem>
-            <ElFormItem label="Подпроект в">
-                <ElSelect v-model="newProjectData.podProject">
-                    <ElOption label="что то 1" value="podProject 1" />
-                    <ElOption label="что то 1" value="podProject 2" />
-                    <ElOption label="что то 1" value="podProject 3" />
-                </ElSelect>
-            </ElFormItem> 
-            <ElFormItem label="Лимит">
-                <ElInput v-model="newProjectData.limit" />
-            </ElFormItem>
-            <ElFormItem label="Примечание">
-                <ElInput v-model="newProjectData.note" />
-            </ElFormItem>
-            <ElFormItem label="Состояние">
-                <ElSelect v-model="newProjectData.conditions">
-                    <ElOption label="Открыт" value="open" />
-                    <ElOption label="Закрыт" value="close" />
-                </ElSelect>
-            </ElFormItem>           
-        </ElForm>
-    </NewShablonGroupDialog>
+        v-if="data"
+        :projects="data.rows"
+    />
     <div class="h-full flex flex-col bg-[#ffffff]">
         <ProjectHeader @open-dialog="handleOpenProjectDialog" />
         <div class="flex-1 min-h-0">
-            <ProjectTable />
+            <ProjectTable v-if="data" :data="data" />
         </div>
     </div>
 </template>

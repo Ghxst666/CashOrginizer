@@ -39,12 +39,6 @@ export const INFORMATION_ROUTES: readonly RouteRecordRaw[] = [
                 beforeEnter: requireAuth,
             },
             {
-                path: INFORMATION_ROUTE.CURRENCY.PATH,
-                name: INFORMATION_ROUTE.CURRENCY.NAME,
-                component: () => import('@/pages/information/currency/ui/CurrencyPage.vue'),
-                beforeEnter: requireAuth,
-            },
-            {
                 path: INFORMATION_ROUTE.USER.PATH,
                 name: INFORMATION_ROUTE.USER.NAME,
                 component: () => import('@/pages/information/user/ui/UserPage.vue'),

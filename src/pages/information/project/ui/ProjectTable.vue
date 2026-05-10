@@ -1,64 +1,86 @@
 <script setup lang="ts">
+import { useDeleteProject } from '@/entities/project';
+import { projectCreateData, projectsResponseData } from '@/entities/project/types/project.types';
+import EditProject from '@/shared/ui/edit/EditProject.vue';
 import { Delete, EditPen } from '@element-plus/icons-vue';
-import { ElButton, ElText } from 'element-plus';
+import { ElButton, ElPopconfirm, ElText } from 'element-plus';
+import { ref } from 'vue';
 
+const props = defineProps<{
+    data: projectsResponseData
+}>()
 
-const tableData = [
-    {
-        name: "Проект 1",
-        limit: "70 000",
-        potracheno: "12 000",
-        percentage: "15",
-        current: "-6000",
-        children: [
-            {
-                name: "ПодПроект 1",
-                limit: "20 000",
-                potracheno: "10 000",
-                percentage: "50",
-                current: "-1000",
-            },
-        ]
-    },
-    {
-        name: "Проект 2",
-        limit: "50 000",
-        potracheno: "10 000",
-        percentage: "13",
-        current: "-6 500",
-    }
-]
+const selectedRow = ref<projectCreateData>()
+const selectedId = ref<number>()
+const isOpenEdit = ref(false)
+const { mutate } = useDeleteProject()
+
+function getPercentage(total: string | number, limit: string | number) {
+    const spent = Number(total)
+    const max = Number(limit)
+
+    if (!max) return 0
+
+    return Math.min(Math.round((spent / max) * 100), 100)
+}
+
+function handleConfirm(id: number) {
+  mutate({
+    project_id: id,
+  })
+}
+
+function handleUpdate(row: any) {
+    selectedRow.value = { ...row }
+    selectedId.value = row.id
+    isOpenEdit.value = true
+}
 </script>
 
 <template>
+    <EditProject 
+        v-model="isOpenEdit"
+        title="Редактирование проекта"
+        :id="selectedId || null"
+        :projects="data.rows"
+        v-if="selectedRow"
+        :update-data="selectedRow"
+    />
     <div class="h-full w-full">
         <ElTable 
             height="100%"
             border 
-            :data="tableData"
-            row-key="name"
+            :data="data.rows"
+            row-key="id"
             :tree-props="{ children: 'children' }"
         >
-            <ElTableColumn prop="name" label="Название проекта" />
-            <ElTableColumn width="300" prop="percentage" label="Текущий" align="center">
+            <ElTableColumn prop="title" label="Название проекта">
+                <template #default="{ row }">
+                    <span>{{ row.title }}</span>
+                    <span class="text-[red] ml-1" v-if="row.status === 'closed'">(Закрыт)</span>
+                </template>
+            </ElTableColumn>
+            <ElTableColumn width="300" label="Текущий" align="center">
                 <template #default="{ row }">
                     <ElProgress
                         :text-inside="true"
                         :stroke-width="20"
-                        :percentage="row.percentage"
-                        status="success"
+                        :percentage="getPercentage(row.total, row.money_limit)"
+                        :status="getPercentage(row.total, row.money_limit) > 90
+                            ? 'exception'
+                            : 'success'"
                     >
-                        <span>{{ row.potracheno }} р</span>
+                        <span>{{ row.total_formatted }}</span>
                     </ElProgress>
                     <p>
-                        Лимит {{ row.limit }} р
+                        Лимит {{ row.money_limit }} р
                     </p>
                 </template>
             </ElTableColumn>
             <ElTableColumn width="300" prop="current" label="Период"> 
                 <template #default="{ row }">
                     <ElText type="danger">
-                        {{ row.current }} р
+                        {{ row.total_formatted }}
                     </ElText>
                 </template>
             </ElTableColumn>
@@ -67,8 +89,23 @@ const tableData = [
                 width="140px"
                 align="center"
             >
-                <ElButton type="primary" :icon="EditPen" />
-                <ElButton type="danger" :icon="Delete" />
+                <template #default="{ row }">
+                    <ElButton type="primary" @click="handleUpdate(row)" :icon="EditPen" />
+                    <ElPopconfirm
+                        width="220"
+                        :icon="undefined"
+                        title="Вы хотите удалить проект?"
+                    >
+                        <template #reference>
+                            <ElButton type="danger" :icon="Delete" />
+                        </template>
+
+                        <template #actions="{ cancel }">
+                            <ElButton size="small" @click="cancel">Нет</ElButton>
+                            <ElButton type="danger" size="small" @click="handleConfirm(row.id)">Да</ElButton>
+                        </template>
+                    </ElPopconfirm>
+                </template>
             </ElTableColumn>
         </ElTable>
     </div>

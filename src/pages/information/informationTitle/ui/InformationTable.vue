@@ -1,90 +1,37 @@
 <script setup lang="ts">
+import { purposesResponseData } from '@/entities/purposes/types/purposes.types';
 import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElButton } from 'element-plus';
 
+const props = defineProps<{
+    data: purposesResponseData
+}>()
 
-const tableData = [
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    },
-    {
-        name: "Название 1",
-        category: "Авто % Транспорт",
-        Period: "-5 000",
-    },
-    {
-        name: "Название 2",
-        category: "",
-        Period: "-2 000",
-    }
-]
+// const selectedRow = ref<CreateCategoryData>()
+// const selectedId = ref<number>()
+// const isOpenEdit = ref(false)
+
+// const { mutate } = useDeleteCategory()
+
+// function handleConfirm(id: number) {
+//   mutate({
+//     category_id: id,
+//   })
+// }
+
+
+// function formatedTypeName(name: string) {
+//     return name === 'expenses'
+//         ? 'Расходные'
+//         : 'Приходные'
+// }
+
+// function handleUpdate(row: any) {
+//     selectedRow.value = { ...row }
+//     selectedId.value = row.id
+//     isOpenEdit.value = true
+// }
+
 </script>
 
 <template>
@@ -92,11 +39,12 @@ const tableData = [
         <ElTable 
             height="100%"
             border 
-            :data="tableData"
+            :data="data.rows"
         >
-            <ElTableColumn prop="name" label="Название" />
-            <ElTableColumn width="400" prop="category" label="Категория" />
-            <ElTableColumn width="300" prop="Period" label="Период" />
+            <ElTableColumn prop="title" label="Название" />
+            <ElTableColumn width="400" prop="category_title" label="Категория" />
+            <ElTableColumn width="400" prop="project_title" label="Проект" />
+            <ElTableColumn width="300" prop="total_formatted" label="Период" />
 
             <ElTableColumn
                 width="140px"

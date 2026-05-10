@@ -3,8 +3,11 @@ import { ref } from 'vue';
 import InformationHeader from './InformationHeader.vue';
 import InformationTable from './InformationTable.vue';
 import { NewPayDialog } from '@/shared/ui';
+import { usePurposesQuery } from '@/entities/purposes';
 
 const newNameDialogVisible = ref<boolean>(false)
+
+const { data } = usePurposesQuery()
 
 const formData = ref({
   name: '',
@@ -128,7 +131,10 @@ function handleCloseDialog() {
     <div class="h-full flex flex-col bg-[#ffffff]">
         <InformationHeader @open-dialog="handleOpenDialog" />
         <div class="flex-1 min-h-0">
-            <InformationTable />
+            <InformationTable
+              v-if="data"
+              :data="data"
+            />
         </div>
     </div>
 </template>

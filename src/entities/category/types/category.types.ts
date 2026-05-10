@@ -55,5 +55,5 @@ export type CategoryChildrenData = CategoryRowData
 export interface CreateCategoryData {
     title: string
     type: string
-    parent_id: number
+    parent_id: number | null
 }

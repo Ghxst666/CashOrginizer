@@ -40,7 +40,7 @@ export default defineConfig(async () => ({
 
     proxy: {
       '/api': {
-        target: 'https://necessarily-thickness-formatting-horses.trycloudflare.com/',
+        target: 'https://drinks-rat-soil-your.trycloudflare.com/',
         changeOrigin: true,
         secure: false,
 

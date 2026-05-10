@@ -1,61 +1,32 @@
 <script setup lang="ts">
-import { NewShablonGroupDialog } from '@/shared/ui';
 import CategoryHeader from './CategoryHeader.vue';
 import CategoryTable from './CategoryTable.vue';
 import { ref } from 'vue';
+import { useCategoriesQuery } from '@/entities/category';
+import NewCategoryDialog from '@/shared/ui/NewCategoryDialog.vue';
+
+const { data } = useCategoriesQuery()
 
 const newCategory = ref<boolean>(false)
-const newCategoryData = ref({
-    name: '',
-    type: '',
-    in: ''
-})
 function handleOpenCategoryDialog() {
     newCategory.value = true
-}
-function handleCloseCategoryDialog() {
-    newCategory.value = false
-    newCategoryData.value = {
-        name: '',
-        type: '',
-        in: ''
-    }
 }
 </script>
 
 <template>
-    <NewShablonGroupDialog
-        v-model:new-pay="newCategory"
+    <NewCategoryDialog 
+        v-model="newCategory"
         title="Новая категория"
-        @close="handleCloseCategoryDialog"
-    >
-        <ElForm 
-            :model="newCategoryData" 
-            label-position="top"
-            class="payment-form"
-        >
-            <ElFormItem label="Название">
-                <ElInput v-model="newCategoryData.name" />
-            </ElFormItem>
-            <ElFormItem label="Тип">
-                <ElSelect v-model="newCategoryData.type">
-                    <ElOption label="Расходные" value="type 1" />
-                    <ElOption label="Приходные" value="type 2" />
-                    <ElOption label="Подкатегория" value="type 3" />
-                </ElSelect>
-            </ElFormItem> 
-            <ElFormItem v-if="newCategoryData.type === 'type 3'" label="В*">
-                <ElSelect v-model="newCategoryData.in">
-                    <ElOption label="Автомойка" value="in 1" />
-                    <ElOption label="Стоянка" value="in 2" />
-                </ElSelect>
-            </ElFormItem>           
-        </ElForm>
-    </NewShablonGroupDialog>
+        v-if="data"
+        :categories="data.rows"
+    />
     <div class="h-full flex flex-col bg-[#ffffff]">
         <CategoryHeader @add-category="handleOpenCategoryDialog" />
         <div class="flex-1 min-h-0">
-            <CategoryTable />
+            <CategoryTable 
+                v-if="data"
+                :data="data" 
+            />
         </div>
     </div>
 </template>

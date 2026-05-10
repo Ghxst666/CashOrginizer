@@ -1,163 +1,90 @@
 <script setup lang="ts">
+import { useDeleteCategory } from '@/entities/category';
+import { CategoryResponseData, CreateCategoryData } from '@/entities/category/types/category.types';
+import EditCategory from '@/shared/ui/edit/EditCategory.vue';
 import { Delete, EditPen } from '@element-plus/icons-vue';
-import { ElButton, ElText } from 'element-plus';
+import { ElButton, ElPopconfirm, ElText } from 'element-plus';
+import { ref } from 'vue';
+
+const props = defineProps<{
+    data: CategoryResponseData
+}>()
+
+const selectedRow = ref<CreateCategoryData>()
+const selectedId = ref<number>()
+const isOpenEdit = ref(false)
+
+const { mutate } = useDeleteCategory()
+
+function handleConfirm(id: number) {
+  mutate({
+    category_id: id,
+  })
+}
 
 
-const tableData = [
-    {
-        name: "Авто & Транспорт",
-        typeCategory: "Расходные",
-        Period: "-500",
-        children: [
-            {
-                name: "Автомойка",
-                typeCategory: "Расходные",
-                Period: "",
-            },
-            {
-                name: "Авторемонт и запчасти",
-                typeCategory: "Расходные",
-                Period: "",
-            },
-            {
-                name: "Автостраховка",
-                typeCategory: "Расходные",
-                Period: "",
-            },
-            {
-                name: "Газ и топливо",
-                typeCategory: "Расходные",
-                Period: "",
-            },
-            {
-                name: "Общественный транспорт",
-                typeCategory: "Расходные",
-                Period: "",
-            },
-            {
-                name: "Стоянка",
-                typeCategory: "Расходные",
-                Period: "",
-            },
-        ]
-    },
-    {
-        name: "Доходы",
-        typeCategory: "Приходные",
-        Period: "",
-        children: [
-            {
-                name: "Возврат покупки",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Денежные компенсации",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Доход от аренды",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Зарплата и премия",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Процент от вложений",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-        ]
-    },
-    {
-        name: "Доходы",
-        typeCategory: "Приходные",
-        Period: "",
-        children: [
-            {
-                name: "Возврат покупки",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Денежные компенсации",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Доход от аренды",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Зарплата и премия",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Процент от вложений",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Возврат покупки",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Денежные компенсации",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Доход от аренды",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Зарплата и премия",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-            {
-                name: "Процент от вложений",
-                typeCategory: "Приходные",
-                Period: "",
-            },
-        ]
-    }
-]
+function formatedTypeName(name: string) {
+    return name === 'expenses'
+        ? 'Расходные'
+        : 'Приходные'
+}
+
+function handleUpdate(row: any) {
+    selectedRow.value = { ...row }
+    selectedId.value = row.id
+    isOpenEdit.value = true
+}
 </script>
 
 <template>
+    <EditCategory 
+        v-model="isOpenEdit"
+        title="Редактирование категории"
+        :id="selectedId || null"
+        :categories="data.rows"
+        v-if="selectedRow"
+        :update-data="selectedRow"
+    />
     <div class="h-full w-full">
         <ElTable 
             height="100%"
             border 
-            :data="tableData"
-            row-key="name"
+            :data="data.rows"
+            row-key="id"
             :tree-props="{ children: 'children' }"
         >
-            <ElTableColumn prop="name" label="Название категории" />
-            <ElTableColumn width="300" prop="typeCategory" label="Тип">
+            <ElTableColumn prop="title" label="Название категории" />
+            <ElTableColumn width="300" prop="type" label="Тип">
                 <template #default="{ row }">
-                    <ElText :type="row.typeCategory === 'Расходные' ? 'danger' : 'success'">
-                        {{ row.typeCategory }}
+                    <ElText :type="row.type === 'expenses' ? 'danger' : 'success'">
+                        {{ formatedTypeName(row.type) }}
                     </ElText>
                 </template>
             </ElTableColumn>
-            <ElTableColumn width="300" prop="Period" label="Операция" />
+            <ElTableColumn width="300" prop="total_formatted" label="Операция" />
 
             <ElTableColumn
+            
                 width="140px"
                 align="center"
             >
-                <ElButton type="primary" :icon="EditPen" />
-                <ElButton type="danger" :icon="Delete" />
+                <template #default="{ row }">
+                    <ElButton type="primary" @click="handleUpdate(row)" :icon="EditPen" />
+                    <ElPopconfirm
+                        width="220"
+                        :icon="undefined"
+                        title="Вы хотите удалить категорию?"
+                    >
+                        <template #reference>
+                            <ElButton type="danger" :icon="Delete" />
+                        </template>
+
+                        <template #actions="{ cancel }">
+                            <ElButton size="small" @click="cancel">Нет</ElButton>
+                            <ElButton type="danger" size="small" @click="handleConfirm(row.id)">Да</ElButton>
+                        </template>
+                    </ElPopconfirm>
+                </template>
             </ElTableColumn>
         </ElTable>
     </div>

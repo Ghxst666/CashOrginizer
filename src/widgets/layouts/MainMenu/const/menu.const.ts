@@ -58,11 +58,6 @@ export const menuItems: MenuItem[] = [
             },
             {
                 id: '3-6',
-                title: "Валюта",
-                pageName: INFORMATION_ROUTE.CURRENCY.NAME
-            },
-            {
-                id: '3-7',
                 title: "Пользователь",
                 pageName: INFORMATION_ROUTE.USER.NAME
             },

@@ -56,7 +56,7 @@ export type projectsChildrenData = projectsRowData
 
 export interface projectCreateData {
     title: string,
-    parent_id: number,
+    parent_id: number | null,
     money_limit: number,
     note: string,
     status: string,

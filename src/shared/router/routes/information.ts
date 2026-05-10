@@ -23,10 +23,6 @@ export const INFORMATION_ROUTE = {
         PATH: 'tag',
         NAME: 'Tag'
     },
-    CURRENCY: {
-        PATH: 'currency',
-        NAME: 'Currency'
-    },
     USER: {
         PATH: 'user',
         NAME: 'User'
