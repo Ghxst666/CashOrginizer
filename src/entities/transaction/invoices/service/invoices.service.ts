@@ -5,8 +5,8 @@ import { ENDPOINTS } from "../config/invoices.config";
 import { REQUEST_METHODS } from "@/shared/config/api/request.config";
 
 export const InvoicessService = {
-    getAllInvoices(): BaseResponse<accountsResponse> {
-        return api.makeRequest<accountsResponse>({
+    getAllInvoices(): BaseResponse<accountsResponse[]> {
+        return api.makeRequest<accountsResponse[]>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,
         })

@@ -3,9 +3,7 @@ import { InvoicessService } from "../service/invoices.service";
 import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByStatusResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { ElMessage } from "element-plus";
 
-const queryClient = useQueryClient()
-
-export function useAccountsQuery(): UseQueryReturnType<accountsResponse, DefaultError> {
+export function useAccountsQuery(): UseQueryReturnType<accountsResponse[], DefaultError> {
     return useQuery({
         queryKey: ['Accounts'],
         queryFn: () => InvoicessService.getAllInvoices().then(res => res.data)
@@ -18,6 +16,7 @@ export function useCreateAccount(): UseMutationReturnType<
   accountsCreateRequest,
   unknown
 > {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['Accounts_create'],
     mutationFn: (data: accountsCreateRequest) => InvoicessService.createInvoices(data),
@@ -85,6 +84,7 @@ export function useAccountsPartialEdit(): UseMutationReturnType<
   { data: accountPartialEditItemRequestData, group_id: number, account_id: number },
   unknown
 > {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['partial_update'],
     mutationFn: (data: { data: accountPartialEditItemRequestData, group_id: number, account_id: number }) => InvoicessService.accountsPartialEdit(data.group_id, data.account_id, data.data),
@@ -110,6 +110,7 @@ export function useAccountsEdit(): UseMutationReturnType<
   { data: accountEditRequesData, account_id: number },
   unknown
 > {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['update'],
     mutationFn: (data: { data: accountEditRequesData, account_id: number }) => InvoicessService.accountsEdit(data.account_id, data.data),
@@ -135,6 +136,7 @@ export function useDeleteWithGroup(): UseMutationReturnType<
   { group_id: number, account_id: number },
   unknown
 > {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['account_delete_WithGrop'],
     mutationFn: (data: { group_id: number, account_id: number }) => InvoicessService.accountsDeleteWithGroup(data.group_id, data.account_id),
@@ -160,6 +162,7 @@ export function useDelete(): UseMutationReturnType<
   { account_id: number },
   unknown
 > {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['account_delete'],
     mutationFn: (data: { account_id: number }) => InvoicessService.accountsDelete(data.account_id),
