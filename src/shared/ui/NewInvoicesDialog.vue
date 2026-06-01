@@ -20,16 +20,26 @@ const newAccountFormData = ref<accountsCreateRequest>({
     group_id: 0,
 })
 
-const emits = defineEmits<{
-    close: []
-}>()
-
 const disabled = computed(() => isPending.value)
 const isOpen = defineModel<boolean>({ default: false })
 
 
 function handleCreate() {
     mutate(newAccountFormData.value)
+}
+
+function handleCloseDialog() {
+  isOpen.value = false
+  newAccountFormData.value = {
+    title: '',
+    type: '',
+    start_amount: 0,
+    min_amount: 0,
+    credit_limit_amount: 0,
+    note: '',
+    status: true,
+    group_id: 0,
+  }
 }
 
 watch(isSuccess, () => {
@@ -86,16 +96,24 @@ watch(isSuccess, () => {
                     <ElInput v-model="newAccountFormData.note" />
                 </ElFormItem>
 
+                <ElFormItem label="Статус">
+                    <ElSelect v-model="newAccountFormData.status">
+                        <ElOption label="Открытый" value="true" />
+                        <ElOption label="Закрытый" value="false" />
+                    </ElSelect>
+                </ElFormItem>
+
                 <ElFormItem label="Группа счетов">
                     <ElSelect v-model="newAccountFormData.group_id">
-                        <ElOption label="TAGIR_NE_UDALAI" value="2" />
+                        <ElOption label="1" value="1" />
+                        <ElOption label="2" value="2" />
                     </ElSelect>
                 </ElFormItem>
             </ElForm>
         </ElScrollbar>
         <template #footer>
             <div class="flex justify-between">
-                <ElButton @click="emits('close')">
+                <ElButton @click="handleCloseDialog">
                     Отмена
                 </ElButton>
 

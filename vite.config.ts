@@ -40,7 +40,7 @@ export default defineConfig(async () => ({
 
     proxy: {
       '/api': {
-        target: 'https://climb-oakland-graduate-laboratories.trycloudflare.com/',
+        target: 'https://cashorg.ru/',
         changeOrigin: true,
         secure: false,
 

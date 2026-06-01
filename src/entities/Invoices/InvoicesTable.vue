@@ -1,23 +1,26 @@
 <script setup lang="ts">
 import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElPopconfirm } from 'element-plus';
-import { ref } from 'vue';
 import { accountsResponse } from '../transaction/invoices/types/invoices.types'
 
 const props = defineProps<{
     data: accountsResponse[]
 }>()
 
-const clicked = ref(false)
-function onCancel() {
-  clicked.value = true
-}
+const emit = defineEmits<{
+  edit: [row: accountsResponse]
+  delete: [accountId: number]
+  select: [row: accountsResponse]
+}>()
 
+function handleRowClick(row: accountsResponse) {
+  emit('select', row)
+}
 </script>
 
 <template>
-    <div style="height: calc(100vh - 113px);">
-        <ElTable height="100%" border :data="data">
+    <div class="h-full min-h-0 min-w-0 flex overflow-hidden">
+        <ElTable height="100%" border :data="data" @row-click="handleRowClick">
             <ElTableColumn width="50" prop="id" label="№"/>
             <ElTableColumn prop="title" label="Название счета" />
             <ElTableColumn width="500" prop="amount" label="Общий баланс" />
@@ -25,22 +28,23 @@ function onCancel() {
                 width="140px"
                 align="center"
             >
-                <ElButton type="primary" :icon="EditPen" />
-                <ElPopconfirm
-                    width="220"
-                    :icon="undefined"
-                    title="Вы хотите удалить счет?"
-                    @cancel="onCancel"
-                >
-                    <template #reference>
-                        <ElButton type="danger" :icon="Delete" />
-                    </template>
+                <template #default="{ row }">
+                    <ElButton type="primary" :icon="EditPen" @click="emit('edit', row)" />
+                    <ElPopconfirm
+                        width="220"
+                        :icon="undefined"
+                        title="Вы хотите удалить счет?"
+                    >
+                        <template #reference>
+                            <ElButton type="danger" :icon="Delete" />
+                        </template>
 
-                    <template #actions="{ cancel }">
-                        <ElButton size="small" @click="cancel">Нет</ElButton>
-                        <ElButton type="danger" size="small">Да</ElButton>
-                    </template>
-                </ElPopconfirm>
+                        <template #actions="{ cancel }">
+                            <ElButton size="small" @click="cancel">Нет</ElButton>
+                            <ElButton type="danger" size="small" @click="emit('delete', row.id)">Да</ElButton>
+                        </template>
+                    </ElPopconfirm>
+                </template>
             </ElTableColumn>
         </ElTable>
     </div>

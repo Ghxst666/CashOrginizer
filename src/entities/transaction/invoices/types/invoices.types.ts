@@ -61,7 +61,9 @@ export type accountUserItemResponse = accountsResponse
 
 export type accountPartialEditItemRequestData = accountsCreateRequest
 
-export type accountEditRequesData = accountsCreateRequest
+export type accountEditRequesData = Omit<accountsCreateRequest, 'credit_limit_amount'> & {
+  credit_limit_amount?: number
+}
 
 
 

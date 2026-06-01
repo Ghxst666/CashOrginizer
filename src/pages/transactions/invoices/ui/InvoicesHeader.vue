@@ -4,8 +4,19 @@ import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-pl
 
 const emits = defineEmits<{
     newInvoice: []
+    sortByType: []
+    sortDefault: []
+    showProperties: []
 }>()
 
+function handleFilterCommand(command: string) {
+  if (command === 'type') emits('sortByType')
+  if (command === 'default') emits('sortDefault')
+}
+
+function handleSettingsCommand(command: string) {
+  if (command === 'show-properties') emits('showProperties')
+}
 </script>
 
 <template>
@@ -31,7 +42,7 @@ const emits = defineEmits<{
         </div>
 
         <div class="flex gap-2">
-            <ElDropdown>
+            <ElDropdown @command="handleFilterCommand">
                 <ElButton class="h-[40px]"> 
                     <ElIcon size="18">
                         <Filter/>
@@ -39,15 +50,13 @@ const emits = defineEmits<{
                 </ElButton>
                 <template #dropdown>
                     <ElDropdownMenu>
-                        <ElDropdownItem>Сортировка по имени</ElDropdownItem>
-                        <ElDropdownItem>Сортировка по группам</ElDropdownItem>
-                        <ElDropdownItem>Сортировка по группам</ElDropdownItem>
-                        <ElDropdownItem>Сортировка по типу</ElDropdownItem>
-                        <ElDropdownItem>Сортировака по валютам</ElDropdownItem>
+                        <ElDropdownItem command="type">Сортировка по типу</ElDropdownItem>
+                        <ElDropdownItem command="default">Сортировка по вручную</ElDropdownItem>
+                        <ElDropdownItem command="group">Сортировка по группам</ElDropdownItem>
                     </ElDropdownMenu>
                 </template>
             </ElDropdown>
-            <ElDropdown>
+            <ElDropdown @command="handleSettingsCommand">
                 <ElButton class="h-[40px]"> 
                     <ElIcon size="18">
                         <Setting/>
@@ -55,8 +64,8 @@ const emits = defineEmits<{
                 </ElButton>
                 <template #dropdown>
                     <ElDropdownMenu>
-                        <ElDropdownItem>Показать свойства</ElDropdownItem>
-                        <ElDropdownItem>Отчеты</ElDropdownItem>
+                        <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
+                        <ElDropdownItem command="reports">Отчеты</ElDropdownItem>
                     </ElDropdownMenu>
                 </template>
             </ElDropdown>

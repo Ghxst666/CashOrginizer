@@ -5,7 +5,7 @@ import MainMenu from './MainMenu/ui/MainMenu.vue';
 </script>
 
 <template>
-    <div class="flex flex-col h-screen w-full bg-[#eef3f4] overflow-hidden">
+    <div class="flex flex-col h-full w-full bg-[#eef3f4] overflow-hidden">
         <MainHeader />
         <div class="flex h-full overflow-hidden">
             <MainMenu />
