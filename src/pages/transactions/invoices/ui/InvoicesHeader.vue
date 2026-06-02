@@ -7,6 +7,7 @@ const emits = defineEmits<{
     sortByType: []
     sortDefault: []
     showProperties: []
+    showGroupSettings: []
 }>()
 
 function handleFilterCommand(command: string) {
@@ -16,6 +17,7 @@ function handleFilterCommand(command: string) {
 
 function handleSettingsCommand(command: string) {
   if (command === 'show-properties') emits('showProperties')
+  if (command === 'show-group-settings') emits('showGroupSettings')
 }
 </script>
 
@@ -65,6 +67,7 @@ function handleSettingsCommand(command: string) {
                 <template #dropdown>
                     <ElDropdownMenu>
                         <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
+                        <ElDropdownItem command="show-group-settings">Управление группами счетов и сортировка</ElDropdownItem>
                         <ElDropdownItem command="reports">Отчеты</ElDropdownItem>
                     </ElDropdownMenu>
                 </template>

@@ -25,12 +25,12 @@ function handleClose() {
 </script>
 
 <template>
-  <aside
+  <div
     v-if="isOpen"
     class="shrink-0 h-full border-l border-[#e2e3e6] bg-white flex flex-col"
     :style="{ width: props.width, minWidth: props.width }"
   >
-    <div class="h-[56px] px-4 border-b border-[#e2e3e6] flex items-center justify-between">
+    <div class="h-[65px] px-4 border-b border-[#e2e3e6] flex items-center justify-between">
       <h3 class="font-semibold">{{ props.title }}</h3>
       <ElButton text circle :icon="Close" @click="handleClose" />
     </div>
@@ -38,5 +38,5 @@ function handleClose() {
     <div class="flex-1 min-h-0 overflow-auto p-4">
       <slot :close="handleClose" />
     </div>
-  </aside>
+  </div>
 </template>

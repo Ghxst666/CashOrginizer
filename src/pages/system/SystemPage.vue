@@ -152,7 +152,7 @@ function handleCloseDialog() {
   <SystemHeader 
     @open-dialog="handleOpenDialog"
   />
-  <div class="p-5">
+  <div class="size-full p-5">
     <div class="grid grid-cols-2 gap-4">
       <SystemBalanceWidget title="Баланс счетов">
         <ElEmpty v-if="!flag" description="Информации нет" />

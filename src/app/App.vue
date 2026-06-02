@@ -5,9 +5,7 @@ import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <div class="h-screen">
-    <ElConfigProvider :locale="ru">
-      <RouterView />
-    </ElConfigProvider>
-  </div>
+  <ElConfigProvider :locale="ru">
+    <RouterView />
+  </ElConfigProvider>
 </template>

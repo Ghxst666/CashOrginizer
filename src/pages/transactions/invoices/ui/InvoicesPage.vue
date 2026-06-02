@@ -8,11 +8,13 @@ import { useAccountsQuery, useDelete } from '@/entities/transaction/invoices/ind
 import { accountsCreateRequest, accountsResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
+import { GroupsContainer } from '@/features/groups';
 
 const isOpen = ref<boolean>(false)
 const selectedId = ref<number | null>(null)
 const updateDialogVisible = ref<boolean>(false)
 const isPropertiesOpen = ref(false)
+const isGroupSettingsOpen = ref(false)
 const selectedAccount = ref<accountsResponse | null>(null)
 
 const { data } = useAccountsQuery()
@@ -47,6 +49,10 @@ function handleShowProperties() {
   isPropertiesOpen.value = true
 }
 
+function handleShowGroupSettings() {
+  isGroupSettingsOpen.value = true
+}
+
 function handleSelectAccount(row: accountsResponse) {
   selectedAccount.value = row
 }
@@ -66,12 +72,17 @@ function handleOpenUpdateDialog(row: accountsResponse) {
   updateDialogVisible.value = true
 }
 
-function handleDelete (accountId: number) {
+function handleDelete(accountId: number) {
   deleteAccount({ account_id: accountId })
 }
 </script>
 
 <template>
+  <NewInvoicesDialog
+    v-model="isOpen"
+    title="Новый счет"
+  />
+
   <div class="h-full flex">
     <div class="flex-1 min-w-0">
       <InvoicesHeader
@@ -79,6 +90,7 @@ function handleDelete (accountId: number) {
         @sort-by-type="handleSortByType"
         @sort-default="handleSortDefault"
         @show-properties="handleShowProperties"
+        @show-group-settings="handleShowGroupSettings"
       />
 
       <InvoicesTypeGroupesTable v-if="tableMode === 'type'" />
@@ -89,17 +101,44 @@ function handleDelete (accountId: number) {
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
+
+      <InvoicuesEditDialog
+        v-model="updateDialogVisible"
+        title="Редактировать счет"
+        :id="selectedId"
+        :update-data="formData"
+      />
     </div>
 
-    <SidePropertiesPanel v-model="isPropertiesOpen" title="Свойства счета" width="500px">
+    <SidePropertiesPanel
+      v-model="isPropertiesOpen"
+      title="Свойства счета"
+      width="400px"
+    >
       <template v-if="selectedAccount">
-        <div class="grid gap-3">
-          <span class="text-[#6b7280]">Название: {{ selectedAccount.title }}</span> 
-          <span class="text-[#6b7280]">Тип: {{ selectedAccount.type }}</span> 
-          <span class="text-[#6b7280]">Общий баланс: {{ selectedAccount.amount }}</span> 
-          <span class="text-[#6b7280]">Валюта: ₽</span> 
-          <span class="text-[#6b7280]">Примечание:  {{ selectedAccount.note || '—' }}</span>
-        </div>
+        <ElForm
+          :model="selectedAccount"
+          label-position="top"
+          class="account-form"
+        >
+          <ElFormItem label="Название">
+            <div class="text-[#6b7280]">{{ selectedAccount.title }}</div>
+          </ElFormItem>
+          <ElFormItem label="Тип">
+            <div class="text-[#6b7280]">{{ selectedAccount.type }}</div>
+          </ElFormItem>
+          <ElFormItem label="Общий баланс">
+            <div class="text-[#6b7280]">{{ selectedAccount.amount }}</div>
+          </ElFormItem>
+          <ElFormItem label="Валюта">
+            <div class="text-[#6b7280]">₸</div>
+          </ElFormItem>
+          <ElFormItem label="Примечание">
+            <div class="text-[#6b7280]">
+              {{ selectedAccount.note || '—' }}
+            </div>
+          </ElFormItem>
+        </ElForm>
       </template>
 
       <template v-else>
@@ -108,6 +147,14 @@ function handleDelete (accountId: number) {
         </div>
       </template>
     </SidePropertiesPanel>
+
+    <GroupsContainer v-model="isGroupSettingsOpen" />
   </div>
 </template>
 
+<style scoped>
+:deep(.account-form .el-form-item__label) {
+  color: #000;
+  font-size: 16px;
+}
+</style>
