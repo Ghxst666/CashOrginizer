@@ -34,14 +34,14 @@ export function useCreatePayment(): UseMutationReturnType<
         mutationFn: (data: CreatePaymentRequest) => PaymentsService.createPayment(data),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payment created successfully',
+                message: 'Платеж успешно создан',
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to create payment. Try again.',
+                message: 'Не получилось создать платеж. Попробуйте еще раз.',
                 plain: true,
             })
         },
@@ -61,14 +61,14 @@ export function useImportPaymentsFromCsv(): UseMutationReturnType<
         mutationFn: (data: ImportPaymentsFromCsvRequest) => PaymentsService.importPaymentsFromCsv(data),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payments imported successfully',
+                message: 'Платежи успешно импортированы',
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to import payments. Try again.',
+                message: 'Не получилось импортировать платеж. Попробуйте еще раз',
                 plain: true,
             })
         },
@@ -86,13 +86,13 @@ export function useExportPaymentsToCsv(): UseMutationReturnType<
         mutationFn: (data: ExportPaymentsToCsvRequest) => PaymentsService.exportPaymentsToCsv(data),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payments exported successfully',
+                message: 'Платежи успешно экспортированы',
                 plain: true,
             })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to export payments. Try again.',
+                message: 'Не получилось экспортировать платеж. Попробуйте еще раз',
                 plain: true,
             })
         },
@@ -133,14 +133,14 @@ export function useEditPayment(): UseMutationReturnType<
         mutationFn: (data: { payment_id: number, data: EditPaymentRequest }) => PaymentsService.editPayment(data.payment_id, data.data),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payment updated successfully',
+                message: 'Платеж успешно отредактирован',
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to update payment. Try again.',
+                message: 'Не получилось отредактировать платеж. Попробуйте еще раз.',
                 plain: true,
             })
         },
@@ -160,14 +160,14 @@ export function useDeletePayment(): UseMutationReturnType<
         mutationFn: (data: { payment_id: number }) => PaymentsService.deletePayment(data.payment_id),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payment deleted successfully',
+                message: 'Платеж успшено удален',
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to delete payment. Try again.',
+                message: 'Не получилось удалить платеж. Попробуйте еще раз.',
                 plain: true,
             })
         },
@@ -187,14 +187,14 @@ export function useDeleteManyPayments(): UseMutationReturnType<
         mutationFn: (data: DeleteManyPaymentsRequest) => PaymentsService.deleteManyPayments(data),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payments deleted successfully',
+                message: 'Платежи успшено удалены',
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to delete payments. Try again.',
+                message: 'Не получилось удалить платежи. Попробуйте еще раз.',
                 plain: true,
             })
         },
@@ -214,14 +214,14 @@ export function useEditManyPayments(): UseMutationReturnType<
         mutationFn: (data: EditManyPaymentsRequest) => PaymentsService.editManyPayments(data),
         onSuccess: () => {
             ElMessage.success({
-                message: 'Payments updated successfully',
+                message: 'Плтежи отредактированы успешно.',
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
         },
         onError: () => {
             ElMessage.error({
-                message: 'Failed to update payments. Try again.',
+                message: 'Не получилось отредактировать платежи. Попробуйте еще раз.',
                 plain: true,
             })
         },

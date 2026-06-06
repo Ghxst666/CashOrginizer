@@ -21,7 +21,7 @@ function handleRowClick(row: accountsResponse) {
 <template>
     <div class="h-full min-h-0 min-w-0 flex overflow-hidden">
         <ElTable height="100%" border :data="data" @row-click="handleRowClick">
-            <ElTableColumn width="50" prop="id" label="№"/>
+            <ElTableColumn width="50" type="index" label="№"/>
             <ElTableColumn prop="title" label="Название счета" />
             <ElTableColumn width="500" prop="amount" label="Общий баланс" />
             <ElTableColumn

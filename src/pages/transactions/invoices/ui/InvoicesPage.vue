@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import InvoicesTable from '@/entities/Invoices/InvoicesTable.vue';
 import InvoicesHeader from './InvoicesHeader.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
-import { useAccountsQuery, useDelete } from '@/entities/transaction/invoices/index.ts';
+import { useAccountsQuery, useDelete, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
 import { accountsCreateRequest, accountsResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
@@ -16,8 +16,16 @@ const updateDialogVisible = ref<boolean>(false)
 const isPropertiesOpen = ref(false)
 const isGroupSettingsOpen = ref(false)
 const selectedAccount = ref<accountsResponse | null>(null)
+const showClosedAccounts = ref(false)
+const accountsStatus = computed(() => !showClosedAccounts.value)
+const tableMode = ref<'default' | 'type' | 'group'>('default')
+const isDefaultSort = computed(() => tableMode.value === 'default')
+const isTypeSort = computed(() => tableMode.value === 'type')
+const isGroupSort = computed(() => tableMode.value === 'group')
 
-const { data } = useAccountsQuery()
+const { data: accountsData } = useAccountsQuery(accountsStatus, isDefaultSort)
+const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
+const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
 const { mutate: deleteAccount } = useDelete()
 
 const formData = ref<accountsCreateRequest>({
@@ -31,14 +39,16 @@ const formData = ref<accountsCreateRequest>({
   group_id: 0,
 })
 
-const tableMode = ref<'default' | 'type'>('default')
-
 function handleSortByType() {
   tableMode.value = 'type'
 }
 
 function handleSortDefault() {
   tableMode.value = 'default'
+}
+
+function handleSortByGroups() {
+  tableMode.value = 'group'
 }
 
 function handleOpenDialog() {
@@ -51,6 +61,10 @@ function handleShowProperties() {
 
 function handleShowGroupSettings() {
   isGroupSettingsOpen.value = true
+}
+
+function handleShowCloseAccount() {
+  showClosedAccounts.value = !showClosedAccounts.value
 }
 
 function handleSelectAccount(row: accountsResponse) {
@@ -75,6 +89,14 @@ function handleOpenUpdateDialog(row: accountsResponse) {
 function handleDelete(accountId: number) {
   deleteAccount({ account_id: accountId })
 }
+
+function mapperStatus(status: boolean) {
+  if (status === true) {
+    return "Открытый"
+  } else {
+    return "Закрытый"
+  }
+}
 </script>
 
 <template>
@@ -86,17 +108,34 @@ function handleDelete(accountId: number) {
   <div class="h-full flex">
     <div class="flex-1 min-w-0">
       <InvoicesHeader
+        :active-sort="tableMode"
+        :show-closed-accounts="showClosedAccounts"
         @new-invoice="handleOpenDialog"
         @sort-by-type="handleSortByType"
         @sort-default="handleSortDefault"
         @show-properties="handleShowProperties"
         @show-group-settings="handleShowGroupSettings"
+        @show-close-accounts="handleShowCloseAccount"
+        @sort-group="handleSortByGroups"
       />
 
-      <InvoicesTypeGroupesTable v-if="tableMode === 'type'" />
+      <InvoicesTypeGroupesTable
+        v-if="tableMode === 'type'"
+        :data="accountsByTypeData ?? []"
+        @delete="handleDelete"
+        @edit="handleOpenUpdateDialog"
+        @select="handleSelectAccount"
+      />
+      <InvoicesTypeGroupesTable
+        v-else-if="tableMode === 'group'"
+        :data="accountsByGroupsData ?? []"
+        @delete="handleDelete"
+        @edit="handleOpenUpdateDialog"
+        @select="handleSelectAccount"
+      />
       <InvoicesTable
         v-else
-        :data="data ?? []"
+        :data="accountsData ?? []"
         @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
@@ -122,21 +161,24 @@ function handleDelete(accountId: number) {
           class="account-form"
         >
           <ElFormItem label="Название">
-            <div class="text-[#6b7280]">{{ selectedAccount.title }}</div>
+            <span class="text-[#6b7280]">{{ selectedAccount.title }}</span>
           </ElFormItem>
           <ElFormItem label="Тип">
-            <div class="text-[#6b7280]">{{ selectedAccount.type }}</div>
+            <span class="text-[#6b7280]">{{ selectedAccount.type }}</span>
           </ElFormItem>
           <ElFormItem label="Общий баланс">
-            <div class="text-[#6b7280]">{{ selectedAccount.amount }}</div>
+            <span class="text-[#6b7280]">{{ selectedAccount.amount }}</span>
           </ElFormItem>
           <ElFormItem label="Валюта">
-            <div class="text-[#6b7280]">₸</div>
+            <span class="text-[#6b7280]">RUB</span>
           </ElFormItem>
           <ElFormItem label="Примечание">
-            <div class="text-[#6b7280]">
+            <span class="text-[#6b7280]">
               {{ selectedAccount.note || '—' }}
-            </div>
+            </span>
+          </ElFormItem>
+          <ElFormItem label="Состояние">
+            <span class="text-[#6b7280]">{{ mapperStatus(selectedAccount.status) }}</span>
           </ElFormItem>
         </ElForm>
       </template>

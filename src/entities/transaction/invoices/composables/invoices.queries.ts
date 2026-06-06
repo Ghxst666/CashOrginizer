@@ -1,12 +1,39 @@
 import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryClient, UseQueryReturnType } from "@tanstack/vue-query";
 import { InvoicessService } from "../service/invoices.service";
-import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByStatusResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
+import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { ElMessage } from "element-plus";
+import { computed, unref, type MaybeRef } from "vue";
 
-export function useAccountsQuery(): UseQueryReturnType<accountsResponse[], DefaultError> {
+export function useAccountsQuery(
+    status?: MaybeRef<boolean | undefined>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<accountsResponse[], DefaultError> {
     return useQuery({
-        queryKey: ['Accounts'],
-        queryFn: () => InvoicessService.getAllInvoices().then(res => res.data)
+        queryKey: computed(() => ['Accounts', unref(status)]),
+        queryFn: () => InvoicessService.getAllInvoices(unref(status)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
+    })
+}
+
+export function useFilteredInvoicesByType(
+    status?: MaybeRef<boolean | undefined>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<accountsSortedByTypeResponse[], DefaultError> {
+    return useQuery({
+        queryKey: computed(() => ['Accounts', 'by_type', unref(status)]),
+        queryFn: () => InvoicessService.getAllInvoicesSortedByType(unref(status)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
+    })
+}
+
+export function useFilteredInvoicesByGroups(
+    status?: MaybeRef<boolean | undefined>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<accountsSortedByGroupsResponse[], DefaultError> {
+    return useQuery({
+        queryKey: computed(() => ['Accounts', 'by_groups', unref(status)]),
+        queryFn: () => InvoicessService.getAllInvoicesSortedByGroups(unref(status)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 
@@ -34,27 +61,6 @@ export function useCreateAccount(): UseMutationReturnType<
       })
     },
   })
-}
-
-export function useFilteredInvoicesByStatus(status: boolean): UseQueryReturnType<accountsSortedByStatusResponse, DefaultError> {
-    return useQuery({
-        queryKey: ['Accounts_status'],
-        queryFn: () => InvoicessService.filteredInvoicesByStatus(status).then(res => res.data)
-    })
-}
-
-export function useFilteredInvoicesByType(status: boolean): UseQueryReturnType<accountsSortedByTypeResponse, DefaultError> {
-    return useQuery({
-        queryKey: ['Accounts_type'],
-        queryFn: () => InvoicessService.filteredInvoicesByType(status).then(res => res.data)
-    })
-}
-
-export function useFilteredInvoicesByGroups(status: boolean): UseQueryReturnType<accountsSortedByGroupsResponse, DefaultError> {
-    return useQuery({
-        queryKey: ['Accounts_group'],
-        queryFn: () => InvoicessService.filteredInvoicesByGroups(status).then(res => res.data)
-    })
 }
 
 export function useAccountsItemGroup(group_id: number, status?: boolean): UseQueryReturnType<accountsGroupItemResponse, DefaultError> {

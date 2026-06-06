@@ -1,14 +1,39 @@
 import { BaseResponse } from "@/shared/types/api/request";
-import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsCreateResponse, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByStatusResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
+import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsCreateResponse, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { api } from "@/shared/service/api";
 import { ENDPOINTS } from "../config/invoices.config";
 import { REQUEST_METHODS } from "@/shared/config/api/request.config";
 
 export const InvoicessService = {
-    getAllInvoices(): BaseResponse<accountsResponse[]> {
+    getAllInvoices(status?: boolean): BaseResponse<accountsResponse[]> {
         return api.makeRequest<accountsResponse[]>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,
+            params: {
+                status,
+            },
+        })
+    },
+
+    getAllInvoicesSortedByType(status?: boolean): BaseResponse<accountsSortedByTypeResponse[]> {
+        return api.makeRequest<accountsSortedByTypeResponse[]>({
+            url: ENDPOINTS.BASE,
+            method: REQUEST_METHODS.GET,
+            params: {
+                status,
+                sorted: 'by_type',
+            },
+        })
+    },
+
+    getAllInvoicesSortedByGroups(status?: boolean): BaseResponse<accountsSortedByGroupsResponse[]> {
+        return api.makeRequest<accountsSortedByGroupsResponse[]>({
+            url: ENDPOINTS.BASE,
+            method: REQUEST_METHODS.GET,
+            params: {
+                status,
+                sorted: 'by_groups',
+            },
         })
     },
 
@@ -17,27 +42,6 @@ export const InvoicessService = {
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.POST,
             data
-        })
-    },
-
-    filteredInvoicesByStatus(status: boolean): BaseResponse<accountsSortedByStatusResponse> {
-        return api.makeRequest<accountsSortedByStatusResponse>({
-            url: `${ENDPOINTS.SORTED_BY_STATUS + '/' + status}`,
-            method: REQUEST_METHODS.GET,
-        })
-    },
-
-    filteredInvoicesByType(status: boolean): BaseResponse<accountsSortedByTypeResponse> {
-        return api.makeRequest<accountsSortedByTypeResponse>({
-            url: `${ENDPOINTS.SORTED_BY_TYPE + '/' + status}`,
-            method: REQUEST_METHODS.GET,
-        })
-    },
-
-    filteredInvoicesByGroups(status: boolean): BaseResponse<accountsSortedByGroupsResponse> {
-        return api.makeRequest<accountsSortedByGroupsResponse>({
-            url: `${ENDPOINTS.SORTED_BY_GROUPS + '/' + status}`,
-            method: REQUEST_METHODS.GET,
         })
     },
 

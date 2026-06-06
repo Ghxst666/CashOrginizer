@@ -1,61 +1,77 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { Delete, EditPen } from '@element-plus/icons-vue'
+import { ElPopconfirm } from 'element-plus'
+import { computed } from 'vue'
+import {
+  accountsResponse,
+  accountsSortedByGroupsResponse,
+  accountsSortedByTypeResponse,
+} from '../transaction/invoices/types/invoices.types'
 
-type Account = {
-  id: number
-  title: string
-  type: string
-  amount: number
+type AccountsGroup = accountsSortedByTypeResponse | accountsSortedByGroupsResponse
+
+const props = defineProps<{
+  data: AccountsGroup[]
+}>()
+
+const groups = computed(() => props.data)
+
+const emit = defineEmits<{
+  edit: [row: accountsResponse]
+  delete: [accountId: number]
+  select: [row: accountsResponse]
+}>()
+
+function getGroupKey(group: AccountsGroup) {
+  return 'group_id' in group ? group.group_id : group.type
 }
 
-const mockAccounts = ref<Account[]>([
-  { id: 1, title: 'Тинькофф', type: 'bank', amount: 125000 },
-  { id: 2, title: 'Наличные дом', type: 'cash', amount: 18000 },
-  { id: 3, title: 'Альфа кредитка', type: 'creditcard', amount: -32000 },
-  { id: 4, title: 'Сбер дебет', type: 'debitcard', amount: 54000 },
-  { id: 5, title: 'Кошелек', type: 'cash', amount: 3500 },
-])
-
-const typeTitleMap: Record<string, string> = {
-  bank: 'Банк',
-  cash: 'Наличные',
-  creditcard: 'Кредитные карты',
-  debitcard: 'Дебетовые карты',
-  property: 'Имущество',
-  investments: 'Инвестиции',
-  debt: 'Долги',
-  loan: 'Займы',
-  receivable: 'Дебиторка',
-  tax: 'Налоговые',
+function handleRowClick(row: accountsResponse) {
+  emit('select', row)
 }
-
-const grouped = computed(() => {
-  const dict: Record<string, Account[]> = {}
-
-  for (const acc of mockAccounts.value) {
-    if (!dict[acc.type]) dict[acc.type] = []
-    dict[acc.type].push(acc)
-  }
-
-  return Object.entries(dict).map(([type, accounts]) => ({
-    type,
-    title: typeTitleMap[type] ?? type,
-    accounts,
-  }))
-})
 </script>
 
 <template>
-  <div class="h-[calc(100vh-113px)] overflow-y-auto bg-white p-4">
-    <div v-for="group in grouped" :key="group.type" class="mb-6">
+  <div class="h-full min-h-0 overflow-y-auto bg-white p-4">
+    <div
+      v-for="group in groups"
+      :key="getGroupKey(group)"
+      class="mb-6"
+    >
       <h3 class="mb-2 text-lg font-semibold">{{ group.title }}</h3>
 
-      <ElTable :data="group.accounts" border>
-        <ElTableColumn width="60" prop="id" label="№" />
-        <ElTableColumn prop="title" label="Счет" />
-        <ElTableColumn label="Баланс">
+      <ElTable
+        :data="group.accounts"
+        border
+        @row-click="handleRowClick"
+      >
+        <ElTableColumn width="50" type="index" label="№" />
+        <ElTableColumn prop="title" label="Название счета" />
+        <ElTableColumn width="500" prop="amount" label="Общий баланс">
           <template #default="{ row }">
             {{ Number(row.amount).toLocaleString('ru-RU') }} ₽
+          </template>
+        </ElTableColumn>
+        <ElTableColumn
+          width="140px"
+          align="center"
+        >
+          <template #default="{ row }">
+            <ElButton type="primary" :icon="EditPen" @click.stop="emit('edit', row)" />
+            <ElPopconfirm
+              width="220"
+              :icon="undefined"
+              title="Вы хотите удалить счет?"
+            >
+              <template #reference>
+                <ElButton type="danger" :icon="Delete" @click.stop />
+              </template>
+
+              <template #actions="{ cancel }">
+                <ElButton size="small" @click="cancel">Нет</ElButton>
+                <ElButton type="danger" size="small" @click="emit('delete', row.id)">Да</ElButton>
+              </template>
+            </ElPopconfirm>
           </template>
         </ElTableColumn>
       </ElTable>
