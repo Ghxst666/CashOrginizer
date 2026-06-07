@@ -1,6 +1,11 @@
 export type PaymentType = 'expenses' | 'profits' | 'transfers'
 
-export type PaymentAmount = number | string | null
+export type PaymentAmount = string | null
+
+export interface GetPaymentsRequest {
+    page?: number
+    per_page?: number
+}
 
 export interface CreatePaymentRequest {
     payment_date: string
@@ -46,34 +51,94 @@ export interface EditManyPaymentsRequest {
 
 export type DeleteManyPaymentsRequest = number[]
 
+export interface PaymentSplitResponse {
+    id: number
+    note: string
+    amount?: PaymentAmount
+    project_id?: number | null
+}
+
+export interface PaymentResponse {
+    payment_date?: string | null
+    purpose_id?: number | null
+    amount?: PaymentAmount
+    type?: PaymentType | null
+    to_account_id?: number | null
+    note?: string | null
+    category_id?: number | null
+    project_id?: number | null
+    number?: string | null
+    id: number
+    account_id: number
+    account_title?: string | null
+    to_account_title?: string | null
+}
+
 export interface PaymentListItemResponse {
-    Test: string
+    payment_date?: string | null
+    purpose_id?: number | null
+    amount?: PaymentAmount
+    type?: PaymentType | null
+    to_account_id?: number | null
+    note?: string | null
+    category_id?: number | null
+    project_id?: number | null
+    number?: string | null
+    id: number
+    account_id: number
+    account_title?: string | null
+    to_account_title?: string | null
+    splits?: PaymentSplitResponse[]
 }
 
 export type GetAllPaymentsResponse = PaymentListItemResponse[]
 
 export interface CreatePaymentResponse {
-    Test: string
+    status: string
+    data: PaymentResponse
+}
+
+export interface PaymentsImportStatsResponse {
+    rows_total: number
+    rows_imported: number
+    rows_failed: number
+    rows_limit: number
+    accounts_created: number
+    purposes_created: number
+    categories_created: number
+    projects_created: number
+    payments_created: number
+    splits_created: number
+    category_type_conflicts: number
+    opening_balances_applied: number
+    ignored_columns: string[]
+}
+
+export interface PaymentsImportErrorResponse {
+    row: number
+    error: string
+}
+
+export interface PaymentsImportResultResponse {
+    stats: PaymentsImportStatsResponse
+    errors: PaymentsImportErrorResponse[]
 }
 
 export interface ImportPaymentsFromCsvResponse {
-    Test: string
+    status: string
+    data: PaymentsImportResultResponse
 }
 
-export interface ExportPaymentsToCsvResponse {
-    Test: string
-}
+export type ExportPaymentsToCsvResponse = unknown
 
-export interface GetPaymentOneOrNoneResponse {
-    Test: string
-}
+export type GetPaymentOneOrNoneResponse = PaymentListItemResponse
 
 export interface EditPaymentResponse {
-    Test: string
+    status: string
 }
 
 export interface DeletePaymentResponse {
-    Test: string
+    status: string
 }
 
 export type GetPaymentFilteredByAccountResponse = PaymentListItemResponse[]
@@ -81,9 +146,9 @@ export type GetPaymentFilteredByAccountResponse = PaymentListItemResponse[]
 export type GetPaymentFilteredByGroupResponse = PaymentListItemResponse[]
 
 export interface DeleteManyPaymentsResponse {
-    Test: string
+    status: string
 }
 
 export interface EditManyPaymentsResponse {
-    Test: string
+    status: string
 }

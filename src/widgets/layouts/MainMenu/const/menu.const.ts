@@ -51,16 +51,6 @@ export const menuItems: MenuItem[] = [
                 title: "Название",
                 pageName: INFORMATION_ROUTE.INFORMATION_TITLE.NAME
             },
-            {
-                id: '3-5',
-                title: "Тег",
-                pageName: INFORMATION_ROUTE.TAG.NAME
-            },
-            {
-                id: '3-6',
-                title: "Пользователь",
-                pageName: INFORMATION_ROUTE.USER.NAME
-            },
         ],
     },
 ]

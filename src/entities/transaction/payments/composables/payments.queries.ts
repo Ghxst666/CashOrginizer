@@ -1,5 +1,6 @@
-import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryClient, UseQueryReturnType } from "@tanstack/vue-query";
+import { DefaultError, InfiniteData, useInfiniteQuery, UseInfiniteQueryReturnType, useMutation, UseMutationReturnType, useQuery, useQueryClient, UseQueryReturnType } from "@tanstack/vue-query";
 import { ElMessage } from "element-plus";
+import { useInfiniteScroll } from "@/shared/composables/useInfiniteScroll";
 import { PaymentsService } from "../service/payments.service";
 import {
     CreatePaymentRequest,
@@ -14,11 +15,34 @@ import {
     ImportPaymentsFromCsvRequest,
 } from "../types/payments.types";
 
+const DEFAULT_PAYMENTS_PER_PAGE = 30
+
+type UsePaymentsInfiniteScrollQueryReturn = UseInfiniteQueryReturnType<InfiniteData<GetAllPaymentsResponse, number>, DefaultError> & ReturnType<typeof useInfiniteScroll>
+
 export function usePaymentsQuery(): UseQueryReturnType<GetAllPaymentsResponse, DefaultError> {
     return useQuery({
         queryKey: ['payments'],
         queryFn: () => PaymentsService.getAllPayments().then(res => res.data),
     })
+}
+
+export function usePaymentsInfiniteScrollQuery(perPage = DEFAULT_PAYMENTS_PER_PAGE): UsePaymentsInfiniteScrollQueryReturn {
+    const query = useInfiniteQuery<GetAllPaymentsResponse, DefaultError, InfiniteData<GetAllPaymentsResponse, number>, readonly ['payments', 'infinite', number], number>({
+        queryKey: ['payments', 'infinite', perPage],
+        queryFn: ({ pageParam }) => PaymentsService.getAllPayments({
+            page: pageParam,
+            per_page: perPage,
+        }).then(res => res.data),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, allPages) => lastPage.length === perPage ? allPages.length + 1 : undefined,
+    })
+
+    const { target } = useInfiniteScroll(query.fetchNextPage, query.hasNextPage, query.isFetchingNextPage)
+
+    return {
+        ...query,
+        target,
+    }
 }
 
 export function useCreatePayment(): UseMutationReturnType<

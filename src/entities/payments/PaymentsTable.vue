@@ -27,11 +27,6 @@ const tableData = [
 <template>
     <div style="height: calc(100vh - 113px);">
         <ElTable height="100%" border :data="tableData">
-            <ElTableColumn width="130" prop="status" label="Статус">
-                <ElSelect>
-                    
-                </ElSelect>
-            </ElTableColumn>
             <ElTableColumn width="100" prop="date" label="Дата" />
             <ElTableColumn prop="account" label="Счет" />
             <ElTableColumn prop="project" label="Проект" />

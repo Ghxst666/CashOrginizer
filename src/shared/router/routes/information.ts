@@ -18,13 +18,5 @@ export const INFORMATION_ROUTE = {
     INFORMATION_TITLE: {
         PATH: 'information-title',
         NAME: 'InformationTitle'
-    },
-    TAG: {
-        PATH: 'tag',
-        NAME: 'Tag'
-    },
-    USER: {
-        PATH: 'user',
-        NAME: 'User'
-    },
+    }
 } as const

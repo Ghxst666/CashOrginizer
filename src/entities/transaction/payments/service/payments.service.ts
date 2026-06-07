@@ -15,6 +15,7 @@ import {
     ExportPaymentsToCsvRequest,
     ExportPaymentsToCsvResponse,
     GetAllPaymentsResponse,
+    GetPaymentsRequest,
     GetPaymentFilteredByAccountResponse,
     GetPaymentFilteredByGroupResponse,
     GetPaymentOneOrNoneResponse,
@@ -23,10 +24,11 @@ import {
 } from "../types/payments.types";
 
 export const PaymentsService = {
-    getAllPayments(): BaseResponse<GetAllPaymentsResponse> {
+    getAllPayments(params?: GetPaymentsRequest): BaseResponse<GetAllPaymentsResponse> {
         return api.makeRequest<GetAllPaymentsResponse>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,
+            params,
         })
     },
 
@@ -80,17 +82,19 @@ export const PaymentsService = {
         })
     },
 
-    getPaymentsFilteredByAccount(account_id: number): BaseResponse<GetPaymentFilteredByAccountResponse> {
+    getPaymentsFilteredByAccount(account_id: number, params?: GetPaymentsRequest): BaseResponse<GetPaymentFilteredByAccountResponse> {
         return api.makeRequest<GetPaymentFilteredByAccountResponse>({
             url: `${ENDPOINTS.FILTERED_BY_ACCOUNT}/${account_id}`,
             method: REQUEST_METHODS.GET,
+            params,
         })
     },
 
-    getPaymentsFilteredByGroup(group_id: number): BaseResponse<GetPaymentFilteredByGroupResponse> {
+    getPaymentsFilteredByGroup(group_id: number, params?: GetPaymentsRequest): BaseResponse<GetPaymentFilteredByGroupResponse> {
         return api.makeRequest<GetPaymentFilteredByGroupResponse>({
             url: `${ENDPOINTS.FILTERED_BY_GROUP}/${group_id}`,
             method: REQUEST_METHODS.GET,
+            params,
         })
     },
 

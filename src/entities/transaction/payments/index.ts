@@ -9,6 +9,7 @@ import {
     usePaymentQuery,
     usePaymentsFilteredByAccountQuery,
     usePaymentsFilteredByGroupQuery,
+    usePaymentsInfiniteScrollQuery,
     usePaymentsQuery,
 } from "./composables/payments.queries";
 
@@ -23,5 +24,6 @@ export {
     usePaymentQuery,
     usePaymentsFilteredByAccountQuery,
     usePaymentsFilteredByGroupQuery,
+    usePaymentsInfiniteScrollQuery,
     usePaymentsQuery,
 }

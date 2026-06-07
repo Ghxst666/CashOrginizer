@@ -31,19 +31,7 @@ export const INFORMATION_ROUTES: readonly RouteRecordRaw[] = [
                 name: INFORMATION_ROUTE.INFORMATION_TITLE.NAME,
                 component: () => import('@/pages/information/informationTitle/ui/InformationTitlePage.vue'),
                 beforeEnter: requireAuth,
-            },
-            {
-                path: INFORMATION_ROUTE.TAG.PATH,
-                name: INFORMATION_ROUTE.TAG.NAME,
-                component: () => import('@/pages/information/tag/ui/TagPage.vue'),
-                beforeEnter: requireAuth,
-            },
-            {
-                path: INFORMATION_ROUTE.USER.PATH,
-                name: INFORMATION_ROUTE.USER.NAME,
-                component: () => import('@/pages/information/user/ui/UserPage.vue'),
-                beforeEnter: requireAuth,
-            },
+            }
         ]
     }
 ]

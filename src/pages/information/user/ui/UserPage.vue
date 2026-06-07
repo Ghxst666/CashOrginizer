@@ -1,3 +1,0 @@
-<template>
-    пользователи
-</template>
