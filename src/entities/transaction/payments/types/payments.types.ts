@@ -88,6 +88,7 @@ export interface PaymentListItemResponse {
     account_id: number
     account_title?: string | null
     to_account_title?: string | null
+    project?: string | null
     splits?: PaymentSplitResponse[]
 }
 
