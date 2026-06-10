@@ -1,4 +1,4 @@
 export const ENDPOINTS = {
-    BASE: 'categories/me',
+    BASE: 'categories',
     CREATE: 'categories'
 }

@@ -3,11 +3,15 @@ import { ElMessage } from "element-plus";
 import { ENDPOINTS } from "../config/project.config";
 import { projectCreateData, projectsResponseData } from "../types/project.types";
 import { ProjectService } from "../service/project.service";
+import { computed, unref, type MaybeRef } from "vue";
+import type { projectsRequest } from "../types/project.types";
 
-export function useProjectsQuery(): UseQueryReturnType<projectsResponseData, DefaultError> {
+export function useProjectsQuery(
+    params: MaybeRef<Partial<projectsRequest> | undefined> = undefined,
+): UseQueryReturnType<projectsResponseData, DefaultError> {
     return useQuery({
-        queryKey: [ENDPOINTS.PROJECT],
-        queryFn: () => ProjectService.getAllProject().then(res => res.data)
+        queryKey: computed(() => [ENDPOINTS.PROJECT, unref(params)]),
+        queryFn: () => ProjectService.getAllProject(unref(params)).then(res => res.data)
     })
 }
 
@@ -49,7 +53,7 @@ export function useDeleteProject(): UseMutationReturnType<
     mutationFn: (data: { project_id: number }) => ProjectService.deleteProject(data.project_id),
     onSuccess: () => {
       ElMessage.success({
-        message: 'Проект успешно удалена',
+        message: 'Проект успешно удален',
         plain: true,
       })
       queryClient.invalidateQueries({ queryKey: [ENDPOINTS.PROJECT] })

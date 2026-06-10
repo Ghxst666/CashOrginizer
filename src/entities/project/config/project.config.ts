@@ -1,4 +1,4 @@
 export const ENDPOINTS = {
     BASE: 'projects',
-    PROJECT: 'projects/me'
+    PROJECT: 'projects'
 } as const

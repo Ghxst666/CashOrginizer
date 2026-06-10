@@ -5,7 +5,7 @@ import { ENDPOINTS } from "../config/project.config"
 import { REQUEST_METHODS } from "@/shared/config/api/request.config"
 
 export const ProjectService = {
-    getAllProject(params?: projectsRequest): BaseResponse<projectsResponseData> {
+    getAllProject(params?: Partial<projectsRequest>): BaseResponse<projectsResponseData> {
         return api.makeRequest<projectsResponseData>({
             url: ENDPOINTS.PROJECT,
             method: REQUEST_METHODS.GET,

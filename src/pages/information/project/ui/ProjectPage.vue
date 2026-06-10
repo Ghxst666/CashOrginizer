@@ -5,12 +5,23 @@ import ProjectTable from './ProjectTable.vue';
 import { useProjectsQuery } from '@/entities/project';
 import NewProject from '@/shared/ui/NewProject.vue';
 
-const { data } = useProjectsQuery()
+interface ProjectPeriodFilter {
+    period: string
+    date_from?: string
+    date_to?: string
+}
+
+const periodFilter = ref<ProjectPeriodFilter>({ period: 'all_period' })
+const { data } = useProjectsQuery(periodFilter)
 
 const newProject = ref<boolean>(false)
 
 function handleOpenProjectDialog() {
     newProject.value = true
+}
+
+function handleSelectPeriod(filter: ProjectPeriodFilter) {
+    periodFilter.value = filter
 }
 </script>
 
@@ -22,7 +33,13 @@ function handleOpenProjectDialog() {
         :projects="data.rows"
     />
     <div class="h-full flex flex-col bg-[#ffffff]">
-        <ProjectHeader @open-dialog="handleOpenProjectDialog" />
+        <ProjectHeader
+            :selected-period="periodFilter.period"
+            :date-from="periodFilter.date_from"
+            :date-to="periodFilter.date_to"
+            @open-dialog="handleOpenProjectDialog"
+            @select-period="handleSelectPeriod"
+        />
         <div class="flex-1 min-h-0">
             <ProjectTable v-if="data" :data="data" />
         </div>
