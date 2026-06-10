@@ -2,6 +2,7 @@ import { DefaultError, InfiniteData, useInfiniteQuery, UseInfiniteQueryReturnTyp
 import { ElMessage } from "element-plus";
 import { useInfiniteScroll } from "@/shared/composables/useInfiniteScroll";
 import { PaymentsService } from "../service/payments.service";
+import { computed, unref, type MaybeRef } from "vue";
 import {
     CreatePaymentRequest,
     DeleteManyPaymentsRequest,
@@ -26,7 +27,10 @@ export function usePaymentsQuery(): UseQueryReturnType<GetAllPaymentsResponse, D
     })
 }
 
-export function usePaymentsInfiniteScrollQuery(perPage = DEFAULT_PAYMENTS_PER_PAGE): UsePaymentsInfiniteScrollQueryReturn {
+export function usePaymentsInfiniteScrollQuery(
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+): UsePaymentsInfiniteScrollQueryReturn {
     const query = useInfiniteQuery<GetAllPaymentsResponse, DefaultError, InfiniteData<GetAllPaymentsResponse, number>, readonly ['payments', 'infinite', number], number>({
         queryKey: ['payments', 'infinite', perPage],
         queryFn: ({ pageParam }) => PaymentsService.getAllPayments({
@@ -35,6 +39,7 @@ export function usePaymentsInfiniteScrollQuery(perPage = DEFAULT_PAYMENTS_PER_PA
         }).then(res => res.data),
         initialPageParam: 1,
         getNextPageParam: (lastPage, allPages) => lastPage.length === perPage ? allPages.length + 1 : undefined,
+        enabled: computed(() => unref(enabled)),
     })
 
     const { target } = useInfiniteScroll(query.fetchNextPage, query.hasNextPage, query.isFetchingNextPage)
@@ -130,17 +135,25 @@ export function usePaymentQuery(payment_id: number): UseQueryReturnType<GetPayme
     })
 }
 
-export function usePaymentsFilteredByAccountQuery(account_id: number): UseQueryReturnType<GetPaymentFilteredByAccountResponse, DefaultError> {
+export function usePaymentsFilteredByAccountQuery(
+    account_id: MaybeRef<number>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<GetPaymentFilteredByAccountResponse, DefaultError> {
     return useQuery({
-        queryKey: ['payments', 'account', account_id],
-        queryFn: () => PaymentsService.getPaymentsFilteredByAccount(account_id).then(res => res.data),
+        queryKey: computed(() => ['payments', 'account', unref(account_id)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByAccount(unref(account_id)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 
-export function usePaymentsFilteredByGroupQuery(group_id: number): UseQueryReturnType<GetPaymentFilteredByGroupResponse, DefaultError> {
+export function usePaymentsFilteredByGroupQuery(
+    group_id: MaybeRef<number>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<GetPaymentFilteredByGroupResponse, DefaultError> {
     return useQuery({
-        queryKey: ['payments', 'group', group_id],
-        queryFn: () => PaymentsService.getPaymentsFilteredByGroup(group_id).then(res => res.data),
+        queryKey: computed(() => ['payments', 'group', unref(group_id)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByGroup(unref(group_id)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 

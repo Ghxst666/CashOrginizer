@@ -2,11 +2,13 @@ import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryCli
 import { createGroupsRequest, groupsResponse } from "../types/groups.types";
 import { GroupService } from "../service/groups.service";
 import { ElMessage } from "element-plus";
+import { computed, unref, type MaybeRef } from "vue";
 
-export function useGroupsQuery(): UseQueryReturnType<groupsResponse[], DefaultError> {
+export function useGroupsQuery(enabled: MaybeRef<boolean> = true): UseQueryReturnType<groupsResponse[], DefaultError> {
     return useQuery({
         queryKey: ['groups'],
-        queryFn: () => GroupService.getAllGroups().then(res => res.data)
+        queryFn: () => GroupService.getAllGroups().then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 

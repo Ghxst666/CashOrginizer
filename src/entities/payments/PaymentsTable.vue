@@ -2,21 +2,52 @@
 import { Delete, EditPen } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import EditPaymentDialog from '@/pages/transactions/payments/ui/EditPaymentDialog.vue'
-import { useDeletePayment, usePaymentsInfiniteScrollQuery } from '@/entities/transaction/payments'
+import {
+    useDeletePayment,
+    usePaymentsFilteredByAccountQuery,
+    usePaymentsFilteredByGroupQuery,
+    usePaymentsInfiniteScrollQuery,
+} from '@/entities/transaction/payments'
 import type { PaymentListItemResponse } from '@/entities/transaction/payments/types/payments.types'
+import type { PaymentsFilter } from '@/pages/transactions/payments/payments-filter'
+
+const props = defineProps<{
+    filter: PaymentsFilter
+}>()
+
+const isAllPayments = computed(() => props.filter.type === 'all')
+const isAccountFilter = computed(() => props.filter.type === 'account')
+const isGroupFilter = computed(() => props.filter.type === 'group')
+const selectedAccountId = computed(() => props.filter.type === 'account' ? props.filter.id : 0)
+const selectedGroupId = computed(() => props.filter.type === 'group' ? props.filter.id : 0)
 
 const {
-    data,
+    data: allPaymentsData,
     target,
-    isLoading,
+    isLoading: isAllPaymentsLoading,
     isFetchingNextPage,
-} = usePaymentsInfiniteScrollQuery()
+} = usePaymentsInfiniteScrollQuery(30, isAllPayments)
+
+const accountPaymentsQuery = usePaymentsFilteredByAccountQuery(selectedAccountId, isAccountFilter)
+const groupPaymentsQuery = usePaymentsFilteredByGroupQuery(selectedGroupId, isGroupFilter)
 
 const deletePayment = useDeletePayment()
 const selectedPayment = ref<PaymentListItemResponse | null>(null)
 const isOpenEdit = ref(false)
 
-const tableData = computed(() => data.value?.pages.flat() ?? [])
+const tableData = computed(() => {
+    if (props.filter.type === 'account') return accountPaymentsQuery.data.value ?? []
+    if (props.filter.type === 'group') return groupPaymentsQuery.data.value ?? []
+
+    return allPaymentsData.value?.pages.flat() ?? []
+})
+
+const isLoading = computed(() => {
+    if (props.filter.type === 'account') return accountPaymentsQuery.isLoading.value
+    if (props.filter.type === 'group') return groupPaymentsQuery.isLoading.value
+
+    return isAllPaymentsLoading.value
+})
 
 function handleOpenEditPayment(row: PaymentListItemResponse) {
     selectedPayment.value = { ...row }
@@ -92,11 +123,12 @@ function handleDeletePayment(payment_id: number) {
 
             <template #append>
                 <div
+                    v-if="isAllPayments"
                     ref="target"
                     class="h-px"
                 />
                 <div
-                    v-if="isFetchingNextPage"
+                    v-if="isAllPayments && isFetchingNextPage"
                     class="py-2 text-center text-sm text-gray-500"
                 >
                     Загрузка...

@@ -6,6 +6,7 @@ import { useCreatePayment } from '@/entities/transaction/payments'
 import { useCreatePaymentSplit } from '@/entities/transaction/payments-split'
 import type { CreatePaymentRequest } from '@/entities/transaction/payments/types/payments.types'
 import type { CreatePaymentSplitRequest } from '@/entities/transaction/payments-split/types/payments-split.types'
+import { useAccountsQuery } from '@/entities/transaction/invoices'
 
 interface PaymentFormData {
   check: number | null
@@ -54,8 +55,11 @@ const emptySplitForm = (): SplitFormData => ({
   project: null,
 })
 
+const { data: accounts } = useAccountsQuery(false)
 const formData = ref<PaymentFormData>(emptyPaymentForm())
 const splits = ref<SplitFormData[]>([emptySplitForm()])
+
+const accountOptions = computed(() => accounts.value ?? [])
 
 const isPending = computed(() => createPayment.isPending.value || createPaymentSplit.isPending.value)
 
@@ -149,10 +153,18 @@ async function handleCreatePayment() {
           class="payment-form"
         >
           <ElFormItem label="Счет">
-            <!-- TODO: Подвязать реальные счета -->
-            <ElSelect v-model="formData.check">
-              <ElOption label="Счет 1" :value="1" />
-              <ElOption label="Счет 2" :value="2" />
+            <ElSelect
+              v-model="formData.check"
+              placeholder="Выберите счет"
+              clearable
+              filterable
+            >
+              <ElOption
+                v-for="account in accountOptions"
+                :key="account.id"
+                :label="account.title"
+                :value="account.id"
+              />
             </ElSelect>
           </ElFormItem>
 
@@ -188,14 +200,6 @@ async function handleCreatePayment() {
             <ElSelect v-model="formData.project">
               <ElOption label="Проект 1" :value="1" />
               <ElOption label="Проект 2" :value="2" />
-            </ElSelect>
-          </ElFormItem>
-
-          <ElFormItem label="Тег">
-            <!-- TODO: Подвязать реальные теги -->
-            <ElSelect v-model="formData.tag">
-              <ElOption label="Тег 1" value="tag 1" />
-              <ElOption label="Тег 2" value="tag 2" />
             </ElSelect>
           </ElFormItem>
 

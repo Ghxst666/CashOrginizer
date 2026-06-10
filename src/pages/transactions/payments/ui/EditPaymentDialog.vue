@@ -11,6 +11,7 @@ import {
 } from '@/entities/transaction/payments-split'
 import type { EditPaymentRequest, PaymentListItemResponse } from '@/entities/transaction/payments/types/payments.types'
 import type { CreatePaymentSplitRequest, EditPaymentSplitRequest } from '@/entities/transaction/payments-split/types/payments-split.types'
+import { useAccountsQuery } from '@/entities/transaction/invoices'
 
 interface PaymentEditFormData {
   check: number | null
@@ -52,6 +53,9 @@ const formData = ref<PaymentEditFormData>({
 })
 const splits = ref<SplitEditFormData[]>([])
 const deletedSplitIds = ref<number[]>([])
+
+const { data: accounts } = useAccountsQuery(false)
+const accountOptions = computed(() => accounts.value ?? [])
 
 const isPending = computed(() => (
   editPayment.isPending.value
@@ -220,10 +224,18 @@ async function handleEditPayment() {
           class="payment-form"
         >
           <ElFormItem label="Счет">
-            <!-- TODO: Подвязать реальные счета -->
-            <ElSelect v-model="formData.check">
-              <ElOption label="Счет 1" :value="1" />
-              <ElOption label="Счет 2" :value="2" />
+            <ElSelect
+              v-model="formData.check"
+              placeholder="Выберите счет"
+              clearable
+              filterable
+            >
+              <ElOption
+                v-for="account in accountOptions"
+                :key="account.id"
+                :label="account.title"
+                :value="account.id"
+              />
             </ElSelect>
           </ElFormItem>
 
