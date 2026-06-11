@@ -113,8 +113,6 @@ function applyCustomDates() {
             </ElButton>
             <template #dropdown>
                 <ElDropdownMenu>
-                    <ElDropdownItem>Включить запланированные</ElDropdownItem>
-                    <ElDropdownItem>Показывать закрытые проекты</ElDropdownItem>
                     <ElDropdownItem>Показать свойства</ElDropdownItem>
                     <ElDropdownItem>Отчет по проектам</ElDropdownItem>
                 </ElDropdownMenu>

@@ -8,10 +8,12 @@ import type { projectsRequest } from "../types/project.types";
 
 export function useProjectsQuery(
     params: MaybeRef<Partial<projectsRequest> | undefined> = undefined,
+    enabled: MaybeRef<boolean> = true,
 ): UseQueryReturnType<projectsResponseData, DefaultError> {
     return useQuery({
         queryKey: computed(() => [ENDPOINTS.PROJECT, unref(params)]),
-        queryFn: () => ProjectService.getAllProject(unref(params)).then(res => res.data)
+        queryFn: () => ProjectService.getAllProject(unref(params)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 

@@ -5,7 +5,7 @@ import { ENDPOINTS } from "../config/category.config"
 import { REQUEST_METHODS } from "@/shared/config/api/request.config"
 
 export const CategoryService = {
-    getAllCategories(params?: CategoryRequest): BaseResponse<CategoryResponseData> {
+    getAllCategories(params?: Partial<CategoryRequest>): BaseResponse<CategoryResponseData> {
         return api.makeRequest<CategoryResponseData>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,

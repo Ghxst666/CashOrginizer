@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElDialog } from 'element-plus';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 const props = defineProps<{
     title: string
     firstStepTitle?: string
@@ -26,6 +26,10 @@ const prevStep = () => {
 }
 
 const newPayDialogVisible = defineModel<boolean>('newPay', { required: true })
+
+watch(newPayDialogVisible, (isVisible) => {
+  if (!isVisible) activeStep.value = 0
+})
 </script>
 
 <template>

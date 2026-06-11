@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { NewPayDialog } from '@/shared/ui'
 import { useCreatePayment } from '@/entities/transaction/payments'
@@ -7,6 +7,14 @@ import { useCreatePaymentSplit } from '@/entities/transaction/payments-split'
 import type { CreatePaymentRequest } from '@/entities/transaction/payments/types/payments.types'
 import type { CreatePaymentSplitRequest } from '@/entities/transaction/payments-split/types/payments-split.types'
 import { useAccountsQuery } from '@/entities/transaction/invoices'
+import { useCategoriesQuery } from '@/entities/category'
+import { useProjectsQuery } from '@/entities/project'
+
+interface SelectOptionNode {
+  id: number
+  title: string
+  children?: SelectOptionNode[]
+}
 
 interface PaymentFormData {
   check: number | null
@@ -56,16 +64,46 @@ const emptySplitForm = (): SplitFormData => ({
 })
 
 const { data: accounts } = useAccountsQuery(false)
+const categoriesEnabled = ref(false)
+const projectsEnabled = ref(false)
+const { data: categories } = useCategoriesQuery(undefined, categoriesEnabled)
+const { data: projects } = useProjectsQuery(undefined, projectsEnabled)
 const formData = ref<PaymentFormData>(emptyPaymentForm())
 const splits = ref<SplitFormData[]>([emptySplitForm()])
 
 const accountOptions = computed(() => accounts.value ?? [])
+const categoryOptions = computed(() => flattenOptions(categories.value?.rows ?? []))
+const projectOptions = computed(() => flattenOptions(projects.value?.rows ?? []))
+const hasSplitData = computed(() => splits.value.some(isSplitFilled))
 
 const isPending = computed(() => createPayment.isPending.value || createPaymentSplit.isPending.value)
+
+watch(hasSplitData, (hasSplits) => {
+  if (!hasSplits) return
+
+  formData.value.sum = ''
+  formData.value.note = ''
+  formData.value.project = null
+})
 
 function resetForm() {
   formData.value = emptyPaymentForm()
   splits.value = [emptySplitForm()]
+}
+
+function flattenOptions(options: SelectOptionNode[]): SelectOptionNode[] {
+  return options.flatMap(option => [
+    option,
+    ...flattenOptions(option.children ?? []),
+  ])
+}
+
+function handleCategoryVisibleChange(visible: boolean) {
+  if (visible) categoriesEnabled.value = true
+}
+
+function handleProjectVisibleChange(visible: boolean) {
+  if (visible) projectsEnabled.value = true
 }
 
 function handleCloseDialog() {
@@ -89,10 +127,10 @@ function buildPaymentPayload(): CreatePaymentRequest {
   return {
     account_id: Number(formData.value.check),
     payment_date: formData.value.date,
-    amount: formData.value.sum || null,
-    note: formData.value.note || null,
+    amount: hasSplitData.value ? null : formData.value.sum || null,
+    note: hasSplitData.value ? null : formData.value.note || null,
     category_id: formData.value.category,
-    project_id: formData.value.project,
+    project_id: hasSplitData.value ? null : formData.value.project,
     number: formData.value.number || null,
   }
 }
@@ -100,7 +138,7 @@ function buildPaymentPayload(): CreatePaymentRequest {
 function buildSplitPayload(split: SplitFormData): CreatePaymentSplitRequest {
   return {
     note: split.note || null,
-    amount: split.sum || null,
+    amount: split.sum.replace(',', '.') || null,
     project_id: split.project,
   }
 }
@@ -180,35 +218,52 @@ async function handleCreatePayment() {
           </ElFormItem>
 
           <ElFormItem label="Сумма">
-            <ElInput v-model="formData.sum" />
+            <ElInput
+              v-model="formData.sum"
+              :disabled="hasSplitData"
+              :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
+            />
           </ElFormItem>
 
           <ElFormItem label="Примечание">
-            <ElInput v-model="formData.note" />
+            <ElInput
+              v-model="formData.note"
+              :disabled="hasSplitData"
+              :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
+            />
           </ElFormItem>
 
           <ElFormItem label="Категория">
-            <!-- TODO: Подвязать реальные категории -->
-            <ElSelect v-model="formData.category">
-              <ElOption label="Категория 1" :value="1" />
-              <ElOption label="Категория 2" :value="2" />
+            <ElSelect
+              v-model="formData.category"
+              clearable
+              filterable
+              @visible-change="handleCategoryVisibleChange"
+            >
+              <ElOption
+                v-for="category in categoryOptions"
+                :key="category.id"
+                :label="category.title"
+                :value="category.id"
+              />
             </ElSelect>
           </ElFormItem>
 
           <ElFormItem label="Проект">
-            <!-- TODO: Подвязать реальные проекты -->
-            <ElSelect v-model="formData.project">
-              <ElOption label="Проект 1" :value="1" />
-              <ElOption label="Проект 2" :value="2" />
-            </ElSelect>
-          </ElFormItem>
-
-          <ElFormItem label="Метка">
-            <!-- TODO: Подвязать реальные метки -->
-            <ElSelect v-model="formData.metca">
-              <ElOption label="Несогласованный" value="metca 1" />
-              <ElOption label="Чистый" value="metca 2" />
-              <ElOption label="Согласованный" value="metca 3" />
+            <ElSelect
+              v-model="formData.project"
+              clearable
+              filterable
+              :disabled="hasSplitData"
+              :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
+              @visible-change="handleProjectVisibleChange"
+            >
+              <ElOption
+                v-for="project in projectOptions"
+                :key="project.id"
+                :label="project.title"
+                :value="project.id"
+              />
             </ElSelect>
           </ElFormItem>
 
@@ -253,10 +308,18 @@ async function handleCreatePayment() {
             </ElFormItem>
 
             <ElFormItem label="Проект">
-              <!-- TODO: Подвязать реальные проекты -->
-              <ElSelect v-model="split.project">
-                <ElOption label="Проект 1" :value="1" />
-                <ElOption label="Проект 2" :value="2" />
+              <ElSelect
+                v-model="split.project"
+                clearable
+                filterable
+                @visible-change="handleProjectVisibleChange"
+              >
+                <ElOption
+                  v-for="project in projectOptions"
+                  :key="project.id"
+                  :label="project.title"
+                  :value="project.id"
+                />
               </ElSelect>
             </ElFormItem>
           </ElForm>

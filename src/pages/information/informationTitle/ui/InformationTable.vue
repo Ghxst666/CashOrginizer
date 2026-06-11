@@ -1,45 +1,43 @@
 <script setup lang="ts">
-import { purposesResponseData } from '@/entities/purposes/types/purposes.types';
+import { useDeletePurposes } from '@/entities/purposes';
+import { purposesResponseData, purposesRowData } from '@/entities/purposes/types/purposes.types';
 import { Delete, EditPen } from '@element-plus/icons-vue';
-import { ElButton } from 'element-plus';
+import { ElButton, ElPopconfirm } from 'element-plus';
+import { ref } from 'vue';
+import EditPurposeDialog from './EditPurposeDialog.vue';
 
 const props = defineProps<{
     data: purposesResponseData
 }>()
 
-// const selectedRow = ref<CreateCategoryData>()
-// const selectedId = ref<number>()
-// const isOpenEdit = ref(false)
+const selectedPurpose = ref<purposesRowData | null>(null)
+const isOpenEdit = ref(false)
+const deletePurpose = useDeletePurposes()
 
-// const { mutate } = useDeleteCategory()
+function handleUpdate(row: purposesRowData) {
+    selectedPurpose.value = { ...row }
+    isOpenEdit.value = true
+}
 
-// function handleConfirm(id: number) {
-//   mutate({
-//     category_id: id,
-//   })
-// }
-
-
-// function formatedTypeName(name: string) {
-//     return name === 'expenses'
-//         ? 'Расходные'
-//         : 'Приходные'
-// }
-
-// function handleUpdate(row: any) {
-//     selectedRow.value = { ...row }
-//     selectedId.value = row.id
-//     isOpenEdit.value = true
-// }
+function handleDelete(purpose_id: number) {
+    deletePurpose.mutate({ purpose_id })
+}
 
 </script>
 
 <template>
     <div class="h-full w-full">
+        <EditPurposeDialog
+            v-if="selectedPurpose && isOpenEdit"
+            :key="selectedPurpose.id"
+            v-model="isOpenEdit"
+            :purpose="selectedPurpose"
+        />
+
         <ElTable 
             height="100%"
             border 
-            :data="data.rows"
+            :data="props.data.rows"
         >
             <ElTableColumn prop="title" label="Название" />
             <ElTableColumn width="400" prop="category_title" label="Категория" />
@@ -50,8 +48,25 @@ const props = defineProps<{
                 width="140px"
                 align="center"
             >
-                <ElButton type="primary" :icon="EditPen" />
-                <ElButton type="danger" :icon="Delete" />
+                <template #default="{ row }">
+                    <ElButton type="primary" :icon="EditPen" @click="handleUpdate(row)" />
+                    <ElPopconfirm title="Вы хотите удалить название?" width="220">
+                        <template #reference>
+                            <ElButton type="danger" :icon="Delete" :loading="deletePurpose.isPending.value" />
+                        </template>
+                        <template #actions="{ cancel }">
+                            <ElButton size="small" @click="cancel">Нет</ElButton>
+                            <ElButton
+                                type="danger"
+                                size="small"
+                                :loading="deletePurpose.isPending.value"
+                                @click="handleDelete(row.id)"
+                            >
+                                Да
+                            </ElButton>
+                        </template>
+                    </ElPopconfirm>
+                </template>
             </ElTableColumn>
         </ElTable>
     </div>

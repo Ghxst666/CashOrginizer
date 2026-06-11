@@ -1,13 +1,18 @@
 import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryClient, UseQueryReturnType } from "@tanstack/vue-query";
 import { ElMessage } from "element-plus";
-import { CategoryResponseData, CreateCategoryData } from "../types/category.types";
+import { CategoryRequest, CategoryResponseData, CreateCategoryData } from "../types/category.types";
 import { ENDPOINTS } from "../config/category.config";
 import { CategoryService } from "../service/category.service";
+import { computed, unref, type MaybeRef } from "vue";
 
-export function useCategoriesQuery(): UseQueryReturnType<CategoryResponseData, DefaultError> {
+export function useCategoriesQuery(
+  params: MaybeRef<Partial<CategoryRequest> | undefined> = undefined,
+  enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<CategoryResponseData, DefaultError> {
     return useQuery({
-        queryKey: [ENDPOINTS.BASE],
-        queryFn: () => CategoryService.getAllCategories().then(res => res.data)
+        queryKey: computed(() => [ENDPOINTS.BASE, unref(params)]),
+        queryFn: () => CategoryService.getAllCategories(unref(params)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 

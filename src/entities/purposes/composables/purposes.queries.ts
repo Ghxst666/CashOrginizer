@@ -2,15 +2,15 @@ import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryCli
 import { ElMessage } from "element-plus";
 import { ENDPOINTS } from "../config/purposes.config";
 import { PurposesService } from "../service/purposes.service";
-import { createPurposesData, ItemPurposesResponseData, purposesResponseData } from "../types/purposes.types";
+import { createPurposesData, ItemPurposesResponseData, purposesRequest, purposesResponseData, updatePurposesData } from "../types/purposes.types";
+import { computed, unref, type MaybeRef } from "vue";
 
-
-
-
-export function usePurposesQuery(): UseQueryReturnType<purposesResponseData, DefaultError> {
+export function usePurposesQuery(
+  params: MaybeRef<Partial<purposesRequest> | undefined> = undefined,
+): UseQueryReturnType<purposesResponseData, DefaultError> {
     return useQuery({
-        queryKey: [ENDPOINTS.PURPOSES],
-        queryFn: () => PurposesService.getAllPurposes().then(res => res.data)
+        queryKey: computed(() => [ENDPOINTS.PURPOSES, unref(params)]),
+        queryFn: () => PurposesService.getAllPurposes(unref(params)).then(res => res.data)
     })
 }
 
@@ -22,7 +22,7 @@ export function usePurposesItemQuery(purpose_id: number): UseQueryReturnType<Ite
 }
 
 export function useCreatePurposes(): UseMutationReturnType<
-  any,
+  Awaited<ReturnType<typeof PurposesService.createPurposes>>,
   Error,
   createPurposesData,
   unknown
@@ -76,14 +76,14 @@ export function useDeletePurposes(): UseMutationReturnType<
 export function useUpdatePurposes(): UseMutationReturnType<
   any,
   Error,
-  { data: createPurposesData, purpose_id : number },
+  { data: updatePurposesData, purpose_id : number },
   unknown
 > {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationKey: ['purposes_update'],
-    mutationFn: (data: { data: createPurposesData, purpose_id: number }) => PurposesService.updatePurposes(data.purpose_id, data.data),
+    mutationFn: (data: { data: updatePurposesData, purpose_id: number }) => PurposesService.updatePurposes(data.purpose_id, data.data),
     onSuccess: () => {
       ElMessage.success({
         message: 'Название успешно редактировано',

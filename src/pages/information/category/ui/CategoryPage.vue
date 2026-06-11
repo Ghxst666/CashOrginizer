@@ -5,11 +5,22 @@ import { ref } from 'vue';
 import { useCategoriesQuery } from '@/entities/category';
 import NewCategoryDialog from '@/shared/ui/NewCategoryDialog.vue';
 
-const { data } = useCategoriesQuery()
+interface CategoryPeriodFilter {
+    period: string
+    date_from?: string
+    date_to?: string
+}
+
+const periodFilter = ref<CategoryPeriodFilter>({ period: 'all_period' })
+const { data } = useCategoriesQuery(periodFilter)
 
 const newCategory = ref<boolean>(false)
 function handleOpenCategoryDialog() {
     newCategory.value = true
+}
+
+function handleSelectPeriod(filter: CategoryPeriodFilter) {
+    periodFilter.value = filter
 }
 </script>
 
@@ -21,7 +32,13 @@ function handleOpenCategoryDialog() {
         :categories="data.rows"
     />
     <div class="h-full flex flex-col bg-[#ffffff]">
-        <CategoryHeader @add-category="handleOpenCategoryDialog" />
+        <CategoryHeader
+            :selected-period="periodFilter.period"
+            :date-from="periodFilter.date_from"
+            :date-to="periodFilter.date_to"
+            @add-category="handleOpenCategoryDialog"
+            @select-period="handleSelectPeriod"
+        />
         <div class="flex-1 min-h-0">
             <CategoryTable 
                 v-if="data"

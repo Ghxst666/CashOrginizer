@@ -23,8 +23,11 @@ export const ProjectService = {
 
     deleteProject(project_id: number): BaseResponse<void> {
         return api.makeRequest<void>({
-            url: `${ENDPOINTS.BASE + '/' + project_id}`,
+            url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.DELETE,
+            params: {
+                project_id,
+            },
         })
     },
 

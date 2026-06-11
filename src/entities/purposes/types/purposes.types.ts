@@ -36,16 +36,16 @@ export interface purposesSummaryData {
 
 export interface purposesRowData {
     title: string,
-    amount: number,
-    note: string,
-    category_id: number,
-    project_id: number,
+    amount: string | null,
+    note: string | null,
+    category_id: number | null,
+    project_id: number | null,
     is_auto_update: boolean,
     id: number,
-    category_title: string,
-    project_title: string,
+    category_title: string | null,
+    project_title: string | null,
     tags: number[],
-    splits: number[],
+    splits: unknown[],
     income: string,
     income_formatted: string,
     expense: string,
@@ -57,25 +57,43 @@ export interface purposesRowData {
 }
 
 export interface createPurposesData {
-    title: string,
-    amount: number,
-    note: string,
-    category_id: number,
-    project_id: number,
-    is_auto_update: boolean,
-    tags_ids: number[]
+    title: string
+    amount?: string | null
+    note?: string | null
+    category_id?: number | null
+    project_id?: number | null
+    is_auto_update?: boolean
+}
+
+export type updatePurposesData = Partial<createPurposesData>
+
+export interface PurposeData {
+    title: string
+    amount: string | null
+    note: string | null
+    category_id: number | null
+    project_id: number | null
+    is_auto_update: boolean
+    id: number
+    category_title?: string | null
+    project_title?: string | null
+}
+
+export interface CreatePurposesResponseData {
+    status: string
+    data: PurposeData
 }
 
 export interface ItemPurposesResponseData {
     title: string,
-    amount: number,
-    note: string,
-    category_id: number,
-    project_id: number,
+    amount: string | null,
+    note: string | null,
+    category_id: number | null,
+    project_id: number | null,
     is_auto_update: boolean,
     id: number,
-    category_title: string,
-    project_title: string,
+    category_title: string | null,
+    project_title: string | null,
     tags: number[],
-    splits: number[],
+    splits: unknown[],
 }
