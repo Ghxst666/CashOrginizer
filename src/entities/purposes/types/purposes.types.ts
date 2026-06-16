@@ -40,12 +40,9 @@ export interface purposesRowData {
     note: string | null,
     category_id: number | null,
     project_id: number | null,
-    is_auto_update: boolean,
     id: number,
     category_title: string | null,
     project_title: string | null,
-    tags: number[],
-    splits: unknown[],
     income: string,
     income_formatted: string,
     expense: string,
@@ -62,7 +59,6 @@ export interface createPurposesData {
     note?: string | null
     category_id?: number | null
     project_id?: number | null
-    is_auto_update?: boolean
 }
 
 export type updatePurposesData = Partial<createPurposesData>
@@ -73,7 +69,6 @@ export interface PurposeData {
     note: string | null
     category_id: number | null
     project_id: number | null
-    is_auto_update: boolean
     id: number
     category_title?: string | null
     project_title?: string | null
@@ -90,10 +85,7 @@ export interface ItemPurposesResponseData {
     note: string | null,
     category_id: number | null,
     project_id: number | null,
-    is_auto_update: boolean,
     id: number,
     category_title: string | null,
     project_title: string | null,
-    tags: number[],
-    splits: unknown[],
 }

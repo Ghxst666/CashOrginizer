@@ -2,8 +2,9 @@
 import { ref } from 'vue';
 import InformationHeader from './InformationHeader.vue';
 import InformationTable from './InformationTable.vue';
-import CreatePurposeDialog from './CreatePurposeDialog.vue';
 import { usePurposesQuery } from '@/entities/purposes';
+import type { purposesRowData } from '@/entities/purposes/types/purposes.types';
+import { NewPurposesDialog } from '@/shared/ui';
 
 interface InformationPeriodFilter {
   period: string
@@ -12,6 +13,8 @@ interface InformationPeriodFilter {
 }
 
 const newNameDialogVisible = ref<boolean>(false)
+const editNameDialogVisible = ref<boolean>(false)
+const selectedPurpose = ref<purposesRowData | null>(null)
 
 const periodFilter = ref<InformationPeriodFilter>({ period: 'all_period' })
 const { data } = usePurposesQuery(periodFilter)
@@ -20,8 +23,18 @@ function handleOpenDialog() {
   newNameDialogVisible.value = true
 }
 
-function handleCloseDialog() {
+function handleCloseCreateDialog() {
   newNameDialogVisible.value = false
+}
+
+function handleOpenEditDialog(purpose: purposesRowData) {
+  selectedPurpose.value = purpose
+  editNameDialogVisible.value = true
+}
+
+function handleCloseEditDialog() {
+  editNameDialogVisible.value = false
+  selectedPurpose.value = null
 }
 
 function handleSelectPeriod(filter: InformationPeriodFilter) {
@@ -30,9 +43,16 @@ function handleSelectPeriod(filter: InformationPeriodFilter) {
 </script>
 
 <template>
-    <CreatePurposeDialog
+    <NewPurposesDialog
       v-model="newNameDialogVisible"
-      @close="handleCloseDialog"
+      @close="handleCloseCreateDialog"
+    />
+    <NewPurposesDialog
+      v-if="selectedPurpose"
+      :key="selectedPurpose.id"
+      v-model="editNameDialogVisible"
+      :purpose="selectedPurpose"
+      @close="handleCloseEditDialog"
     />
     <div class="h-full flex flex-col bg-[#ffffff]">
         <InformationHeader
@@ -46,6 +66,7 @@ function handleSelectPeriod(filter: InformationPeriodFilter) {
             <InformationTable
               v-if="data"
               :data="data"
+              @edit="handleOpenEditDialog"
             />
         </div>
     </div>

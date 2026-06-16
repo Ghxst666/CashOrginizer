@@ -3,20 +3,19 @@ import { useDeletePurposes } from '@/entities/purposes';
 import { purposesResponseData, purposesRowData } from '@/entities/purposes/types/purposes.types';
 import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElButton, ElPopconfirm } from 'element-plus';
-import { ref } from 'vue';
-import EditPurposeDialog from './EditPurposeDialog.vue';
 
 const props = defineProps<{
     data: purposesResponseData
 }>()
 
-const selectedPurpose = ref<purposesRowData | null>(null)
-const isOpenEdit = ref(false)
+const emit = defineEmits<{
+    edit: [purpose: purposesRowData]
+}>()
+
 const deletePurpose = useDeletePurposes()
 
 function handleUpdate(row: purposesRowData) {
-    selectedPurpose.value = { ...row }
-    isOpenEdit.value = true
+    emit('edit', { ...row })
 }
 
 function handleDelete(purpose_id: number) {
@@ -27,13 +26,6 @@ function handleDelete(purpose_id: number) {
 
 <template>
     <div class="h-full w-full">
-        <EditPurposeDialog
-            v-if="selectedPurpose && isOpenEdit"
-            :key="selectedPurpose.id"
-            v-model="isOpenEdit"
-            :purpose="selectedPurpose"
-        />
-
         <ElTable 
             height="100%"
             border 
