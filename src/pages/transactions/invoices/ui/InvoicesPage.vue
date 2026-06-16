@@ -4,29 +4,42 @@ import InvoicesHeader from './InvoicesHeader.vue';
 import { computed, ref } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
-import { useAccountsQuery, useDelete, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
+import { useAccountsItemGroup, useAccountsQuery, useDelete, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
 import { accountsCreateRequest, accountsResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
 import { GroupsContainer } from '@/features/groups';
+import { useRouter } from 'vue-router';
+import { TRANSACTION_ROUTE } from '@/shared/router';
+import type { InvoicesAccountsFilter } from '../invoices-filter';
 
 const isOpen = ref<boolean>(false)
+const router = useRouter()
 const selectedId = ref<number | null>(null)
 const updateDialogVisible = ref<boolean>(false)
 const isPropertiesOpen = ref(false)
 const isGroupSettingsOpen = ref(false)
 const selectedAccount = ref<accountsResponse | null>(null)
 const showClosedAccounts = ref(false)
+const selectedAccountsFilter = ref<InvoicesAccountsFilter>({ type: 'all' })
 const accountsStatus = computed(() => !showClosedAccounts.value)
 const tableMode = ref<'default' | 'type' | 'group'>('default')
-const isDefaultSort = computed(() => tableMode.value === 'default')
 const isTypeSort = computed(() => tableMode.value === 'type')
 const isGroupSort = computed(() => tableMode.value === 'group')
+const isAllAccountsFilter = computed(() => selectedAccountsFilter.value.type === 'all' && tableMode.value === 'default')
+const isGroupFilter = computed(() => selectedAccountsFilter.value.type === 'group' && tableMode.value === 'default')
+const selectedGroupId = computed(() => selectedAccountsFilter.value.type === 'group' ? selectedAccountsFilter.value.id : 0)
 
-const { data: accountsData } = useAccountsQuery(accountsStatus, isDefaultSort)
+const { data: accountsData } = useAccountsQuery(accountsStatus, isAllAccountsFilter)
 const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
 const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
+const { data: accountsBySelectedGroupData } = useAccountsItemGroup(selectedGroupId, accountsStatus, isGroupFilter)
 const { mutate: deleteAccount } = useDelete()
+const invoicesTableData = computed(() => {
+  if (selectedAccountsFilter.value.type === 'group') return accountsBySelectedGroupData.value ?? []
+
+  return accountsData.value ?? []
+})
 
 const formData = ref<accountsCreateRequest>({
   title: '',
@@ -67,8 +80,23 @@ function handleShowCloseAccount() {
   showClosedAccounts.value = !showClosedAccounts.value
 }
 
+function handleSelectAccountsFilter(filter: InvoicesAccountsFilter) {
+  selectedAccountsFilter.value = filter
+  tableMode.value = 'default'
+}
+
 function handleSelectAccount(row: accountsResponse) {
   selectedAccount.value = row
+}
+
+function handleOpenPayments(row: accountsResponse) {
+  router.push({
+    name: TRANSACTION_ROUTE.PAYMENTS.NAME,
+    query: {
+      account_id: String(row.id),
+      account_title: row.title,
+    },
+  })
 }
 
 function handleOpenUpdateDialog(row: accountsResponse) {
@@ -110,7 +138,9 @@ function mapperStatus(status: boolean) {
       <InvoicesHeader
         :active-sort="tableMode"
         :show-closed-accounts="showClosedAccounts"
+        :selected-filter="selectedAccountsFilter"
         @new-invoice="handleOpenDialog"
+        @select-filter="handleSelectAccountsFilter"
         @sort-by-type="handleSortByType"
         @sort-default="handleSortDefault"
         @show-properties="handleShowProperties"
@@ -135,10 +165,11 @@ function mapperStatus(status: boolean) {
       />
       <InvoicesTable
         v-else
-        :data="accountsData ?? []"
+        :data="invoicesTableData"
         @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
+        @open-payments="handleOpenPayments"
       />
 
       <InvoicuesEditDialog

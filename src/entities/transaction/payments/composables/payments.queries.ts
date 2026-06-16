@@ -138,10 +138,11 @@ export function usePaymentQuery(payment_id: number): UseQueryReturnType<GetPayme
 export function usePaymentsFilteredByAccountQuery(
     account_id: MaybeRef<number>,
     enabled: MaybeRef<boolean> = true,
+    status: MaybeRef<boolean> = true,
 ): UseQueryReturnType<GetPaymentFilteredByAccountResponse, DefaultError> {
     return useQuery({
-        queryKey: computed(() => ['payments', 'account', unref(account_id)]),
-        queryFn: () => PaymentsService.getPaymentsFilteredByAccount(unref(account_id)).then(res => res.data),
+        queryKey: computed(() => ['payments', 'account', unref(account_id), unref(status)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByAccount(unref(account_id), { status: unref(status) }).then(res => res.data),
         enabled: computed(() => unref(enabled)),
     })
 }
@@ -149,10 +150,11 @@ export function usePaymentsFilteredByAccountQuery(
 export function usePaymentsFilteredByGroupQuery(
     group_id: MaybeRef<number>,
     enabled: MaybeRef<boolean> = true,
+    status: MaybeRef<boolean> = true,
 ): UseQueryReturnType<GetPaymentFilteredByGroupResponse, DefaultError> {
     return useQuery({
-        queryKey: computed(() => ['payments', 'group', unref(group_id)]),
-        queryFn: () => PaymentsService.getPaymentsFilteredByGroup(unref(group_id)).then(res => res.data),
+        queryKey: computed(() => ['payments', 'group', unref(group_id), unref(status)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByGroup(unref(group_id), { status: unref(status) }).then(res => res.data),
         enabled: computed(() => unref(enabled)),
     })
 }

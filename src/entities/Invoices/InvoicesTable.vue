@@ -3,7 +3,7 @@ import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElPopconfirm } from 'element-plus';
 import { accountsResponse } from '../transaction/invoices/types/invoices.types'
 
-const props = defineProps<{
+defineProps<{
     data: accountsResponse[]
 }>()
 
@@ -11,16 +11,21 @@ const emit = defineEmits<{
   edit: [row: accountsResponse]
   delete: [accountId: number]
   select: [row: accountsResponse]
+  openPayments: [row: accountsResponse]
 }>()
 
 function handleRowClick(row: accountsResponse) {
   emit('select', row)
 }
+
+function handleRowDblClick(row: accountsResponse) {
+  emit('openPayments', row)
+}
 </script>
 
 <template>
     <div class="h-full min-h-0 min-w-0 flex overflow-hidden">
-        <ElTable height="100%" border :data="data" @row-click="handleRowClick">
+        <ElTable height="100%" border :data="data" @row-click="handleRowClick" @row-dblclick="handleRowDblClick">
             <ElTableColumn width="50" type="index" label="№"/>
             <ElTableColumn prop="title" label="Название счета" />
             <ElTableColumn width="500" prop="amount" label="Общий баланс" />

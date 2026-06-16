@@ -63,10 +63,15 @@ export function useCreateAccount(): UseMutationReturnType<
   })
 }
 
-export function useAccountsItemGroup(group_id: number, status?: boolean): UseQueryReturnType<accountsGroupItemResponse, DefaultError> {
+export function useAccountsItemGroup(
+    group_id: MaybeRef<number>,
+    status?: MaybeRef<boolean | undefined>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<accountsGroupItemResponse, DefaultError> {
     return useQuery({
-        queryKey: ['get_Accounts_Itemgroup'],
-        queryFn: () => InvoicessService.accountsItemGroup(group_id, status).then(res => res.data)
+        queryKey: computed(() => ['get_Accounts_Itemgroup', unref(group_id), unref(status)]),
+        queryFn: () => InvoicessService.accountsItemGroup(unref(group_id), unref(status)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 

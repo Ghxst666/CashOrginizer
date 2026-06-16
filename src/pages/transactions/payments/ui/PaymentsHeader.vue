@@ -19,7 +19,7 @@ const emits = defineEmits<{
 const dropdownRef = ref<DropdownInstance>()
 const showAccounts = ref(false)
 const showGroups = ref(false)
-const { data: accounts } = useAccountsQuery(false)
+const { data: accounts } = useAccountsQuery(true, showAccounts)
 const { data: groups  } = useGroupsQuery(showGroups)
 
 const selectedFilterTitle = computed(() => {

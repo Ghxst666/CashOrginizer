@@ -2,12 +2,15 @@
 import { ElDialog } from 'element-plus';
 import { accountsCreateRequest } from '@/entities/transaction/invoices/types/invoices.types';
 import { useCreateAccount } from '@/entities/transaction/invoices';
+import { useGroupsQuery } from '@/entities/transaction/groups';
 import { computed, ref, watch } from 'vue';
 const props = defineProps<{
     title: string
 }>()
 
 const { mutate, isPending, isSuccess } = useCreateAccount()
+const isOpen = defineModel<boolean>({ default: false })
+const { data: groups, isLoading: isGroupsLoading } = useGroupsQuery(isOpen)
 
 const newAccountFormData = ref<accountsCreateRequest>({
     title: '',
@@ -21,7 +24,6 @@ const newAccountFormData = ref<accountsCreateRequest>({
 })
 
 const disabled = computed(() => isPending.value)
-const isOpen = defineModel<boolean>({ default: false })
 
 
 function handleCreate() {
@@ -104,9 +106,16 @@ watch(isSuccess, () => {
                 </ElFormItem>
 
                 <ElFormItem label="Группа счетов">
-                    <ElSelect v-model="newAccountFormData.group_id">
-                        <ElOption label="1" value="1" />
-                        <ElOption label="2" value="2" />
+                    <ElSelect
+                        v-model="newAccountFormData.group_id"
+                        :loading="isGroupsLoading"
+                    >
+                        <ElOption
+                            v-for="group in groups"
+                            :key="group.id"
+                            :label="group.title"
+                            :value="group.id"
+                        />
                     </ElSelect>
                 </ElFormItem>
             </ElForm>

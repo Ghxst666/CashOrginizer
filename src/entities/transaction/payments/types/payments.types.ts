@@ -5,6 +5,7 @@ export type PaymentAmount = string | null
 export interface GetPaymentsRequest {
     page?: number
     per_page?: number
+    status?: boolean
 }
 
 export interface CreatePaymentRequest {

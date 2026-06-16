@@ -47,8 +47,11 @@ export const InvoicessService = {
 
     accountsItemGroup(group_id: number, status?: boolean): BaseResponse<accountsGroupItemResponse> {
         return api.makeRequest<accountsGroupItemResponse>({
-            url: `${ENDPOINTS.ACCOUNTS_GROUP_ITEM + '/' + group_id + '/' + status}`,
-            method: REQUEST_METHODS.GET
+            url: `${ENDPOINTS.ACCOUNTS_GROUP_ITEM + '/' + group_id}`,
+            method: REQUEST_METHODS.GET,
+            params: {
+                status,
+            },
         })
     },
 
