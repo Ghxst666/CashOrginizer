@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowRight, Check, Filter, Plus, Setting } from '@element-plus/icons-vue'
+import { ArrowDown, ArrowRight, Check, Plus, Setting } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
 import type { DropdownInstance } from 'element-plus'
@@ -134,12 +134,6 @@ function handleFilterCommand(command: string) {
                     </ElDropdownMenu>
                 </template>
             </ElDropdown>
-
-            <ElButton class="h-[40px]"> 
-                <ElIcon size="18">
-                    <Filter/>
-                </ElIcon>
-            </ElButton>
 
             <ElButton @click="emits('openDialog')" :icon="Plus" class="h-[40px]" type="primary" round>
                 Новый платеж

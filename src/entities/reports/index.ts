@@ -28,4 +28,5 @@ export type {
     ReportsProjectRowData,
     ReportsPurposeRowData,
     ReportsRequest,
+    ReportsSummaryData,
 } from "./types/reports.types";

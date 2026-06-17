@@ -7,10 +7,12 @@ import { computed, unref, type MaybeRef } from "vue";
 
 export function usePurposesQuery(
   params: MaybeRef<Partial<purposesRequest> | undefined> = undefined,
+  enabled: MaybeRef<boolean> = true,
 ): UseQueryReturnType<purposesResponseData, DefaultError> {
     return useQuery({
         queryKey: computed(() => [ENDPOINTS.PURPOSES, unref(params)]),
-        queryFn: () => PurposesService.getAllPurposes(unref(params)).then(res => res.data)
+        queryFn: () => PurposesService.getAllPurposes(unref(params)).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 

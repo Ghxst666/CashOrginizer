@@ -1,10 +1,20 @@
 export interface ReportsRequest {
+    title?: string | null
+    note?: string | null
+    kind?: 'purposes' | 'income_expense' | 'categories' | 'projects' | 'cash_flow_monthly' | null
     period?: string
     date_from?: string
     date_to?: string
     method?: string
-    planned_status?: string
-    accounts_ids?: number[] | string[]
+    text?: string | null
+    amount_from?: string | null
+    amount_to?: string | null
+    number_from?: string | null
+    number_to?: string | null
+    accounts_ids?: number[]
+    purposes_ids?: number[]
+    categories_ids?: number[]
+    projects_ids?: number[]
 }
 
 export interface ReportsPeriodData {
@@ -18,17 +28,19 @@ export interface ReportsSummaryData {
     rows_count: number
     income: string
     income_formatted: string
+    total_income_formatted?: string
     expense: string
     expense_formatted: string
+    total_expense_formatted?: string
     transfer: string
     transfer_formatted: string
     total: string
     total_formatted: string
+    total_amount_formatted?: string
 }
 
 export interface ReportsResponseData<TRow> {
     method: string
-    planned_status: string
     period: ReportsPeriodData
     summary: ReportsSummaryData
     rows: TRow[]
