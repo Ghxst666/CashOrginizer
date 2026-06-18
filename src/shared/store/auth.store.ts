@@ -3,7 +3,7 @@ import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { LoginRequestData } from "../types/api/auth.types"
 import { authService } from "../service/auth.service"
-import { SYSTEM_ROUTE } from "../router"
+import { TRANSACTION_ROUTE } from "../router"
 import axios from "axios"
 import { ApiErrorResponse } from "../types/api/error"
 import { errorMessageHandler } from "../lib/api/errorMessageHandler"
@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('refresh_token', response.data.refresh_token)
       localStorage.setItem('access_token', response.data.access_token)
       setAuthenticated(true)
-      router.push({ name: SYSTEM_ROUTE.BASE.NAME })
+      router.push({ name: TRANSACTION_ROUTE.BASE.NAME })
     }
     catch (error) {
       setAuthenticated(false)

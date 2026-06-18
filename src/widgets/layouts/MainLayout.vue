@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router';
 import MainHeader from './MainHeader/ui/MainHeader.vue';
 import MainMenu from './MainMenu/ui/MainMenu.vue';
+
 </script>
 
 <template>

@@ -56,8 +56,8 @@ const projectOptions = computed(() => flattenOptions(projects.value?.rows ?? [])
 const isPending = computed(() => createPurpose.isPending.value || updatePurpose.isPending.value)
 
 watch(
-  () => isOpen.value,
-  (opened) => {
+  () => [isOpen.value, props.purpose] as const,
+  ([opened]) => {
     if (opened) {
       hydrateForm()
       return
@@ -65,13 +65,7 @@ watch(
 
     resetForm()
   },
-)
-
-watch(
-  () => props.purpose,
-  () => {
-    if (isOpen.value) hydrateForm()
-  },
+  { immediate: true },
 )
 
 function flattenOptions(options: SelectOptionNode[]): SelectOptionNode[] {
@@ -91,6 +85,9 @@ function hydrateForm() {
     resetForm()
     return
   }
+
+  if (props.purpose.category_id !== null) categoriesEnabled.value = true
+  if (props.purpose.project_id !== null) projectsEnabled.value = true
 
   formData.value = {
     title: props.purpose.title,

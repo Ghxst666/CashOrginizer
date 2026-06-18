@@ -1,19 +1,34 @@
 <script setup lang="ts">
 import { useDeleteProject } from '@/entities/project';
-import { projectCreateData, projectsResponseData } from '@/entities/project/types/project.types';
+import { projectCreateData, projectsResponseData, projectsRowData } from '@/entities/project/types/project.types';
+import { filterTreeRowsBySearch } from '@/shared/lib/search';
+import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import EditProject from '@/shared/ui/edit/EditProject.vue';
 import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElButton, ElPopconfirm, ElText } from 'element-plus';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
     data: projectsResponseData
 }>()
 
+const headerSearchStore = useHeaderSearchStore()
 const selectedRow = ref<projectCreateData>()
 const selectedId = ref<number>()
 const isOpenEdit = ref(false)
 const { mutate } = useDeleteProject()
+const tableRows = computed(() => filterTreeRowsBySearch(
+    props.data.rows,
+    headerSearchStore.debouncedQuery,
+    (row: projectsRowData) => [
+        row.title,
+        row.note,
+        row.status,
+        row.money_limit,
+        row.total,
+        row.total_formatted,
+    ],
+))
 
 function getPercentage(total: string | number, limit: string | number) {
     const spent = Number(total)
@@ -50,7 +65,7 @@ function handleUpdate(row: any) {
         <ElTable 
             height="100%"
             border 
-            :data="data.rows"
+            :data="tableRows"
             row-key="id"
             :tree-props="{ children: 'children' }"
         >

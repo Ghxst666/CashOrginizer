@@ -1,20 +1,34 @@
 <script setup lang="ts">
 import { useDeleteCategory } from '@/entities/category';
-import { CategoryResponseData, CreateCategoryData } from '@/entities/category/types/category.types';
+import { CategoryResponseData, CategoryRowData, CreateCategoryData } from '@/entities/category/types/category.types';
+import { filterTreeRowsBySearch } from '@/shared/lib/search';
+import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import EditCategory from '@/shared/ui/edit/EditCategory.vue';
 import { Delete, EditPen } from '@element-plus/icons-vue';
 import { ElButton, ElPopconfirm, ElText } from 'element-plus';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
     data: CategoryResponseData
 }>()
 
+const headerSearchStore = useHeaderSearchStore()
 const selectedRow = ref<CreateCategoryData>()
 const selectedId = ref<number>()
 const isOpenEdit = ref(false)
 
 const { mutate } = useDeleteCategory()
+const tableRows = computed(() => filterTreeRowsBySearch(
+    props.data.rows,
+    headerSearchStore.debouncedQuery,
+    (row: CategoryRowData) => [
+        row.title,
+        row.type,
+        formatedTypeName(row.type),
+        row.total,
+        row.total_formatted,
+    ],
+))
 
 function handleConfirm(id: number) {
   mutate({
@@ -49,7 +63,7 @@ function handleUpdate(row: any) {
         <ElTable 
             height="100%"
             border 
-            :data="data.rows"
+            :data="tableRows"
             row-key="id"
             :tree-props="{ children: 'children' }"
         >

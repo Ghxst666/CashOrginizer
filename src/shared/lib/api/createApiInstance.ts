@@ -1,10 +1,22 @@
-import { ApiInstance } from "@/shared/types/api/createApiInstance"
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, CreateAxiosDefaults, InternalAxiosRequestConfig } from "axios"
+import type { ApiInstance } from "@/shared/types/api/createApiInstance"
+import type {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  CreateAxiosDefaults,
+  InternalAxiosRequestConfig,
+} from "axios"
+import type { BaseResponse } from "@/shared/types/api/request"
+import type { MutexInterface } from "async-mutex"
+import axios from "axios"
 import { clearEmptyProperties } from "../clearEmptyProperties"
-import { BaseResponse } from "@/shared/types/api/request"
-import { Mutex, MutexInterface } from "async-mutex"
-import { authService } from "@/shared/service/auth.service"
+import { Mutex } from "async-mutex"
 import { useAuthStore } from "@/shared/store/auth.store"
+import { AUTH_ROUTE } from "@/shared/router"
+
+type RetriableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean
+}
 
 export function createApiInstance(instanceConfig: CreateAxiosDefaults = {}): ApiInstance {
   const instance: AxiosInstance = axios.create(instanceConfig)
@@ -12,11 +24,10 @@ export function createApiInstance(instanceConfig: CreateAxiosDefaults = {}): Api
 
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      const token = localStorage.getItem('access_token')
+      const accessToken = localStorage.getItem('access_token')
 
-      if (token) {
-        config.headers = config.headers || {}
-        config.headers.Authorization = `Bearer ${token}`
+      if (accessToken) {
+        config.headers.set('Authorization', `Bearer ${accessToken}`)
       }
 
       config.params = clearEmptyProperties(config.params)
@@ -26,47 +37,55 @@ export function createApiInstance(instanceConfig: CreateAxiosDefaults = {}): Api
   )
 
   instance.interceptors.response.use(
-    undefined,
+    response => response,
     async (error: AxiosError) => {
       if (!error.config)
         return Promise.reject(error)
 
-      if (error.response?.status === 401 && !error.config.url?.includes('/auth/refresh') && !window.location.pathname.includes('/auth')) {
+      if (error.response?.status !== 401)
+        return Promise.reject(error)
+
+      const originalRequest = error.config as RetriableRequestConfig
+
+      if (originalRequest._retry)
+        return Promise.reject(error)
+
+      originalRequest._retry = true
+
+      if (mutex.isLocked()) {
+        await mutex.waitForUnlock()
+
+        if (!localStorage.getItem('access_token'))
+          return Promise.reject(error)
+
+        return instance.request(originalRequest)
+      }
+
+      const release: MutexInterface.Releaser = await mutex.acquire()
+
+      try {
         const authStore = useAuthStore()
 
+        await authStore.refresh()
+
         if (!authStore.isAuthenticated) {
-          return Promise.reject(error)
+          throw new Error('Refresh failed')
         }
-        if (mutex.isLocked()) {
-          await mutex.waitForUnlock()
-        }
-        else {
-          const release: MutexInterface.Releaser = await mutex.acquire()
-          try {
-            const refreshToken = localStorage.getItem('refresh_token')
-            if (!refreshToken) {
-              throw new Error('No refresh token')
-            }
-            const res = await authService.refresh(refreshToken)
-            localStorage.setItem('refresh_token', res.data.refresh_token)
-            localStorage.setItem('access_token', res.data.access_token)
-          }
-          catch (refreshError) {
-            const authStore = useAuthStore()
 
-            authStore.setAuthenticated(false)
-            localStorage.clear()
-            window.location.href = '/auth'
-
-            return Promise.reject(refreshError)
-          }
-          finally {
-            release()
-          }
-        }
-        return instance.request(error.config)
+        return await instance.request(originalRequest)
       }
-      return Promise.reject(error)
+      catch (refreshError) {
+        const authStore = useAuthStore()
+
+        authStore.setAuthenticated(false)
+        localStorage.clear()
+        window.location.href = AUTH_ROUTE.LOGIN.PATH
+
+        return Promise.reject(refreshError)
+      }
+      finally {
+        release()
+      }
     },
   )
 

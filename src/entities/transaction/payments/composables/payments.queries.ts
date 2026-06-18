@@ -20,10 +20,13 @@ const DEFAULT_PAYMENTS_PER_PAGE = 30
 
 type UsePaymentsInfiniteScrollQueryReturn = UseInfiniteQueryReturnType<InfiniteData<GetAllPaymentsResponse, number>, DefaultError> & ReturnType<typeof useInfiniteScroll>
 
-export function usePaymentsQuery(): UseQueryReturnType<GetAllPaymentsResponse, DefaultError> {
+export function usePaymentsQuery(
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<GetAllPaymentsResponse, DefaultError> {
     return useQuery({
         queryKey: ['payments'],
         queryFn: () => PaymentsService.getAllPayments().then(res => res.data),
+        enabled: computed(() => unref(enabled)),
     })
 }
 
@@ -113,7 +116,15 @@ export function useExportPaymentsToCsv(): UseMutationReturnType<
     return useMutation({
         mutationKey: ['payments_export_csv'],
         mutationFn: (data: ExportPaymentsToCsvRequest) => PaymentsService.exportPaymentsToCsv(data),
-        onSuccess: () => {
+        onSuccess: (response) => {
+            const url = URL.createObjectURL(response.data as unknown as Blob)
+            const link = document.createElement('a')
+
+            link.href = url
+            link.download = 'payments.qif'
+            link.click()
+            URL.revokeObjectURL(url)
+
             ElMessage.success({
                 message: 'Платежи успешно экспортированы',
                 plain: true,

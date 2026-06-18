@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cash-org-icon-title">
+  <title id="cash-org-icon-title">Cash Org</title>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M346 126C314 97 272 80 226 80C128 80 48 160 48 258C48 356 128 436 226 436C272 436 314 419 346 390" stroke="#009AE0" stroke-width="64"/>
+    <path d="M282 174H372C410 174 440 204 440 242V332C440 370 410 400 372 400H282C244 400 214 370 214 332V242C214 204 244 174 282 174Z" stroke="#7D3FB3" stroke-width="52"/>
+    <path d="M302 318L330 290L362 322" stroke="#009AE0" stroke-width="40"/>
+  </g>
+</svg>

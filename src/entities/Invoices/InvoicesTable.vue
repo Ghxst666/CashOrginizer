@@ -28,7 +28,11 @@ function handleRowDblClick(row: accountsResponse) {
         <ElTable height="100%" border :data="data" @row-click="handleRowClick" @row-dblclick="handleRowDblClick">
             <ElTableColumn width="50" type="index" label="№"/>
             <ElTableColumn prop="title" label="Название счета" />
-            <ElTableColumn width="500" prop="amount" label="Общий баланс" />
+            <ElTableColumn width="500" prop="amount" label="Общий баланс">
+                <template #default="{ row }">
+                    <span>{{ row.amount }}  ₽</span>
+                </template>
+            </ElTableColumn>
             <ElTableColumn
                 width="140px"
                 align="center"

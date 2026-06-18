@@ -14,6 +14,18 @@ export const AUTH_ROUTES: readonly RouteRecordRaw[] = [
         component: () => import('@/pages/auth/AuthPage.vue'),
         beforeEnter: requireGuest,
       },
+      {
+        path: AUTH_ROUTE.REGISTER.PATH,
+        name: AUTH_ROUTE.REGISTER.NAME,
+        component: () => import('@/pages/auth/RegistryPage.vue'),
+        beforeEnter: requireGuest,
+      },
+      {
+        path: AUTH_ROUTE.RESET_PASSWORD.PATH,
+        name: AUTH_ROUTE.RESET_PASSWORD.NAME,
+        component: () => import('@/pages/auth/ResetPasswordPage.vue'),
+        beforeEnter: requireGuest,
+      },
     ],
   },
 ]

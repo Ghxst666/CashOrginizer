@@ -1,4 +1,4 @@
-import { AUTH_ROUTE, SYSTEM_ROUTE } from "@/shared/router"
+import { AUTH_ROUTE, TRANSACTION_ROUTE } from "@/shared/router"
 import { useAuthStore } from "@/shared/store/auth.store"
 import { NavigationGuardReturn, RouteLocationNormalized } from "vue-router"
 
@@ -18,7 +18,7 @@ export async function requireGuest(
   }
 
   if (authStore.isAuthenticated)
-    return { name: SYSTEM_ROUTE.BASE.NAME }
+    return { name: TRANSACTION_ROUTE.BASE.NAME }
 }
 
 export async function requireAuth(

@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { AUTH_ROUTE } from '@/shared/router';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { ElCard, ElForm, ElFormItem, ElInput, FormInstance } from 'element-plus';
 import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const form = reactive({
   login: '',
@@ -17,12 +20,18 @@ function submitForm() {
         return false
     authStore.login(form)
 }
+
+function goToRegister() {
+    router.push({ name: AUTH_ROUTE.REGISTER.NAME })
+}
+
+function goToResetPassword() {
+    router.push({ name: AUTH_ROUTE.RESET_PASSWORD.NAME })
+}
 </script>
 
 <template>
-    <div
-        class="flex w-full h-screen items-center justify-center bg-blue-300"
-    >
+    <div class="flex w-full h-screen items-center justify-center bg-blue-300">
         <ElCard
             body-class="flex flex-col gap-8 p-8"
             class="rounded-2xl"
@@ -40,9 +49,7 @@ function submitForm() {
                     label="Имя пользователя"
                     prop="login"
                 >
-                    <ElInput
-                        v-model="form.login"
-                    />
+                    <ElInput v-model="form.login" />
                 </ElFormItem>
                 <ElFormItem
                     label="Пароль"
@@ -61,6 +68,22 @@ function submitForm() {
             >
                 Вход
             </ElButton>
+            <div class="flex justify-between gap-3">
+                <ElButton
+                    link
+                    type="primary"
+                    @click="goToRegister"
+                >
+                    Регистрация
+                </ElButton>
+                <ElButton
+                    link
+                    type="primary"
+                    @click="goToResetPassword"
+                >
+                    Забыли пароль?
+                </ElButton>
+            </div>
         </ElCard>
     </div>
 </template>

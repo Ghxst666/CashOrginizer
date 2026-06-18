@@ -2,11 +2,14 @@
 import { Delete, EditPen } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import EditPaymentDialog from '@/pages/transactions/payments/ui/EditPaymentDialog.vue'
+import { filterRowsBySearch } from '@/shared/lib/search'
+import { useHeaderSearchStore } from '@/shared/store/header-search.store'
 import {
     useDeletePayment,
     usePaymentsFilteredByAccountQuery,
     usePaymentsFilteredByGroupQuery,
     usePaymentsInfiniteScrollQuery,
+    usePaymentsQuery,
 } from '@/entities/transaction/payments'
 import type { PaymentListItemResponse } from '@/entities/transaction/payments/types/payments.types'
 import type { PaymentsFilter } from '@/pages/transactions/payments/payments-filter'
@@ -15,11 +18,13 @@ const props = defineProps<{
     filter: PaymentsFilter
 }>()
 
+const headerSearchStore = useHeaderSearchStore()
 const isAllPayments = computed(() => props.filter.type === 'all')
 const isAccountFilter = computed(() => props.filter.type === 'account')
 const isGroupFilter = computed(() => props.filter.type === 'group')
 const selectedAccountId = computed(() => props.filter.type === 'account' ? props.filter.id : 0)
 const selectedGroupId = computed(() => props.filter.type === 'group' ? props.filter.id : 0)
+const shouldLoadAllPaymentsForSearch = computed(() => isAllPayments.value && Boolean(headerSearchStore.debouncedQuery))
 
 const {
     data: allPaymentsData,
@@ -30,6 +35,7 @@ const {
 
 const accountPaymentsQuery = usePaymentsFilteredByAccountQuery(selectedAccountId, isAccountFilter)
 const groupPaymentsQuery = usePaymentsFilteredByGroupQuery(selectedGroupId, isGroupFilter)
+const allPaymentsSearchQuery = usePaymentsQuery(shouldLoadAllPaymentsForSearch)
 
 const deletePayment = useDeletePayment()
 const selectedPayment = ref<PaymentListItemResponse | null>(null)
@@ -38,13 +44,29 @@ const isOpenEdit = ref(false)
 const tableData = computed(() => {
     if (props.filter.type === 'account') return accountPaymentsQuery.data.value ?? []
     if (props.filter.type === 'group') return groupPaymentsQuery.data.value ?? []
+    if (headerSearchStore.debouncedQuery && allPaymentsSearchQuery.data.value) return allPaymentsSearchQuery.data.value
 
     return allPaymentsData.value?.pages.flat() ?? []
 })
 
+const filteredTableData = computed(() => filterRowsBySearch(
+    tableData.value,
+    headerSearchStore.debouncedQuery,
+    payment => [
+        payment.payment_date,
+        payment.account_title,
+        payment.to_account_title,
+        payment.project,
+        payment.amount,
+        payment.note,
+        payment.number,
+    ],
+))
+
 const isLoading = computed(() => {
     if (props.filter.type === 'account') return accountPaymentsQuery.isLoading.value
     if (props.filter.type === 'group') return groupPaymentsQuery.isLoading.value
+    if (headerSearchStore.debouncedQuery && allPaymentsSearchQuery.isLoading.value) return true
 
     return isAllPaymentsLoading.value
 })
@@ -72,12 +94,16 @@ function handleDeletePayment(payment_id: number) {
             v-loading="isLoading"
             height="100%"
             border
-            :data="tableData"
+            :data="filteredTableData"
         >
             <ElTableColumn width="100" prop="payment_date" label="Дата" />
             <ElTableColumn prop="account_title" label="Счет" />
             <ElTableColumn prop="project" label="Проект" />
-            <ElTableColumn prop="amount" label="Сумма/Баланс" />
+            <ElTableColumn label="Сумма/Баланс">
+                <template #default="{ row }">
+                    <span>{{ row.amount }}  ₽</span>
+                </template>
+            </ElTableColumn>
             <ElTableColumn
                 width="140px"
                 align="center"

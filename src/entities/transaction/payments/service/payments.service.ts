@@ -57,6 +57,7 @@ export const PaymentsService = {
             url: ENDPOINTS.EXPORT_CSV,
             method: REQUEST_METHODS.POST,
             data,
+            responseType: 'blob',
         })
     },
 

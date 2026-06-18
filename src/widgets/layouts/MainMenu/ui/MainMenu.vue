@@ -4,6 +4,7 @@ import { useEventListener } from '@vueuse/core'
 import { DArrowLeft } from '@element-plus/icons-vue';
 import { menuItems } from '../const/menu.const';
 import { useRouter } from 'vue-router';
+import logoUrl from '@/shared/assets/logo.svg'
 
 const BREAKPOINT_COLLAPSE = 1327
 
@@ -82,12 +83,12 @@ const logoListeners = {
                 class="flex h-[--el-menu-item-height] items-center justify-between px-5 py-4 [&:not(is-collapsed)]:w-[250px]"
                 :class="isCollapsed && 'is-collapsed'"
             >
-                <span
+                <img
                     v-if="!isCollapsed"
-                    class="truncate text-[24px]/[100%] uppercase text-purple"
+                    class="h-9 w-[150px] shrink-0 object-contain object-left"
+                    :src="logoUrl"
+                    alt="Cash Org"
                 >
-                    LOGO
-                </span>
                 <ElButton
                     link
                     type="primary"

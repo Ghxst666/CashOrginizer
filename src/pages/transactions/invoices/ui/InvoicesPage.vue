@@ -5,16 +5,21 @@ import { computed, ref } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
 import { useAccountsItemGroup, useAccountsQuery, useDelete, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
-import { accountsCreateRequest, accountsResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
+import { accountsCreateRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
 import { GroupsContainer } from '@/features/groups';
 import { useRouter } from 'vue-router';
 import { TRANSACTION_ROUTE } from '@/shared/router';
 import type { InvoicesAccountsFilter } from '../invoices-filter';
+import { filterRowsBySearch, matchesSearch } from '@/shared/lib/search';
+import { useHeaderSearchStore } from '@/shared/store/header-search.store';
+
+type AccountsGroup = accountsSortedByTypeResponse | accountsSortedByGroupsResponse
 
 const isOpen = ref<boolean>(false)
 const router = useRouter()
+const headerSearchStore = useHeaderSearchStore()
 const selectedId = ref<number | null>(null)
 const updateDialogVisible = ref<boolean>(false)
 const isPropertiesOpen = ref(false)
@@ -40,6 +45,9 @@ const invoicesTableData = computed(() => {
 
   return accountsData.value ?? []
 })
+const filteredInvoicesTableData = computed(() => filterAccounts(invoicesTableData.value))
+const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsByTypeData.value ?? []))
+const filteredAccountsByGroupsData = computed(() => filterAccountGroups(accountsByGroupsData.value ?? []))
 
 const formData = ref<accountsCreateRequest>({
   title: '',
@@ -125,6 +133,43 @@ function mapperStatus(status: boolean) {
     return "Закрытый"
   }
 }
+function getAccountSearchValues(account: accountsResponse) {
+  return [
+    account.title,
+    account.type,
+    account.amount,
+    account.note,
+    account.start_amount,
+    account.min_amount,
+    account.credit_limit_amount,
+    mapperStatus(account.status),
+  ]
+}
+
+function filterAccounts(accounts: accountsResponse[]) {
+  return filterRowsBySearch(
+    accounts,
+    headerSearchStore.debouncedQuery,
+    getAccountSearchValues,
+  )
+}
+
+function filterAccountGroups(groups: AccountsGroup[]) {
+  if (!headerSearchStore.debouncedQuery)
+    return groups
+
+  return groups.flatMap((group) => {
+    if (matchesSearch(headerSearchStore.debouncedQuery, [group.title])) {
+      return [group]
+    }
+
+    const accounts = filterAccounts(group.accounts)
+
+    return accounts.length > 0
+      ? [{ ...group, accounts }]
+      : []
+  })
+}
 </script>
 
 <template>
@@ -151,21 +196,21 @@ function mapperStatus(status: boolean) {
 
       <InvoicesTypeGroupesTable
         v-if="tableMode === 'type'"
-        :data="accountsByTypeData ?? []"
+        :data="filteredAccountsByTypeData"
         @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
       <InvoicesTypeGroupesTable
         v-else-if="tableMode === 'group'"
-        :data="accountsByGroupsData ?? []"
+        :data="filteredAccountsByGroupsData"
         @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
       <InvoicesTable
         v-else
-        :data="invoicesTableData"
+        :data="filteredInvoicesTableData"
         @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"

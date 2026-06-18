@@ -131,7 +131,7 @@ export interface ImportPaymentsFromCsvResponse {
     data: PaymentsImportResultResponse
 }
 
-export type ExportPaymentsToCsvResponse = unknown
+export type ExportPaymentsToCsvResponse = Blob
 
 export type GetPaymentOneOrNoneResponse = PaymentListItemResponse
 

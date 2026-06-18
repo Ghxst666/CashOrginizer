@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import InformationHeader from './InformationHeader.vue';
 import InformationTable from './InformationTable.vue';
 import { usePurposesQuery } from '@/entities/purposes';
 import type { purposesRowData } from '@/entities/purposes/types/purposes.types';
+import { filterRowsBySearch } from '@/shared/lib/search';
+import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import { NewPurposesDialog } from '@/shared/ui';
 
 interface InformationPeriodFilter {
@@ -15,9 +17,31 @@ interface InformationPeriodFilter {
 const newNameDialogVisible = ref<boolean>(false)
 const editNameDialogVisible = ref<boolean>(false)
 const selectedPurpose = ref<purposesRowData | null>(null)
+const headerSearchStore = useHeaderSearchStore()
 
 const periodFilter = ref<InformationPeriodFilter>({ period: 'all_period' })
 const { data } = usePurposesQuery(periodFilter)
+const filteredData = computed(() => {
+  if (!data.value)
+    return data.value
+
+  return {
+    ...data.value,
+    rows: filterRowsBySearch(
+      data.value.rows,
+      headerSearchStore.debouncedQuery,
+      purpose => [
+        purpose.title,
+        purpose.amount,
+        purpose.note,
+        purpose.category_title,
+        purpose.project_title,
+        purpose.total,
+        purpose.total_formatted,
+      ],
+    ),
+  }
+})
 
 function handleOpenDialog() {
   newNameDialogVisible.value = true
@@ -64,8 +88,8 @@ function handleSelectPeriod(filter: InformationPeriodFilter) {
         />
         <div class="flex-1 min-h-0">
             <InformationTable
-              v-if="data"
-              :data="data"
+              v-if="filteredData"
+              :data="filteredData"
               @edit="handleOpenEditDialog"
             />
         </div>
