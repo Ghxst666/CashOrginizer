@@ -20,6 +20,7 @@ const props = defineProps<{
 const emits = defineEmits<{
     openDialog: []
     selectPeriod: [filter: ProjectPeriodFilter]
+    showProperties: []
 }>()
 
 const periodTitles: Record<ProjectPeriod, string> = {
@@ -70,6 +71,10 @@ function applyCustomDates() {
     })
     customDateDialog.value = false
 }
+
+function handleSettingsCommand(command: string) {
+    if (command === 'show-properties') emits('showProperties')
+}
 </script>
 
 <template>
@@ -105,7 +110,7 @@ function applyCustomDates() {
             </ElButton>
         </div>
 
-        <ElDropdown>
+        <ElDropdown @command="handleSettingsCommand">
             <ElButton class="h-[40px]"> 
                 <ElIcon size="18">
                     <Setting />
@@ -113,7 +118,7 @@ function applyCustomDates() {
             </ElButton>
             <template #dropdown>
                 <ElDropdownMenu>
-                    <ElDropdownItem>Показать свойства</ElDropdownItem>
+                    <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
                     <ElDropdownItem>Отчет по проектам</ElDropdownItem>
                 </ElDropdownMenu>
             </template>

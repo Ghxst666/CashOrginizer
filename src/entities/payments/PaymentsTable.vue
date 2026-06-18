@@ -18,6 +18,10 @@ const props = defineProps<{
     filter: PaymentsFilter
 }>()
 
+const emit = defineEmits<{
+    select: [payment: PaymentListItemResponse]
+}>()
+
 const headerSearchStore = useHeaderSearchStore()
 const isAllPayments = computed(() => props.filter.type === 'all')
 const isAccountFilter = computed(() => props.filter.type === 'account')
@@ -76,6 +80,10 @@ function handleOpenEditPayment(row: PaymentListItemResponse) {
     isOpenEdit.value = true
 }
 
+function handleRowClick(row: PaymentListItemResponse) {
+    emit('select', row)
+}
+
 function handleDeletePayment(payment_id: number) {
     deletePayment.mutate({ payment_id })
 }
@@ -95,6 +103,7 @@ function handleDeletePayment(payment_id: number) {
             height="100%"
             border
             :data="filteredTableData"
+            @row-click="handleRowClick"
         >
             <ElTableColumn width="100" prop="payment_date" label="Дата" />
             <ElTableColumn prop="account_title" label="Счет" />

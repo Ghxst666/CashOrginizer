@@ -12,6 +12,10 @@ const props = defineProps<{
     data: CategoryResponseData
 }>()
 
+const emit = defineEmits<{
+    select: [row: CategoryRowData]
+}>()
+
 const headerSearchStore = useHeaderSearchStore()
 const selectedRow = ref<CreateCategoryData>()
 const selectedId = ref<number>()
@@ -48,6 +52,10 @@ function handleUpdate(row: any) {
     selectedId.value = row.id
     isOpenEdit.value = true
 }
+
+function handleRowClick(row: CategoryRowData) {
+    emit('select', row)
+}
 </script>
 
 <template>
@@ -66,6 +74,7 @@ function handleUpdate(row: any) {
             :data="tableRows"
             row-key="id"
             :tree-props="{ children: 'children' }"
+            @row-click="handleRowClick"
         >
             <ElTableColumn prop="title" label="Название категории" />
             <ElTableColumn width="300" prop="type" label="Тип">

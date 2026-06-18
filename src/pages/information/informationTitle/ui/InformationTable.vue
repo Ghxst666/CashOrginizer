@@ -10,12 +10,17 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     edit: [purpose: purposesRowData]
+    select: [purpose: purposesRowData]
 }>()
 
 const deletePurpose = useDeletePurposes()
 
 function handleUpdate(row: purposesRowData) {
     emit('edit', { ...row })
+}
+
+function handleRowClick(row: purposesRowData) {
+    emit('select', row)
 }
 
 function handleDelete(purpose_id: number) {
@@ -30,6 +35,7 @@ function handleDelete(purpose_id: number) {
             height="100%"
             border 
             :data="props.data.rows"
+            @row-click="handleRowClick"
         >
             <ElTableColumn prop="title" label="Название" />
             <ElTableColumn width="400" prop="category_title" label="Категория" />

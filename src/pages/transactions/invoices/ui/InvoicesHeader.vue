@@ -188,7 +188,6 @@ function isClosedAccountsActive() {
                             </span>
                         </ElDropdownItem>
                         <ElDropdownItem command="show-group-settings">Управление группами счетов и сортировка</ElDropdownItem>
-                        <ElDropdownItem command="reports">Отчеты</ElDropdownItem>
                     </ElDropdownMenu>
                 </template>
             </ElDropdown>

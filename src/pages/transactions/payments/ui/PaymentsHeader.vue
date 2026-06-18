@@ -14,6 +14,7 @@ const props = defineProps<{
 const emits = defineEmits<{
     openDialog: []
     selectFilter: [filter: PaymentsFilter]
+    showProperties: []
 }>()
 
 const dropdownRef = ref<DropdownInstance>()
@@ -69,6 +70,10 @@ function handleFilterCommand(command: string) {
     }
 
     dropdownRef.value?.handleClose()
+}
+
+function handleSettingsCommand(command: string) {
+    if (command === 'show-properties') emits('showProperties')
 }
 </script>
 
@@ -141,7 +146,7 @@ function handleFilterCommand(command: string) {
         </div>
 
         <div class="flex gap-2">
-            <ElDropdown>
+            <ElDropdown @command="handleSettingsCommand">
                 <ElButton class="h-[40px]"> 
                     <ElIcon size="18">
                         <Setting/>
@@ -149,6 +154,7 @@ function handleFilterCommand(command: string) {
                 </ElButton>
                 <template #dropdown>
                     <ElDropdownMenu>
+                        <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
                         <ElDropdownItem>Отчет по платежам</ElDropdownItem>
                     </ElDropdownMenu>
                 </template>

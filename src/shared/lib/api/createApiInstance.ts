@@ -98,7 +98,12 @@ export function createApiInstance(instanceConfig: CreateAxiosDefaults = {}): Api
     return instance.request(config)
   }
 
+  function setBaseUrl(baseURL: string): void {
+    instance.defaults.baseURL = baseURL
+  }
+
   return {
     makeRequest,
+    setBaseUrl,
   }
 }

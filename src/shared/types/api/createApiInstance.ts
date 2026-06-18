@@ -7,4 +7,5 @@ export type MakeRequest = <ResponseData = any, RequestData = any>(
 
 export interface ApiInstance {
   makeRequest: MakeRequest
+  setBaseUrl: (baseURL: string) => void
 }

@@ -7,13 +7,20 @@ import './styles/tailwind.css'
 import { router } from "./providers/router";
 import { VueQueryPlugin } from "@tanstack/vue-query";
 import { createPinia } from "pinia";
+import { configureApiBaseUrl } from "@/shared/lib/api/configureApiBaseUrl";
 const pinia = createPinia()
 
 
-const app = createApp(App)
+async function bootstrap() {
+  await configureApiBaseUrl()
 
-app.use(router)
-app.use(ElementPlus)
-app.use(pinia)
-app.use(VueQueryPlugin)
-app.mount('#app')
+  const app = createApp(App)
+
+  app.use(router)
+  app.use(ElementPlus)
+  app.use(pinia)
+  app.use(VueQueryPlugin)
+  app.mount('#app')
+}
+
+void bootstrap()

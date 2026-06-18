@@ -5,6 +5,27 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "binaries/cashorg-backend",
+          "sidecar": true,
+          "args": [
+            "--host",
+            "127.0.0.1",
+            "--port",
+            {
+              "validator": "\\d+"
+            },
+            "--data-dir",
+            {
+              "validator": ".+"
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

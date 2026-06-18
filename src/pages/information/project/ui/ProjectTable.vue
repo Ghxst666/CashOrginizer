@@ -12,6 +12,10 @@ const props = defineProps<{
     data: projectsResponseData
 }>()
 
+const emit = defineEmits<{
+    select: [row: projectsRowData]
+}>()
+
 const headerSearchStore = useHeaderSearchStore()
 const selectedRow = ref<projectCreateData>()
 const selectedId = ref<number>()
@@ -50,6 +54,10 @@ function handleUpdate(row: any) {
     selectedId.value = row.id
     isOpenEdit.value = true
 }
+
+function handleRowClick(row: projectsRowData) {
+    emit('select', row)
+}
 </script>
 
 <template>
@@ -68,6 +76,7 @@ function handleUpdate(row: any) {
             :data="tableRows"
             row-key="id"
             :tree-props="{ children: 'children' }"
+            @row-click="handleRowClick"
         >
             <ElTableColumn prop="title" label="Название проекта">
                 <template #default="{ row }">
