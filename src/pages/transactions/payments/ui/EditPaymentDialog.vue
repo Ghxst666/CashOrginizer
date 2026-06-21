@@ -14,6 +14,15 @@ import type { CreatePaymentSplitRequest, EditPaymentSplitRequest } from '@/entit
 import { useAccountsQuery } from '@/entities/transaction/invoices'
 import { useCategoriesQuery } from '@/entities/category'
 import { useProjectsQuery } from '@/entities/project'
+import {
+  amountToNumber,
+  flattenCategoryOptions,
+  formatAmountForPayload,
+  formatAmountForType,
+  paymentTypeOptions,
+  type PaymentCategoryOptionNode,
+  type PaymentDialogType,
+} from '../lib/payment-dialog-helpers'
 
 interface SelectOptionNode {
   id: number
@@ -24,6 +33,7 @@ interface SelectOptionNode {
 interface PaymentEditFormData {
   check: number | null
   date: string
+  type: PaymentDialogType
   sum: string
   note: string
   category: number | null
@@ -53,6 +63,7 @@ const deletePaymentSplit = useDeletePaymentSplit()
 const formData = ref<PaymentEditFormData>({
   check: null,
   date: '',
+  type: 'expenses',
   sum: '',
   note: '',
   category: null,
@@ -68,9 +79,26 @@ const projectsEnabled = ref(false)
 const { data: categories } = useCategoriesQuery(undefined, categoriesEnabled)
 const { data: projects } = useProjectsQuery(undefined, projectsEnabled)
 const accountOptions = computed(() => accounts.value ?? [])
-const categoryOptions = computed(() => flattenOptions(categories.value?.rows ?? []))
+const categoryOptions = computed(() => (
+  flattenCategoryOptions((categories.value?.rows ?? []) as PaymentCategoryOptionNode[])
+    .filter(category => category.type === formData.value.type)
+))
 const projectOptions = computed(() => flattenOptions(projects.value?.rows ?? []))
 const hasSplitData = computed(() => splits.value.some(split => Boolean(split.id) || isSplitFilled(split)))
+const firstSplitProject = computed(() => splits.value[0]?.project ?? null)
+const splitTotalAmount = computed(() => (
+  splits.value.reduce((total, split) => total + amountToNumber(split.sum, formData.value.type), 0)
+))
+const splitTotalAmountText = computed(() => String(splitTotalAmount.value))
+const paymentAmountValue = computed(() => (
+  hasSplitData.value ? splitTotalAmountText.value : formData.value.sum
+))
+const paymentNoteValue = computed(() => (
+  hasSplitData.value ? 'Смотрите во вкладке Сплиты' : formData.value.note
+))
+const paymentProjectValue = computed(() => (
+  hasSplitData.value ? firstSplitProject.value : formData.value.project
+))
 
 const isPending = computed(() => (
   editPayment.isPending.value
@@ -79,12 +107,23 @@ const isPending = computed(() => (
   || deletePaymentSplit.isPending.value
 ))
 
-watch(hasSplitData, (hasSplits) => {
-  if (!hasSplits) return
+watch(
+  () => formData.value.type,
+  (type) => {
+    formData.value.sum = formatAmountForType(formData.value.sum, type)
+    splits.value.forEach((split) => {
+      split.sum = formatAmountForType(split.sum, type)
+    })
+    ensureSelectedCategoryMatchesType()
+  },
+)
 
-  formData.value.sum = ''
-  formData.value.note = ''
-  formData.value.project = null
+watch(categoryOptions, () => {
+  ensureSelectedCategoryMatchesType()
+})
+
+watch(firstSplitProject, (projectId) => {
+  if (projectId !== null) projectsEnabled.value = true
 })
 
 watch(
@@ -93,7 +132,8 @@ watch(
     formData.value = {
       check: payment.account_id,
       date: payment.payment_date || '',
-      sum: payment.amount || '',
+      type: payment.type === 'profits' ? 'profits' : 'expenses',
+      sum: formatAmountForType(payment.amount || '', payment.type === 'profits' ? 'profits' : 'expenses'),
       note: payment.note || '',
       category: payment.category_id || null,
       project: payment.project_id || null,
@@ -111,10 +151,10 @@ watch(
       ? paymentSplits.map(split => ({
         id: split.id,
         note: split.note || '',
-        sum: split.amount || '',
+        sum: formatAmountForType(split.amount || '', formData.value.type),
         project: split.project_id || null,
       }))
-      : [emptySplitForm()]
+      : []
   },
   { immediate: true },
 )
@@ -142,14 +182,25 @@ function handleProjectVisibleChange(visible: boolean) {
   if (visible) projectsEnabled.value = true
 }
 
+function ensureSelectedCategoryMatchesType() {
+  if (!formData.value.category || !categoryOptions.value.length) return
+
+  if (!categoryOptions.value.some(category => category.id === formData.value.category)) {
+    formData.value.category = null
+  }
+}
+
 function buildPaymentPayload(): EditPaymentRequest {
   return {
     account_id: Number(formData.value.check),
     payment_date: formData.value.date || null,
-    amount: hasSplitData.value ? null : formData.value.sum || null,
-    note: hasSplitData.value ? null : formData.value.note || null,
+    amount: hasSplitData.value
+      ? formatAmountForPayload(splitTotalAmountText.value, formData.value.type)
+      : formatAmountForPayload(formData.value.sum, formData.value.type),
+    type: formData.value.type,
+    note: hasSplitData.value ? 'split' : formData.value.note || null,
     category_id: formData.value.category,
-    project_id: hasSplitData.value ? null : formData.value.project,
+    project_id: hasSplitData.value ? firstSplitProject.value : formData.value.project,
     number: formData.value.number || null,
   }
 }
@@ -157,7 +208,7 @@ function buildPaymentPayload(): EditPaymentRequest {
 function buildCreateSplitPayload(split: SplitEditFormData): CreatePaymentSplitRequest {
   return {
     note: split.note || null,
-    amount: split.sum.replace(',', '.') || null,
+    amount: formatAmountForPayload(split.sum, formData.value.type),
     project_id: split.project,
   }
 }
@@ -186,10 +237,22 @@ function removeSplit(index: number) {
   }
 
   splits.value.splice(index, 1)
+}
 
-  if (!splits.value.length) {
-    splits.value.push(emptySplitForm())
-  }
+function handlePaymentAmountInput(value: string) {
+  formData.value.sum = formatAmountForType(value, formData.value.type)
+}
+
+function handlePaymentNoteInput(value: string) {
+  formData.value.note = value
+}
+
+function handlePaymentProjectInput(value: number | null) {
+  formData.value.project = value
+}
+
+function handleSplitAmountInput(split: SplitEditFormData, value: string) {
+  split.sum = formatAmountForType(value, formData.value.type)
 }
 
 async function savePaymentFields() {
@@ -284,19 +347,33 @@ async function handleEditPayment() {
             />
           </ElFormItem>
 
+          <ElFormItem label="Тип">
+            <ElRadioGroup v-model="formData.type">
+              <ElRadioButton
+                v-for="option in paymentTypeOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </ElRadioButton>
+            </ElRadioGroup>
+          </ElFormItem>
+
           <ElFormItem label="Сумма">
             <ElInput
-              v-model="formData.sum"
+              :model-value="paymentAmountValue"
               :disabled="hasSplitData"
               :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
+              @input="handlePaymentAmountInput"
             />
           </ElFormItem>
 
           <ElFormItem label="Примечание">
             <ElInput
-              v-model="formData.note"
+              :model-value="paymentNoteValue"
               :disabled="hasSplitData"
               :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
+              @input="handlePaymentNoteInput"
             />
           </ElFormItem>
 
@@ -318,12 +395,13 @@ async function handleEditPayment() {
 
           <ElFormItem label="Проект">
             <ElSelect
-              v-model="formData.project"
+              :model-value="paymentProjectValue"
               clearable
               filterable
               :disabled="hasSplitData"
               :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
               @visible-change="handleProjectVisibleChange"
+              @update:model-value="handlePaymentProjectInput"
             >
               <ElOption
                 v-for="project in projectOptions"
@@ -343,7 +421,10 @@ async function handleEditPayment() {
 
     <template #step-2>
       <ElScrollbar height="400px">
-        <div class="flex flex-col gap-4">
+        <div
+          v-if="splits.length"
+          class="flex flex-col gap-4"
+        >
           <ElForm
             v-for="(split, index) in splits"
             :key="split.id || index"
@@ -371,7 +452,10 @@ async function handleEditPayment() {
             </ElFormItem>
 
             <ElFormItem label="Сумма">
-              <ElInput v-model="split.sum" />
+              <ElInput
+                :model-value="split.sum"
+                @input="value => handleSplitAmountInput(split, value)"
+              />
             </ElFormItem>
 
             <ElFormItem label="Проект">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useDeleteCategory } from '@/entities/category';
 import { CategoryResponseData, CategoryRowData, CreateCategoryData } from '@/entities/category/types/category.types';
+import type { PaymentType } from '@/entities/transaction/payments/types/payments.types';
 import { filterTreeRowsBySearch } from '@/shared/lib/search';
 import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import EditCategory from '@/shared/ui/edit/EditCategory.vue';
@@ -28,7 +29,7 @@ const tableRows = computed(() => filterTreeRowsBySearch(
     (row: CategoryRowData) => [
         row.title,
         row.type,
-        formatedTypeName(row.type),
+        paymentTypeTitle(row.type as PaymentType),
         row.total,
         row.total_formatted,
     ],
@@ -41,10 +42,19 @@ function handleConfirm(id: number) {
 }
 
 
-function formatedTypeName(name: string) {
-    return name === 'expenses'
-        ? 'Расходные'
-        : 'Приходные'
+function paymentTypeTitle(type?: PaymentType | null) {
+    if (type === 'expenses') return 'Расход'
+    if (type === 'profits') return 'Доход'
+    if (type === 'transfers') return 'Перевод'
+
+    return 'Не указан'
+}
+
+function paymentTypeTextType(type?: PaymentType | null) {
+    if (type === 'expenses') return 'danger'
+    if (type === 'transfers') return 'info'
+
+    return 'success'
 }
 
 function handleUpdate(row: any) {
@@ -79,8 +89,8 @@ function handleRowClick(row: CategoryRowData) {
             <ElTableColumn prop="title" label="Название категории" />
             <ElTableColumn width="300" prop="type" label="Тип">
                 <template #default="{ row }">
-                    <ElText :type="row.type === 'expenses' ? 'danger' : 'success'">
-                        {{ formatedTypeName(row.type) }}
+                    <ElText :type="paymentTypeTextType(row.type as PaymentType)">
+                        {{ paymentTypeTitle(row.type as PaymentType) }}
                     </ElText>
                 </template>
             </ElTableColumn>

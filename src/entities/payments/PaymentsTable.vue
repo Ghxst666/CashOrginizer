@@ -11,7 +11,7 @@ import {
     usePaymentsInfiniteScrollQuery,
     usePaymentsQuery,
 } from '@/entities/transaction/payments'
-import type { PaymentListItemResponse } from '@/entities/transaction/payments/types/payments.types'
+import type { PaymentListItemResponse, PaymentType } from '@/entities/transaction/payments/types/payments.types'
 import type { PaymentsFilter } from '@/pages/transactions/payments/payments-filter'
 
 const props = defineProps<{
@@ -60,7 +60,8 @@ const filteredTableData = computed(() => filterRowsBySearch(
         payment.payment_date,
         payment.account_title,
         payment.to_account_title,
-        payment.project,
+        payment.type,
+        formatedTypeName(payment.type),
         payment.amount,
         payment.note,
         payment.number,
@@ -87,6 +88,21 @@ function handleRowClick(row: PaymentListItemResponse) {
 function handleDeletePayment(payment_id: number) {
     deletePayment.mutate({ payment_id })
 }
+
+function formatedTypeName(type?: PaymentType | null) {
+    if (type === 'expenses') return 'Расход'
+    if (type === 'profits') return 'Приход'
+    if (type === 'transfers') return 'Перевод'
+
+    return 'Не указан'
+}
+
+function paymentTypeTextType(type?: PaymentType | null) {
+    if (type === 'expenses') return 'danger'
+    if (type === 'transfers') return 'info'
+
+    return 'success'
+}
 </script>
 
 <template>
@@ -107,7 +123,13 @@ function handleDeletePayment(payment_id: number) {
         >
             <ElTableColumn width="100" prop="payment_date" label="Дата" />
             <ElTableColumn prop="account_title" label="Счет" />
-            <ElTableColumn prop="project" label="Проект" />
+            <ElTableColumn prop="type" label="Тип">
+                <template #default="{ row }">
+                    <ElText :type="paymentTypeTextType(row.type)">
+                        {{ formatedTypeName(row.type) }}
+                    </ElText>
+                </template>
+            </ElTableColumn>
             <ElTableColumn label="Сумма/Баланс">
                 <template #default="{ row }">
                     <span>{{ row.amount }}  ₽</span>

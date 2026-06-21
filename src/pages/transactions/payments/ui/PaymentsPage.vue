@@ -175,9 +175,6 @@ watch(
           <ElFormItem label="Баланс">
             <span class="text-[#374151] font-semibold">{{ paymentBalanceTitle(selectedPayment) }}</span>
           </ElFormItem>
-          <ElFormItem label="Проект">
-            <span class="text-[#374151] font-semibold">{{ selectedPayment.project || 'Проект не задан' }}</span>
-          </ElFormItem>
           <ElFormItem label="Тип">
             <span class="text-[#6b7280]">{{ paymentTypeTitle(selectedPayment.type) }}</span>
           </ElFormItem>

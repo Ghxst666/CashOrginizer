@@ -6,7 +6,7 @@ export interface accountsResponse {
     credit_limit_amount: string,
     note: string,
     status: boolean,
-    group_id: number,
+    group_id: number | null,
     id: number,
     amount: string
 }
@@ -19,7 +19,7 @@ export interface accountsCreateRequest {
     credit_limit_amount: number,
     note: string,
     status: boolean,
-    group_id: number,
+    group_id: number | null,
 }
 
 export interface accountsCreateResponse {

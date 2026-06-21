@@ -12,7 +12,12 @@ const { mutate, isPending, isSuccess } = useCreateAccount()
 const isOpen = defineModel<boolean>({ default: false })
 const { data: groups, isLoading: isGroupsLoading } = useGroupsQuery(isOpen)
 
-const newAccountFormData = ref<accountsCreateRequest>({
+const NO_GROUP = 'no-group'
+type NewAccountFormData = Omit<accountsCreateRequest, 'group_id'> & {
+    group_id: number | typeof NO_GROUP
+}
+
+const newAccountFormData = ref<NewAccountFormData>({
     title: '',
     type: '',
     start_amount: 0,
@@ -20,14 +25,19 @@ const newAccountFormData = ref<accountsCreateRequest>({
     credit_limit_amount: 0,
     note: '',
     status: true,
-    group_id: 0,
+    group_id: NO_GROUP,
 })
 
 const disabled = computed(() => isPending.value)
 
 
 function handleCreate() {
-    mutate(newAccountFormData.value)
+    mutate({
+        ...newAccountFormData.value,
+        group_id: newAccountFormData.value.group_id === NO_GROUP
+            ? null
+            : newAccountFormData.value.group_id,
+    })
 }
 
 function handleCloseDialog() {
@@ -40,7 +50,7 @@ function handleCloseDialog() {
     credit_limit_amount: 0,
     note: '',
     status: true,
-    group_id: 0,
+    group_id: NO_GROUP,
   }
 }
 
@@ -54,7 +64,7 @@ watch(isSuccess, () => {
     credit_limit_amount: 0,
     note: '',
     status: true,
-    group_id: 0,
+    group_id: NO_GROUP,
   }
 })
 </script>
@@ -100,8 +110,8 @@ watch(isSuccess, () => {
 
                 <ElFormItem label="Статус">
                     <ElSelect v-model="newAccountFormData.status">
-                        <ElOption label="Открытый" value="true" />
-                        <ElOption label="Закрытый" value="false" />
+                        <ElOption label="Открытый" :value="true" />
+                        <ElOption label="Закрытый" :value="false" />
                     </ElSelect>
                 </ElFormItem>
 
@@ -110,6 +120,7 @@ watch(isSuccess, () => {
                         v-model="newAccountFormData.group_id"
                         :loading="isGroupsLoading"
                     >
+                        <ElOption label="Без группы" :value="NO_GROUP" />
                         <ElOption
                             v-for="group in groups"
                             :key="group.id"

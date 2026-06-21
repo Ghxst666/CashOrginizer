@@ -119,7 +119,6 @@ function handleSettingsCommand(command: string) {
             <template #dropdown>
                 <ElDropdownMenu>
                     <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
-                    <ElDropdownItem>Отчет по названию</ElDropdownItem>
                 </ElDropdownMenu>
             </template>
         </ElDropdown>
