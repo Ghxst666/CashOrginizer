@@ -27,6 +27,10 @@ export interface accountsCreateResponse {
     data: accountsData
 }
 
+export interface accountsReorderRequest {
+    account_ids: number[]
+}
+
 export interface accountsData {
     title: string,
     user_id: number,

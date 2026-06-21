@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import InvoicesTable from '@/entities/Invoices/InvoicesTable.vue';
 import InvoicesHeader from './InvoicesHeader.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
-import { useAccountsItemGroup, useAccountsQuery, useDelete, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
+import { useAccountsItemGroup, useAccountsQuery, useAccountsReorder, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
 import { accountsCreateRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
@@ -39,13 +39,15 @@ const { data: accountsData } = useAccountsQuery(accountsStatus, isAllAccountsFil
 const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
 const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
 const { data: accountsBySelectedGroupData } = useAccountsItemGroup(selectedGroupId, accountsStatus, isGroupFilter)
-const { mutate: deleteAccount } = useDelete()
+const { mutate: reorderAccounts } = useAccountsReorder()
+const accountOrder = ref<number[]>([])
 const invoicesTableData = computed(() => {
   if (selectedAccountsFilter.value.type === 'group') return accountsBySelectedGroupData.value ?? []
 
   return accountsData.value ?? []
 })
-const filteredInvoicesTableData = computed(() => filterAccounts(invoicesTableData.value))
+const orderedInvoicesTableData = computed(() => sortAccountsByOrder(invoicesTableData.value))
+const filteredInvoicesTableData = computed(() => filterAccounts(orderedInvoicesTableData.value))
 const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsByTypeData.value ?? []))
 const filteredAccountsByGroupsData = computed(() => filterAccountGroups(accountsByGroupsData.value ?? []))
 
@@ -122,8 +124,35 @@ function handleOpenUpdateDialog(row: accountsResponse) {
   updateDialogVisible.value = true
 }
 
-function handleDelete(accountId: number) {
-  deleteAccount({ account_id: accountId })
+function sortAccountsByOrder(accounts: accountsResponse[]) {
+  const positions = new Map(accountOrder.value.map((accountId, index) => [accountId, index]))
+
+  return [...accounts].sort((first, second) => {
+    const firstPosition = positions.get(first.id) ?? Number.MAX_SAFE_INTEGER
+    const secondPosition = positions.get(second.id) ?? Number.MAX_SAFE_INTEGER
+
+    return firstPosition - secondPosition
+  })
+}
+
+function handleReorder(nextOrder: number[]) {
+  const previousOrder = [...accountOrder.value]
+  const currentOrder = sortAccountsByOrder(invoicesTableData.value).map(account => account.id)
+  const hasSameAccounts = nextOrder.length === currentOrder.length
+    && nextOrder.every(accountId => currentOrder.includes(accountId))
+
+  if (!hasSameAccounts || nextOrder.every((accountId, index) => accountId === currentOrder[index])) return
+
+  accountOrder.value = [...nextOrder]
+
+  reorderAccounts(
+    { account_ids: accountOrder.value },
+    {
+      onError: () => {
+        accountOrder.value = previousOrder
+      },
+    },
+  )
 }
 
 function mapperStatus(status: boolean) {
@@ -153,6 +182,22 @@ function filterAccounts(accounts: accountsResponse[]) {
     getAccountSearchValues,
   )
 }
+
+watch(
+  invoicesTableData,
+  (accounts) => {
+    const accountIds = accounts.map(account => account.id)
+    const accountIdsSet = new Set(accountIds)
+    const existingAccountIds = accountOrder.value.filter(accountId => accountIdsSet.has(accountId))
+    const existingAccountIdsSet = new Set(existingAccountIds)
+
+    accountOrder.value = [
+      ...existingAccountIds,
+      ...accountIds.filter(accountId => !existingAccountIdsSet.has(accountId)),
+    ]
+  },
+  { immediate: true },
+)
 
 function filterAccountGroups(groups: AccountsGroup[]) {
   if (!headerSearchStore.debouncedQuery)
@@ -197,24 +242,23 @@ function filterAccountGroups(groups: AccountsGroup[]) {
       <InvoicesTypeGroupesTable
         v-if="tableMode === 'type'"
         :data="filteredAccountsByTypeData"
-        @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
       <InvoicesTypeGroupesTable
         v-else-if="tableMode === 'group'"
         :data="filteredAccountsByGroupsData"
-        @delete="handleDelete"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
       <InvoicesTable
         v-else
         :data="filteredInvoicesTableData"
-        @delete="handleDelete"
+        :reorderable="true"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
         @open-payments="handleOpenPayments"
+        @reorder="handleReorder"
       />
 
       <InvoicuesEditDialog

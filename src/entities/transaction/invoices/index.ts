@@ -8,6 +8,7 @@ import {
     useAccountItemWithGroup,
     useAccountsPartialEdit,
     useAccountsEdit,
+    useAccountsReorder,
     useDeleteWithGroup,
     useDelete,
 } from "./composables/invoices.queries";
@@ -22,6 +23,7 @@ export {
     useAccountItemWithGroup,
     useAccountsPartialEdit,
     useAccountsEdit,
+    useAccountsReorder,
     useDeleteWithGroup,
     useDelete
 }

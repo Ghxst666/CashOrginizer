@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAccountsEdit } from '@/entities/transaction/invoices';
+import { useAccountsEdit, useDelete } from '@/entities/transaction/invoices';
 import { accountsCreateRequest } from '@/entities/transaction/invoices/types/invoices.types';
 import { ElDialog } from 'element-plus';
 import { computed, ref, watch } from 'vue';
@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>({ default: false })
 const { mutate, isPending } = useAccountsEdit()
+const { mutate: deleteAccount, isPending: isDeleting } = useDelete()
 
 const formData  = ref<accountsCreateRequest>({
   title: '',
@@ -52,6 +53,19 @@ function handleUpdate() {
         isOpen.value = false
       },
     }
+  )
+}
+
+function handleDelete() {
+  if (!props.id) return
+
+  deleteAccount(
+    { account_id: props.id },
+    {
+      onSuccess: () => {
+        isOpen.value = false
+      },
+    },
   )
 }
 </script>
@@ -113,6 +127,16 @@ function handleUpdate() {
 
     <template #footer>
       <div class="flex justify-between">
+        <ElPopconfirm
+          width="220"
+          :icon="undefined"
+          title="Вы хотите удалить счёт?"
+          @confirm="handleDelete"
+        >
+          <template #reference>
+            <ElButton type="danger" :loading="isDeleting" :disabled="isPending">Удалить</ElButton>
+          </template>
+        </ElPopconfirm>
         <ElButton @click="isOpen = false">Отмена</ElButton>
         <ElButton type="primary" @click="handleUpdate" :disabled="disabled">Готово</ElButton>
       </div>

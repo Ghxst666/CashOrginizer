@@ -1,5 +1,5 @@
 import { BaseResponse } from "@/shared/types/api/request";
-import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsCreateResponse, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
+import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsCreateResponse, accountsGroupItemResponse, accountsReorderRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { api } from "@/shared/service/api";
 import { ENDPOINTS } from "../config/invoices.config";
 import { REQUEST_METHODS } from "@/shared/config/api/request.config";
@@ -42,6 +42,14 @@ export const InvoicessService = {
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.POST,
             data
+        })
+    },
+
+    reorderAccounts(data: accountsReorderRequest): BaseResponse<void> {
+        return api.makeRequest<void>({
+            url: ENDPOINTS.REORDER,
+            method: REQUEST_METHODS.PARTIAL_UPDATE,
+            data,
         })
     },
 

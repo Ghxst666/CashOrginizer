@@ -1,6 +1,6 @@
 import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryClient, UseQueryReturnType } from "@tanstack/vue-query";
 import { InvoicessService } from "../service/invoices.service";
-import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
+import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsReorderRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { ElMessage } from "element-plus";
 import { computed, unref, type MaybeRef } from "vue";
 
@@ -135,6 +135,28 @@ export function useAccountsEdit(): UseMutationReturnType<
     onError: () => {
       ElMessage.error({
         message: 'Не удалось отредактировать Счет. Попробуйте ещё раз.',
+        plain: true,
+      })
+    },
+  })
+}
+
+export function useAccountsReorder(): UseMutationReturnType<
+  any,
+  Error,
+  accountsReorderRequest,
+  unknown
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationKey: ['accounts_reorder'],
+    mutationFn: (data: accountsReorderRequest) => InvoicessService.reorderAccounts(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['Accounts'] })
+    },
+    onError: () => {
+      ElMessage.error({
+        message: 'Не удалось сохранить порядок счетов. Попробуйте ещё раз.',
         plain: true,
       })
     },
