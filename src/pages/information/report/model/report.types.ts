@@ -18,7 +18,8 @@ export interface ReportDefinition {
 
 export interface ReportFilters {
     period: string
-    method: string
+    title: string
+    note: string
     accounts_ids: number[]
     purposes_ids: number[]
     categories_ids: number[]
@@ -26,13 +27,12 @@ export interface ReportFilters {
     text: string
     amount_from: string | null
     amount_to: string | null
-    number_from: string | null
-    number_to: string | null
 }
 
 export interface SelectOption {
     label: string
     value: number | string
+    type?: string
 }
 
 export interface TableRow {

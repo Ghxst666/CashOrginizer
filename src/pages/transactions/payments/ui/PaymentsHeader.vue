@@ -1,163 +1,89 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowRight, Check, Plus, Setting } from '@element-plus/icons-vue'
+import { ArrowDown, Plus, Setting } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
-import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
 import type { DropdownInstance } from 'element-plus'
 import { useAccountsQuery } from '@/entities/transaction/invoices'
 import { useGroupsQuery } from '@/entities/transaction/groups'
 import type { PaymentsFilter } from '../payments-filter'
 
-const props = defineProps<{
-    selectedFilter: PaymentsFilter
-}>()
-
-const emits = defineEmits<{
-    openDialog: []
-    selectFilter: [filter: PaymentsFilter]
-    showProperties: []
-}>()
+const props = defineProps<{ selectedFilter: PaymentsFilter }>()
+const emits = defineEmits<{ openDialog: [], selectFilter: [filter: PaymentsFilter], showProperties: [] }>()
 
 const dropdownRef = ref<DropdownInstance>()
-const showAccounts = ref(false)
-const showGroups = ref(false)
-const { data: accounts } = useAccountsQuery(true, showAccounts)
-const { data: groups  } = useGroupsQuery(showGroups)
+const filterSearch = ref('')
+const draftAccountIds = ref<number[]>([])
+const draftGroupIds = ref<number[]>([])
+const { data: accounts } = useAccountsQuery(true)
+const { data: groups } = useGroupsQuery()
 
 const selectedFilterTitle = computed(() => {
-    if (props.selectedFilter.type === 'account') return props.selectedFilter.title
-    if (props.selectedFilter.type === 'group') return props.selectedFilter.title
-
-    return 'Все платежи'
+  if (props.selectedFilter.type === 'all') return 'Все платежи'
+  const count = props.selectedFilter.accountIds.length + props.selectedFilter.groupIds.length
+  return count ? `Выбрано: ${count}` : 'Все платежи'
 })
+const filteredAccounts = computed(() => filterOptions(accounts.value ?? []))
+const filteredGroups = computed(() => filterOptions(groups.value ?? []))
 
-function isSelected(type: PaymentsFilter['type'], id?: number) {
-    if (props.selectedFilter.type !== type) return false
-    if (type === 'all') return true
-
-    return 'id' in props.selectedFilter && props.selectedFilter.id === id
+function filterOptions<T extends { title: string }>(items: T[]) {
+  const query = filterSearch.value.trim().toLocaleLowerCase()
+  return query ? items.filter(item => item.title.toLocaleLowerCase().includes(query)) : items
 }
-
-function handleFilterCommand(command: string) {
-    if (command === 'toggle-accounts') {
-        showAccounts.value = !showAccounts.value
-        showGroups.value = false
-        return
-    }
-
-    if (command === 'toggle-groups') {
-        showGroups.value = !showGroups.value
-        showAccounts.value = false
-        return
-    }
-
-    if (command === 'all') {
-        emits('selectFilter', { type: 'all' })
-        dropdownRef.value?.handleClose()
-        return
-    }
-
-    const [type, rawId] = command.split(':')
-    const id = Number(rawId)
-
-    if (type === 'account') {
-        const account = accounts.value?.find(item => item.id === id)
-        if (account) emits('selectFilter', { type: 'account', id, title: account.title })
-    }
-
-    if (type === 'group') {
-        const group = groups.value?.find(item => item.id === id)
-        if (group) emits('selectFilter', { type: 'group', id, title: group.title })
-    }
-
-    dropdownRef.value?.handleClose()
+function handleDropdownVisibleChange(visible: boolean) {
+  if (!visible) return
+  filterSearch.value = ''
+  draftAccountIds.value = props.selectedFilter.type === 'selection' ? [...props.selectedFilter.accountIds] : []
+  draftGroupIds.value = props.selectedFilter.type === 'selection' ? [...props.selectedFilter.groupIds] : []
 }
-
-function handleSettingsCommand(command: string) {
-    if (command === 'show-properties') emits('showProperties')
+function applySelection() {
+  emits('selectFilter', draftAccountIds.value.length || draftGroupIds.value.length
+    ? { type: 'selection', accountIds: [...draftAccountIds.value], groupIds: [...draftGroupIds.value] }
+    : { type: 'all' })
+  dropdownRef.value?.handleClose()
+}
+function resetSelection() {
+  draftAccountIds.value = []
+  draftGroupIds.value = []
+  emits('selectFilter', { type: 'all' })
 }
 </script>
 
 <template>
-    <div class="flex justify-between bg-[#ffffff] border-b border-[#e2e3e6] py-3 px-4">
-        <div class="flex gap-2">
-            <ElDropdown
-                ref="dropdownRef"
-                :hide-on-click="false"
-                @command="handleFilterCommand"
-            >
-                <ElButton class="h-[40px]">{{ selectedFilterTitle }}
-                    <ElIcon class="ml-2">
-                        <ArrowDown />
-                    </ElIcon>
-                </ElButton>
-                <template #dropdown>
-                    <ElDropdownMenu>
-                        <ElDropdownItem command="toggle-accounts">
-                            <span class="flex w-full items-center justify-between gap-4">
-                                Все счета
-                                <ElIcon :class="{ 'rotate-90': showAccounts }"><ArrowRight /></ElIcon>
-                            </span>
-                        </ElDropdownItem>
-                        <template v-if="showAccounts">
-                            <ElDropdownItem
-                                v-for="account in accounts"
-                                :key="account.id"
-                                :command="`account:${account.id}`"
-                            >
-                                <span class="flex w-full items-center justify-between gap-4 pl-4">
-                                    {{ account.title }}
-                                    <ElIcon v-if="isSelected('account', account.id)"><Check /></ElIcon>
-                                </span>
-                            </ElDropdownItem>
-                        </template>
-
-                        <ElDropdownItem command="toggle-groups">
-                            <span class="flex w-full items-center justify-between gap-4">
-                                Группы счетов
-                                <ElIcon :class="{ 'rotate-90': showGroups }"><ArrowRight /></ElIcon>
-                            </span>
-                        </ElDropdownItem>
-                        <template v-if="showGroups">
-                            <ElDropdownItem
-                                v-for="group in groups"
-                                :key="group.id"
-                                :command="`group:${group.id}`"
-                            >
-                                <span class="flex w-full items-center justify-between gap-4 pl-4">
-                                    {{ group.title }}
-                                    <ElIcon v-if="isSelected('group', group.id)"><Check /></ElIcon>
-                                </span>
-                            </ElDropdownItem>
-                        </template>
-
-                        <ElDropdownItem command="all" divided>
-                            <span class="flex w-full items-center justify-between gap-4">
-                                Все платежи
-                                <ElIcon v-if="isSelected('all')"><Check /></ElIcon>
-                            </span>
-                        </ElDropdownItem>
-                    </ElDropdownMenu>
-                </template>
-            </ElDropdown>
-
-            <ElButton @click="emits('openDialog')" :icon="Plus" class="h-[40px]" type="primary" round>
-                Новый платеж
-            </ElButton>
-        </div>
-
-        <div class="flex gap-2">
-            <ElDropdown @command="handleSettingsCommand">
-                <ElButton class="h-[40px]"> 
-                    <ElIcon size="18">
-                        <Setting/>
-                    </ElIcon>
-                </ElButton>
-                <template #dropdown>
-                    <ElDropdownMenu>
-                        <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
-                    </ElDropdownMenu>
-                </template>
-            </ElDropdown>
-        </div>
+  <div class="flex justify-between bg-[#ffffff] border-b border-[#e2e3e6] py-3 px-4">
+    <div class="flex gap-2">
+      <ElDropdown ref="dropdownRef" trigger="click" :hide-on-click="false" @visible-change="handleDropdownVisibleChange">
+        <ElButton class="h-[40px]">{{ selectedFilterTitle }} <ElIcon class="ml-2"><ArrowDown /></ElIcon></ElButton>
+        <template #dropdown>
+          <div class="account-filter-dropdown" @click.stop>
+            <ElInput v-model="filterSearch" placeholder="Найти" clearable />
+            <div class="account-filter-dropdown__section">Счета</div>
+            <ElCheckboxGroup v-model="draftAccountIds" class="account-filter-dropdown__options">
+              <ElCheckbox v-for="account in filteredAccounts" :key="account.id" :value="account.id">{{ account.title }} ({{ account.currency || 'RUB' }})</ElCheckbox>
+            </ElCheckboxGroup>
+            <div class="account-filter-dropdown__section">Группы счетов</div>
+            <ElCheckboxGroup v-model="draftGroupIds" class="account-filter-dropdown__options">
+              <ElCheckbox v-for="group in filteredGroups" :key="group.id" :value="group.id">{{ group.title }}</ElCheckbox>
+            </ElCheckboxGroup>
+            <div class="account-filter-dropdown__actions">
+              <ElButton text @click="resetSelection">Сбросить всё</ElButton>
+              <ElButton type="primary" round @click="applySelection">ОК</ElButton>
+            </div>
+          </div>
+        </template>
+      </ElDropdown>
+      <ElButton :icon="Plus" class="h-[40px]" type="primary" round @click="emits('openDialog')">Новый платеж</ElButton>
     </div>
+    <ElDropdown @command="command => command === 'show-properties' && emits('showProperties')">
+      <ElButton class="h-[40px]"><ElIcon size="18"><Setting /></ElIcon></ElButton>
+      <template #dropdown><ElDropdownMenu><ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem></ElDropdownMenu></template>
+    </ElDropdown>
+  </div>
 </template>
+
+<style scoped>
+.account-filter-dropdown { width: 300px; padding: 8px 0 0; }
+.account-filter-dropdown :deep(.el-input) { padding: 0 8px 8px; }
+.account-filter-dropdown__section { padding: 9px 12px; border-top: 1px solid #d9dee5; background: #f3f5f8; color: #6b7280; font-size: 14px; }
+.account-filter-dropdown__options { display: flex; max-height: 180px; flex-direction: column; overflow-y: auto; }
+.account-filter-dropdown__options :deep(.el-checkbox) { height: 36px; margin-right: 0; padding: 0 12px; }
+.account-filter-dropdown__actions { display: flex; justify-content: space-between; border-top: 1px solid #d9dee5; padding: 8px; }
+</style>

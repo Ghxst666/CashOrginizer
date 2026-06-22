@@ -11,10 +11,10 @@ export interface ReportsRequest {
     amount_to?: string | null
     number_from?: string | null
     number_to?: string | null
-    accounts_ids?: number[]
-    purposes_ids?: number[]
-    categories_ids?: number[]
-    projects_ids?: number[]
+    accounts_ids?: string
+    purposes_ids?: string
+    categories_ids?: string
+    projects_ids?: string
 }
 
 export interface ReportsPeriodData {

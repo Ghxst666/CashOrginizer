@@ -4,7 +4,7 @@ import InvoicesHeader from './InvoicesHeader.vue';
 import { computed, ref, watch } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
-import { useAccountsItemGroup, useAccountsQuery, useAccountsReorder, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
+import { useAccountsQuery, useAccountsReorder, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
 import { accountsCreateRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
@@ -14,6 +14,7 @@ import { TRANSACTION_ROUTE } from '@/shared/router';
 import type { InvoicesAccountsFilter } from '../invoices-filter';
 import { filterRowsBySearch, matchesSearch } from '@/shared/lib/search';
 import { useHeaderSearchStore } from '@/shared/store/header-search.store';
+import TransactionBalanceBar from '@/shared/ui/TransactionBalanceBar.vue'
 
 type AccountsGroup = accountsSortedByTypeResponse | accountsSortedByGroupsResponse
 
@@ -31,25 +32,22 @@ const accountsStatus = computed(() => !showClosedAccounts.value)
 const tableMode = ref<'default' | 'type' | 'group'>('default')
 const isTypeSort = computed(() => tableMode.value === 'type')
 const isGroupSort = computed(() => tableMode.value === 'group')
-const isAllAccountsFilter = computed(() => selectedAccountsFilter.value.type === 'all' && tableMode.value === 'default')
-const isGroupFilter = computed(() => selectedAccountsFilter.value.type === 'group' && tableMode.value === 'default')
-const selectedGroupId = computed(() => selectedAccountsFilter.value.type === 'group' ? selectedAccountsFilter.value.id : 0)
+const isDefaultTable = computed(() => tableMode.value === 'default')
 
-const { data: accountsData } = useAccountsQuery(accountsStatus, isAllAccountsFilter)
+const { data: accountsData } = useAccountsQuery(accountsStatus, isDefaultTable)
+const { data: balanceAccountsData } = useAccountsQuery(true)
 const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
 const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
-const { data: accountsBySelectedGroupData } = useAccountsItemGroup(selectedGroupId, accountsStatus, isGroupFilter)
 const { mutate: reorderAccounts } = useAccountsReorder()
 const accountOrder = ref<number[]>([])
 const invoicesTableData = computed(() => {
-  if (selectedAccountsFilter.value.type === 'group') return accountsBySelectedGroupData.value ?? []
-
   return accountsData.value ?? []
 })
 const orderedInvoicesTableData = computed(() => sortAccountsByOrder(invoicesTableData.value))
 const filteredInvoicesTableData = computed(() => filterAccounts(orderedInvoicesTableData.value))
 const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsByTypeData.value ?? []))
 const filteredAccountsByGroupsData = computed(() => filterAccountGroups(accountsByGroupsData.value ?? []))
+const totalBalance = computed(() => sumAmounts(balanceAccountsData.value ?? []))
 
 const formData = ref<accountsCreateRequest>({
   title: '',
@@ -177,10 +175,17 @@ function getAccountSearchValues(account: accountsResponse) {
 
 function filterAccounts(accounts: accountsResponse[]) {
   return filterRowsBySearch(
-    accounts,
+    accounts.filter(matchesSelectedAccounts),
     headerSearchStore.debouncedQuery,
     getAccountSearchValues,
   )
+}
+
+function matchesSelectedAccounts(account: accountsResponse) {
+  if (selectedAccountsFilter.value.type === 'all') return true
+
+  return selectedAccountsFilter.value.accountIds.includes(account.id)
+    || (account.group_id !== null && selectedAccountsFilter.value.groupIds.includes(account.group_id))
 }
 
 watch(
@@ -200,21 +205,26 @@ watch(
 )
 
 function filterAccountGroups(groups: AccountsGroup[]) {
-  if (!headerSearchStore.debouncedQuery)
-    return groups
-
   return groups.flatMap((group) => {
-    if (matchesSearch(headerSearchStore.debouncedQuery, [group.title])) {
-      return [group]
-    }
-
     const accounts = filterAccounts(group.accounts)
+    const groupMatchesSearch = matchesSearch(headerSearchStore.debouncedQuery, [group.title])
 
-    return accounts.length > 0
+    return accounts.length > 0 && (groupMatchesSearch || accounts.length > 0)
       ? [{ ...group, accounts }]
       : []
   })
 }
+
+function amountToNumber(amount?: string | null) {
+  const parsedAmount = Number(String(amount ?? 0).replace(/\s/g, '').replace(',', '.'))
+
+  return Number.isFinite(parsedAmount) ? parsedAmount : 0
+}
+
+function sumAmounts(items: Array<{ amount?: string | null }>) {
+  return items.reduce((total, item) => total + amountToNumber(item.amount), 0)
+}
+
 </script>
 
 <template>
@@ -224,7 +234,7 @@ function filterAccountGroups(groups: AccountsGroup[]) {
   />
 
   <div class="h-full flex">
-    <div class="flex-1 min-w-0">
+    <div class="flex-1 min-w-0 flex flex-col">
       <InvoicesHeader
         :active-sort="tableMode"
         :show-closed-accounts="showClosedAccounts"
@@ -241,24 +251,32 @@ function filterAccountGroups(groups: AccountsGroup[]) {
 
       <InvoicesTypeGroupesTable
         v-if="tableMode === 'type'"
+        class="flex-1 min-h-0"
         :data="filteredAccountsByTypeData"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
       <InvoicesTypeGroupesTable
         v-else-if="tableMode === 'group'"
+        class="flex-1 min-h-0"
         :data="filteredAccountsByGroupsData"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
       />
       <InvoicesTable
         v-else
+        class="flex-1 min-h-0"
         :data="filteredInvoicesTableData"
         :reorderable="true"
         @edit="handleOpenUpdateDialog"
         @select="handleSelectAccount"
         @open-payments="handleOpenPayments"
         @reorder="handleReorder"
+      />
+
+      <TransactionBalanceBar
+        :balance="totalBalance"
+        :show-operations="false"
       />
 
       <InvoicuesEditDialog

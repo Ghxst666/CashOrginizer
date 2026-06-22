@@ -8,7 +8,9 @@ export interface accountsResponse {
     status: boolean,
     group_id: number | null,
     id: number,
-    amount: string
+    amount: string,
+    currency: string,
+    sort_order: number
 }
 
 export interface accountsCreateRequest {

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { METHOD_OPTIONS, PERIOD_OPTIONS } from '@/pages/information/report/model/report.config'
+import { PERIOD_OPTIONS } from '@/pages/information/report/model/report.config'
 import type { ReportDefinition, ReportFilters, SelectOption } from '@/pages/information/report/model/report.types'
 
 defineProps<{
     report: ReportDefinition
-    groupOptions: SelectOption[]
     accountOptions: SelectOption[]
     purposeOptions: SelectOption[]
     categoryOptions: SelectOption[]
@@ -12,14 +11,14 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-    loadOptions: [type: 'groups' | 'accounts' | 'purposes' | 'categories' | 'projects']
+    loadOptions: [type: 'accounts' | 'purposes' | 'categories' | 'projects']
 }>()
 
 const filters = defineModel<ReportFilters>('filters', { required: true })
-const selectedGroupId = defineModel<number | null>('selectedGroupId', { required: true })
 const customDateRange = defineModel<string[]>('customDateRange', { required: true })
+const activeField = defineModel<string>('activeField', { required: true })
 
-function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accounts' | 'purposes' | 'categories' | 'projects'>) {
+function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'purposes' | 'categories' | 'projects'>) {
     if (!visible) return
 
     types.forEach(type => emit('loadOptions', type))
@@ -29,24 +28,17 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
 <template>
     <div class="settings-panel">
         <div class="settings-row">
-            <span>Название</span>
-            <strong>{{ report.title }}</strong>
+            <span>Название отчёта</span>
+            <ElInput v-model="filters.title" class="settings-control" clearable @focus="activeField = 'title'" />
         </div>
         <div class="settings-row">
-            <span>Метод учета</span>
-            <ElSelect v-model="filters.method" class="settings-control">
-                <ElOption
-                    v-for="option in METHOD_OPTIONS"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </ElSelect>
+            <span>Примечание</span>
+            <ElInput v-model="filters.note" class="settings-control" type="textarea" :rows="2" clearable @focus="activeField = 'note'" />
         </div>
         <div class="settings-row">
             <span>Дата</span>
             <div class="settings-control settings-control--stack">
-                <ElSelect v-model="filters.period">
+                <ElSelect v-model="filters.period" @focus="activeField = 'period'">
                     <ElOption
                         v-for="option in PERIOD_OPTIONS"
                         :key="option.value"
@@ -65,23 +57,6 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
             </div>
         </div>
         <div class="settings-row">
-            <span>Группа счетов</span>
-            <ElSelect
-                v-model="selectedGroupId"
-                class="settings-control"
-                clearable
-                placeholder="Все группы"
-                @visible-change="visible => handleVisibleChange(visible, 'groups', 'accounts')"
-            >
-                <ElOption
-                    v-for="option in groupOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </ElSelect>
-        </div>
-        <div class="settings-row">
             <span>Счет</span>
             <ElSelect
                 v-model="filters.accounts_ids"
@@ -91,6 +66,7 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
                 clearable
                 placeholder="Все счета"
                 @visible-change="visible => handleVisibleChange(visible, 'accounts')"
+                @focus="activeField = 'accounts_ids'"
             >
                 <ElOption
                     v-for="option in accountOptions"
@@ -110,6 +86,7 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
                 clearable
                 placeholder="Все названия"
                 @visible-change="visible => handleVisibleChange(visible, 'purposes')"
+                @focus="activeField = 'purposes_ids'"
             >
                 <ElOption
                     v-for="option in purposeOptions"
@@ -129,6 +106,7 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
                 clearable
                 placeholder="Все категории"
                 @visible-change="visible => handleVisibleChange(visible, 'categories')"
+                @focus="activeField = 'categories_ids'"
             >
                 <ElOption
                     v-for="option in categoryOptions"
@@ -148,6 +126,7 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
                 clearable
                 placeholder="Все проекты"
                 @visible-change="visible => handleVisibleChange(visible, 'projects')"
+                @focus="activeField = 'projects_ids'"
             >
                 <ElOption
                     v-for="option in projectOptions"
@@ -163,20 +142,14 @@ function handleVisibleChange(visible: boolean, ...types: Array<'groups' | 'accou
                 v-model="filters.text"
                 class="settings-control"
                 clearable
+                @focus="activeField = 'text'"
             />
         </div>
         <div class="settings-row">
             <span>Сумма</span>
             <div class="settings-control settings-control--inline">
-                <ElInput v-model="filters.amount_from" placeholder="От" clearable />
-                <ElInput v-model="filters.amount_to" placeholder="До" clearable />
-            </div>
-        </div>
-        <div class="settings-row">
-            <span>Номер</span>
-            <div class="settings-control settings-control--inline">
-                <ElInput v-model="filters.number_from" placeholder="От" clearable />
-                <ElInput v-model="filters.number_to" placeholder="До" clearable />
+                <ElInput v-model="filters.amount_from" placeholder="От" clearable @focus="activeField = 'amount'" />
+                <ElInput v-model="filters.amount_to" placeholder="До" clearable @focus="activeField = 'amount'" />
             </div>
         </div>
     </div>

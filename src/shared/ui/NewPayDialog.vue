@@ -58,12 +58,15 @@ watch(newPayDialogVisible, (isVisible) => {
 
         <template #footer>
             <div class="flex justify-between">
-                <ElButton
-                    v-if="activeStep > 0"
-                    @click="prevStep"
+                <div class="flex gap-2">
+                    <slot name="footer-start" />
+                    <ElButton
+                        v-if="activeStep > 0"
+                        @click="prevStep"
                     >
                     Назад
                 </ElButton>
+                </div>
 
                 <div>
                     <ElButton @click="emits('close')">

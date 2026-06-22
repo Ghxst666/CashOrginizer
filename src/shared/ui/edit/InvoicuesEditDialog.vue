@@ -73,6 +73,7 @@ function handleDelete() {
 <template>
   <ElDialog :title="props.title" v-model="isOpen" width="800">
     <ElScrollbar height="400px">
+      <div class="account-editor-layout">
       <ElForm :model="formData" label-position="top" class="payment-form">
         <ElFormItem label="Название">
           <ElInput v-model="formData.title" />
@@ -123,6 +124,15 @@ function handleDelete() {
           </ElSelect>
         </ElFormItem>
       </ElForm>
+      <aside class="account-inputs-panel">
+        <div class="account-inputs-panel__title">Поля ввода</div>
+        <ElInput v-model="formData.title" placeholder="Название" />
+        <ElInput v-model="formData.start_amount" placeholder="Начальный баланс" />
+        <ElInput v-model="formData.min_amount" placeholder="Минимальный баланс" />
+        <ElInput v-if="formData.type === 'creditcard'" v-model="formData.credit_limit_amount" placeholder="Кредитный лимит" />
+        <ElInput v-model="formData.note" type="textarea" :rows="5" placeholder="Примечание" />
+      </aside>
+      </div>
     </ElScrollbar>
 
     <template #footer>
@@ -167,4 +177,8 @@ function handleDelete() {
   border-radius: 8px;
   box-shadow: 0 0 0 1px rgba(120, 140, 145, 0.18) inset;
 }
+
+.account-editor-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; }
+.account-inputs-panel { display: flex; flex-direction: column; gap: 10px; border-left: 1px solid #d7dde3; padding-left: 16px; }
+.account-inputs-panel__title { color: #374151; font-weight: 700; }
 </style>

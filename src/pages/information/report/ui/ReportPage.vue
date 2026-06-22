@@ -12,7 +12,6 @@ import {
     type ReportsRequest,
 } from '@/entities/reports'
 import { usePurposesQuery } from '@/entities/purposes'
-import { useGroupsQuery } from '@/entities/transaction/groups'
 import { useAccountsQuery } from '@/entities/transaction/invoices'
 import { exportReportToExcel, exportReportToPdf } from '@/features/reports/export/report-export'
 import { clearEmptyProperties } from '@/shared/lib/clearEmptyProperties'
@@ -36,12 +35,10 @@ const dialogVisible = ref(false)
 const activeTab = ref<ReportTab>('list')
 const activeReportCode = ref(REPORTS[0].code)
 const customDateRange = ref<string[]>([])
-const selectedGroupId = ref<number | null>(null)
 const selectedRow = ref<TableRow | null>(null)
 const paymentSearch = ref('')
 const exportLoading = ref(false)
 const optionsEnabled = reactive({
-    groups: false,
     accounts: false,
     purposes: false,
     categories: false,
@@ -50,7 +47,8 @@ const optionsEnabled = reactive({
 
 const filters = reactive<ReportFilters>({
     period: 'year_to_today',
-    method: 'cashmethod',
+    title: '',
+    note: '',
     accounts_ids: [],
     purposes_ids: [],
     categories_ids: [],
@@ -58,11 +56,8 @@ const filters = reactive<ReportFilters>({
     text: '',
     amount_from: null,
     amount_to: null,
-    number_from: null,
-    number_to: null,
 })
 
-const { data: groupsData } = useGroupsQuery(computed(() => optionsEnabled.groups))
 const { data: accountsData } = useAccountsQuery(true, computed(() => optionsEnabled.accounts))
 const { data: categoriesData } = useCategoriesQuery(undefined, computed(() => optionsEnabled.categories))
 const { data: projectsData } = useProjectsQuery(undefined, computed(() => optionsEnabled.projects))
@@ -75,16 +70,15 @@ const requestData = computed<ReportsRequest | undefined>(() => {
     const payload: ReportsRequest = {
         kind: activeReport.value.kind,
         period: filters.period,
-        method: filters.method,
-        accounts_ids: filters.accounts_ids,
-        purposes_ids: filters.purposes_ids,
-        categories_ids: filters.categories_ids,
-        projects_ids: filters.projects_ids,
+        title: filters.title || undefined,
+        note: filters.note || undefined,
+        accounts_ids: filters.accounts_ids.join(',') || undefined,
+        purposes_ids: filters.purposes_ids.join(',') || undefined,
+        categories_ids: filters.categories_ids.join(',') || undefined,
+        projects_ids: filters.projects_ids.join(',') || undefined,
         text: filters.text,
         amount_from: filters.amount_from,
         amount_to: filters.amount_to,
-        number_from: filters.number_from,
-        number_to: filters.number_to,
         date_from: filters.period === 'custom' ? dateFrom : undefined,
         date_to: filters.period === 'custom' ? dateTo : undefined,
     }
@@ -167,13 +161,7 @@ const tableColumns = computed<ReportColumn[]>(() => {
     ]
 })
 
-const groupOptions = computed<SelectOption[]>(() => (groupsData.value ?? []).map(group => ({
-    label: group.title,
-    value: group.id,
-})))
-
 const accountOptions = computed<SelectOption[]>(() => (accountsData.value ?? [])
-    .filter(account => selectedGroupId.value === null || account.group_id === selectedGroupId.value)
     .map(account => ({
         label: account.title,
         value: account.id,
@@ -210,10 +198,6 @@ const exportPayload = computed<ReportExportPayload>(() => ({
     summary: summary.value,
     summaryData: currentReportData.value?.summary,
 }))
-
-watch([selectedGroupId, accountOptions], ([groupId]) => {
-    filters.accounts_ids = groupId === null ? [] : accountOptions.value.map(option => Number(option.value))
-})
 
 watch(
     () => filters.period,
@@ -277,6 +261,7 @@ function mapRowsToOptions(rows: readonly unknown[]): SelectOption[] {
         const option = {
             label: String(item.title ?? 'Без названия'),
             value: Number(item.id),
+            type: typeof item.type === 'string' ? item.type : undefined,
         }
         const children = Array.isArray(item.children) ? mapRowsToOptions(item.children) : []
 
@@ -311,7 +296,6 @@ function formatDate(value: string) {
             v-model:payment-search="paymentSearch"
             v-model:selected-row="selectedRow"
             v-model:filters="filters"
-            v-model:selected-group-id="selectedGroupId"
             v-model:custom-date-range="customDateRange"
             :report="activeReport"
             :rows="tableRows"
@@ -321,7 +305,6 @@ function formatDate(value: string) {
             :range-label="reportRangeLabel"
             :summary="summary"
             :properties="selectedProperties"
-            :group-options="groupOptions"
             :account-options="accountOptions"
             :purpose-options="purposeOptions"
             :category-options="categoryOptions"

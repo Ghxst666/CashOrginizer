@@ -1,6 +1,6 @@
 import type { PaymentType } from '@/entities/transaction/payments/types/payments.types'
 
-export type PaymentDialogType = Extract<PaymentType, 'expenses' | 'profits'>
+export type PaymentDialogType = PaymentType
 
 export interface PaymentCategoryOptionNode {
   id: number
@@ -18,6 +18,7 @@ export interface PaymentCategoryOption {
 export const paymentTypeOptions: Array<{ label: string, value: PaymentDialogType }> = [
   { label: 'Расход', value: 'expenses' },
   { label: 'Приход', value: 'profits' },
+  { label: 'Перевод', value: 'transfers' },
 ]
 
 export function flattenCategoryOptions(
@@ -67,7 +68,7 @@ export function amountToNumber(value: string, type: PaymentDialogType): number {
 }
 
 function toPaymentDialogType(type?: string | null): PaymentDialogType | null {
-  if (type === 'expenses' || type === 'profits') return type
+  if (type === 'expenses' || type === 'profits' || type === 'transfers') return type
 
   return null
 }

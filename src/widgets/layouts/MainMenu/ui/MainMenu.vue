@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { BaseTransitionProps, ref, TransitionProps } from 'vue';
+import { BaseTransitionProps, computed, ref, TransitionProps } from 'vue';
 import { useEventListener } from '@vueuse/core'
 import { DArrowLeft } from '@element-plus/icons-vue';
 import { menuItems } from '../const/menu.const';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import logoUrl from '@/shared/assets/logo.svg'
 
 const BREAKPOINT_COLLAPSE = 1327
 
 const router = useRouter()
+const route = useRoute()
+const activeMenuItem = computed(() => String(route.name ?? ''))
 
 const isCollapsed = ref<boolean>(window.innerWidth <= BREAKPOINT_COLLAPSE)
 
@@ -108,6 +110,7 @@ const logoListeners = {
                 <ElMenu
                     class="border-r-0 [&:not(.el-menu--collapse)]:w-[250px]"
                     :collapse="isCollapsed"
+                    :default-active="activeMenuItem"
                     @select="handleGoTo"
                 >
                     <template

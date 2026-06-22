@@ -68,7 +68,7 @@ watch(isSuccess, () => {
                 <ElSelect v-model="newCategoryData.type">
                     <ElOption label="Расходные" value="expenses" />
                     <ElOption label="Приходные" value="profits" />
-                    <ElOption label="Подкатегория" value="transfers" />
+                    <ElOption label="Перевод" value="transfers" />
                 </ElSelect>
             </ElFormItem> 
             <ElFormItem v-if="newCategoryData.type === 'transfers'" label="В*">

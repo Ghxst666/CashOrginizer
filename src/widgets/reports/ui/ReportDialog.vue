@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Document, Search, Setting } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
 import type {
     ReportColumn,
     ReportDefinition,
@@ -16,8 +17,9 @@ import ReportPropertiesPanel from './ReportPropertiesPanel.vue'
 import ReportResultTable from './ReportResultTable.vue'
 import ReportSettingsPanel from './ReportSettingsPanel.vue'
 import ReportSummaryBar from './ReportSummaryBar.vue'
+import { PERIOD_OPTIONS } from '@/pages/information/report/model/report.config'
 
-defineProps<{
+const props = defineProps<{
     report: ReportDefinition
     rows: TableRow[]
     columns: ReportColumn[]
@@ -26,7 +28,6 @@ defineProps<{
     rangeLabel: string
     summary: ReportSummaryView
     properties: ReportProperty[]
-    groupOptions: SelectOption[]
     accountOptions: SelectOption[]
     purposeOptions: SelectOption[]
     categoryOptions: SelectOption[]
@@ -35,7 +36,7 @@ defineProps<{
 
 defineEmits<{
     export: [type: ReportExportType]
-    loadOptions: [type: 'groups' | 'accounts' | 'purposes' | 'categories' | 'projects']
+    loadOptions: [type: 'accounts' | 'purposes' | 'categories' | 'projects']
 }>()
 
 const visible = defineModel<boolean>('visible', { required: true })
@@ -43,8 +44,38 @@ const activeTab = defineModel<ReportTab>('activeTab', { required: true })
 const paymentSearch = defineModel<string>('paymentSearch', { required: true })
 const selectedRow = defineModel<TableRow | null>('selectedRow', { required: true })
 const filters = defineModel<ReportFilters>('filters', { required: true })
-const selectedGroupId = defineModel<number | null>('selectedGroupId', { required: true })
 const customDateRange = defineModel<string[]>('customDateRange', { required: true })
+const activeSettingsField = ref('title')
+const rightSearch = ref('')
+const categoryType = ref<string | null>(null)
+const isReferenceField = computed(() => ['accounts_ids', 'purposes_ids', 'categories_ids', 'projects_ids'].includes(activeSettingsField.value))
+const rightOptions = computed(() => {
+    const source = activeSettingsField.value === 'accounts_ids' ? props.accountOptions
+        : activeSettingsField.value === 'purposes_ids' ? props.purposeOptions
+        : activeSettingsField.value === 'categories_ids' ? props.categoryOptions
+        : activeSettingsField.value === 'projects_ids' ? props.projectOptions
+        : []
+    const query = rightSearch.value.trim().toLocaleLowerCase()
+    return source.filter(option => (!query || option.label.toLocaleLowerCase().includes(query)) && (!categoryType.value || option.type === categoryType.value))
+})
+
+function selectedIds() {
+    if (activeSettingsField.value === 'accounts_ids') return filters.value.accounts_ids
+    if (activeSettingsField.value === 'purposes_ids') return filters.value.purposes_ids
+    if (activeSettingsField.value === 'categories_ids') return filters.value.categories_ids
+    if (activeSettingsField.value === 'projects_ids') return filters.value.projects_ids
+    return []
+}
+
+function toggleOption(id: number | string) {
+    const ids = selectedIds()
+    const numericId = Number(id)
+    const next = ids.includes(numericId) ? ids.filter(value => value !== numericId) : [...ids, numericId]
+    if (activeSettingsField.value === 'accounts_ids') filters.value.accounts_ids = next
+    if (activeSettingsField.value === 'purposes_ids') filters.value.purposes_ids = next
+    if (activeSettingsField.value === 'categories_ids') filters.value.categories_ids = next
+    if (activeSettingsField.value === 'projects_ids') filters.value.projects_ids = next
+}
 </script>
 
 <template>
@@ -117,10 +148,9 @@ const customDateRange = defineModel<string[]>('customDateRange', { required: tru
                 <ReportSettingsPanel
                     v-else
                     v-model:filters="filters"
-                    v-model:selected-group-id="selectedGroupId"
+                    v-model:active-field="activeSettingsField"
                     v-model:custom-date-range="customDateRange"
                     :report="report"
-                    :group-options="groupOptions"
                     :account-options="accountOptions"
                     :purpose-options="purposeOptions"
                     :category-options="categoryOptions"
@@ -131,7 +161,47 @@ const customDateRange = defineModel<string[]>('customDateRange', { required: tru
                 <ReportSummaryBar :summary="summary" />
             </div>
 
-            <ReportPropertiesPanel :properties="properties" />
+            <ReportPropertiesPanel
+                v-if="activeTab === 'list'"
+                :properties="properties"
+            />
+            <aside v-else-if="activeTab === 'settings'" class="report-settings-side">
+                <template v-if="isReferenceField">
+                    <ElInput v-model="rightSearch" placeholder="Найти" clearable />
+                    <div v-if="activeSettingsField === 'categories_ids'" class="category-types">
+                        <ElButton size="small" :type="categoryType === 'expenses' ? 'primary' : 'default'" @click="categoryType = categoryType === 'expenses' ? null : 'expenses'">Расходы</ElButton>
+                        <ElButton size="small" :type="categoryType === 'profits' ? 'primary' : 'default'" @click="categoryType = categoryType === 'profits' ? null : 'profits'">Доходы</ElButton>
+                        <ElButton size="small" :type="categoryType === 'transfers' ? 'primary' : 'default'" @click="categoryType = categoryType === 'transfers' ? null : 'transfers'">Переводы</ElButton>
+                    </div>
+                    <ElCheckbox v-for="option in rightOptions" :key="option.value" :model-value="selectedIds().includes(Number(option.value))" class="side-option" @change="toggleOption(option.value)">{{ option.label }}</ElCheckbox>
+                </template>
+                <ElInput v-else-if="activeSettingsField === 'title'" v-model="filters.title" placeholder="Название отчёта" />
+                <ElInput v-else-if="activeSettingsField === 'note'" v-model="filters.note" type="textarea" :rows="8" placeholder="Примечание" />
+                <ElInput v-else-if="activeSettingsField === 'text'" v-model="filters.text" placeholder="Текст" />
+                <div v-else-if="activeSettingsField === 'amount'" class="side-inline"><ElInput v-model="filters.amount_from" placeholder="От" /><ElInput v-model="filters.amount_to" placeholder="До" /></div>
+                <div v-else-if="activeSettingsField === 'period'" class="report-settings-side__date">
+                    <ElButton
+                        v-for="option in PERIOD_OPTIONS"
+                        :key="option.value"
+                        class="period-option"
+                        :type="filters.period === option.value ? 'primary' : 'default'"
+                        @click="filters.period = option.value"
+                    >
+                        {{ option.label }}
+                    </ElButton>
+                    <ElDatePicker
+                        v-if="filters.period === 'custom'"
+                        v-model="customDateRange"
+                        class="period-date-input"
+                        type="daterange"
+                        value-format="YYYY-MM-DD"
+                        format="DD.MM.YYYY"
+                        start-placeholder="Дата с"
+                        end-placeholder="Дата по"
+                    />
+                </div>
+                <span v-else class="report-settings-side__hint">Выберите поле слева</span>
+            </aside>
         </div>
     </ElDialog>
 </template>
@@ -202,6 +272,14 @@ const customDateRange = defineModel<string[]>('customDateRange', { required: tru
   color: #fff;
   font-size: 12px;
 }
+
+.report-settings-side { display: flex; min-width: 0; flex-direction: column; gap: 10px; padding: 12px; }
+.category-types, .side-inline { display: flex; flex-wrap: wrap; gap: 6px; }
+.side-option { margin-right: 0; padding: 8px 0; }
+.report-settings-side__hint { color: #6b7280; font-size: 14px; }
+.report-settings-side__date { display: flex; flex-direction: column; gap: 8px; }
+.period-option { width: 100%; justify-content: flex-start; margin: 0; }
+.period-date-input { width: 100%; }
 
 @media (max-width: 1180px) {
   .report-window {

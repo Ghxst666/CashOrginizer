@@ -1,3 +1,3 @@
 export type InvoicesAccountsFilter =
   | { type: 'all' }
-  | { type: 'group', id: number, title: string }
+  | { type: 'selection', accountIds: number[], groupIds: number[] }

@@ -2,11 +2,13 @@
 import PaymentsTable from '@/entities/payments/PaymentsTable.vue'
 import PaymentsHeader from './PaymentsHeader.vue'
 import CreatePaymentDialog from './CreatePaymentDialog.vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { PaymentsFilter } from '../payments-filter'
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue'
 import type { PaymentListItemResponse, PaymentType } from '@/entities/transaction/payments/types/payments.types'
+import { usePaymentsQuery } from '@/entities/transaction/payments'
+import TransactionBalanceBar from '@/shared/ui/TransactionBalanceBar.vue'
 
 const newPayDialogVisible = ref<boolean>(false)
 const paymentsFilter = ref<PaymentsFilter>({ type: 'all' })
@@ -14,6 +16,9 @@ const route = useRoute()
 const router = useRouter()
 const isPropertiesOpen = ref(false)
 const selectedPayment = ref<PaymentListItemResponse | null>(null)
+const { data: paymentsData } = usePaymentsQuery()
+const paymentsSummary = computed(() => calculatePaymentsSummary(paymentsData.value ?? []))
+const totalBalance = computed(() => paymentsSummary.value.income - paymentsSummary.value.expense)
 
 function handleOpenDialog() {
   newPayDialogVisible.value = true
@@ -34,27 +39,12 @@ function handleSelectPayment(payment: PaymentListItemResponse) {
 function handleSelectFilter(filter: PaymentsFilter) {
   paymentsFilter.value = filter
 
-  if (filter.type === 'account') {
+  if (filter.type === 'selection') {
     router.replace({
       query: {
         ...route.query,
-        account_id: String(filter.id),
-        account_title: filter.title,
-        group_id: undefined,
-        group_title: undefined,
-      },
-    })
-    return
-  }
-
-  if (filter.type === 'group') {
-    router.replace({
-      query: {
-        ...route.query,
-        group_id: String(filter.id),
-        group_title: filter.title,
-        account_id: undefined,
-        account_title: undefined,
+        account_ids: filter.accountIds.join(',') || undefined,
+        group_ids: filter.groupIds.join(',') || undefined,
       },
     })
     return
@@ -63,10 +53,8 @@ function handleSelectFilter(filter: PaymentsFilter) {
   router.replace({
     query: {
       ...route.query,
-      account_id: undefined,
-      account_title: undefined,
-      group_id: undefined,
-      group_title: undefined,
+      account_ids: undefined,
+      group_ids: undefined,
     },
   })
 }
@@ -106,26 +94,39 @@ function paymentBalanceTitle(payment: PaymentListItemResponse) {
   return formatMoney(payment.amount)
 }
 
+function amountToNumber(amount?: string | null) {
+  const parsedAmount = Number(String(amount ?? 0).replace(/\s/g, '').replace(',', '.'))
+
+  return Number.isFinite(parsedAmount) ? parsedAmount : 0
+}
+
+function calculatePaymentsSummary(payments: PaymentListItemResponse[]) {
+  return payments.reduce(
+    (summary, payment) => {
+      const amount = Math.abs(amountToNumber(payment.amount))
+
+      if (payment.type === 'profits') summary.income += amount
+      if (payment.type === 'expenses') summary.expense += amount
+
+      return summary
+    },
+    { income: 0, expense: 0 },
+  )
+}
+
 watch(
   () => route.query,
   (query) => {
-    const accountId = Number(getQueryValue(query.account_id))
-    const groupId = Number(getQueryValue(query.group_id))
+    const accountIds = String(getQueryValue(query.account_ids) || getQueryValue(query.account_id) || '')
+      .split(',').map(Number).filter(id => Number.isFinite(id) && id > 0)
+    const groupIds = String(getQueryValue(query.group_ids) || getQueryValue(query.group_id) || '')
+      .split(',').map(Number).filter(id => Number.isFinite(id) && id > 0)
 
-    if (Number.isFinite(accountId) && accountId > 0) {
+    if (accountIds.length || groupIds.length) {
       paymentsFilter.value = {
-        type: 'account',
-        id: accountId,
-        title: String(getQueryValue(query.account_title) || 'Счет'),
-      }
-      return
-    }
-
-    if (Number.isFinite(groupId) && groupId > 0) {
-      paymentsFilter.value = {
-        type: 'group',
-        id: groupId,
-        title: String(getQueryValue(query.group_title) || 'Группа счетов'),
+        type: 'selection',
+        accountIds,
+        groupIds,
       }
       return
     }
@@ -150,8 +151,14 @@ watch(
         @show-properties="handleShowProperties"
       />
       <PaymentsTable
+        class="flex-1 min-h-0"
         :filter="paymentsFilter"
         @select="handleSelectPayment"
+      />
+      <TransactionBalanceBar
+        :income="paymentsSummary.income"
+        :expense="paymentsSummary.expense"
+        :balance="totalBalance"
       />
     </div>
 

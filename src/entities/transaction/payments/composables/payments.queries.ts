@@ -70,6 +70,7 @@ export function useCreatePayment(): UseMutationReturnType<
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
+            queryClient.invalidateQueries({ queryKey: ['Accounts'] })
         },
         onError: () => {
             ElMessage.error({
@@ -97,6 +98,7 @@ export function useImportPaymentsFromCsv(): UseMutationReturnType<
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
+            queryClient.invalidateQueries({ queryKey: ['Accounts'] })
         },
         onError: () => {
             ElMessage.error({
@@ -187,6 +189,7 @@ export function useEditPayment(): UseMutationReturnType<
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
+            queryClient.invalidateQueries({ queryKey: ['Accounts'] })
         },
         onError: () => {
             ElMessage.error({
@@ -214,6 +217,7 @@ export function useDeletePayment(): UseMutationReturnType<
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
+            queryClient.invalidateQueries({ queryKey: ['Accounts'] })
         },
         onError: () => {
             ElMessage.error({
@@ -241,6 +245,7 @@ export function useDeleteManyPayments(): UseMutationReturnType<
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
+            queryClient.invalidateQueries({ queryKey: ['Accounts'] })
         },
         onError: () => {
             ElMessage.error({
@@ -268,6 +273,7 @@ export function useEditManyPayments(): UseMutationReturnType<
                 plain: true,
             })
             queryClient.invalidateQueries({ queryKey: ['payments'] })
+            queryClient.invalidateQueries({ queryKey: ['Accounts'] })
         },
         onError: () => {
             ElMessage.error({
