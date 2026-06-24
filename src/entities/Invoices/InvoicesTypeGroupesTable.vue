@@ -74,9 +74,10 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
       >
         <ElTableColumn width="50" type="index" label="№" />
         <ElTableColumn prop="title" label="Название счёта" />
+        <ElTableColumn width="100" prop="currency" label="Валюта" />
         <ElTableColumn width="500" prop="amount" label="Общий баланс">
           <template #default="{ row }">
-            {{ Number(row.amount).toLocaleString('ru-RU') }} ₽
+            {{ Number(row.amount).toLocaleString('ru-RU') }} {{ row.currency }}
           </template>
         </ElTableColumn>
       </ElTable>

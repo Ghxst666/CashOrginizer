@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { useDeleteProject } from '@/entities/project';
 import { projectCreateData, projectsResponseData, projectsRowData } from '@/entities/project/types/project.types';
 import { filterTreeRowsBySearch } from '@/shared/lib/search';
 import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import EditProject from '@/shared/ui/edit/EditProject.vue';
-import { Delete, EditPen } from '@element-plus/icons-vue';
-import { ElButton, ElPopconfirm, ElText } from 'element-plus';
-import { computed, ref } from 'vue';
+import { ElText } from 'element-plus';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     data: projectsResponseData
@@ -20,7 +18,12 @@ const headerSearchStore = useHeaderSearchStore()
 const selectedRow = ref<projectCreateData>()
 const selectedId = ref<number>()
 const isOpenEdit = ref(false)
-const { mutate } = useDeleteProject()
+const contextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    row: null as projectsRowData | null,
+})
 const tableRows = computed(() => filterTreeRowsBySearch(
     props.data.rows,
     headerSearchStore.debouncedQuery,
@@ -43,12 +46,6 @@ function getPercentage(total: string | number, limit: string | number) {
     return Math.min(Math.round((spent / max) * 100), 100)
 }
 
-function handleConfirm(id: number) {
-  mutate({
-    project_id: id,
-  })
-}
-
 function handleUpdate(row: any) {
     selectedRow.value = { ...row }
     selectedId.value = row.id
@@ -58,6 +55,28 @@ function handleUpdate(row: any) {
 function handleRowClick(row: projectsRowData) {
     emit('select', row)
 }
+
+function handleRowContextMenu(row: projectsRowData, _column: unknown, event: MouseEvent) {
+  event.preventDefault()
+  contextMenu.value = {
+    visible: true,
+    x: Math.min(event.clientX, window.innerWidth - 180),
+    y: Math.min(event.clientY, window.innerHeight - 48),
+    row,
+  }
+}
+
+function closeContextMenu() {
+  contextMenu.value.visible = false
+}
+
+function handleEditFromContextMenu() {
+  if (contextMenu.value.row) handleUpdate(contextMenu.value.row)
+  closeContextMenu()
+}
+
+onMounted(() => window.addEventListener('click', closeContextMenu))
+onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
 </script>
 
 <template>
@@ -77,6 +96,7 @@ function handleRowClick(row: projectsRowData) {
             row-key="id"
             :tree-props="{ children: 'children' }"
             @row-click="handleRowClick"
+            @row-contextmenu="handleRowContextMenu"
         >
             <ElTableColumn prop="title" label="Название проекта">
                 <template #default="{ row }">
@@ -108,29 +128,46 @@ function handleRowClick(row: projectsRowData) {
                     </ElText>
                 </template>
             </ElTableColumn>
-
-            <ElTableColumn
-                width="140px"
-                align="center"
-            >
-                <template #default="{ row }">
-                    <ElButton type="primary" @click="handleUpdate(row)" :icon="EditPen" />
-                    <ElPopconfirm
-                        width="220"
-                        :icon="undefined"
-                        title="Вы хотите удалить проект?"
-                    >
-                        <template #reference>
-                            <ElButton type="danger" :icon="Delete" />
-                        </template>
-
-                        <template #actions="{ cancel }">
-                            <ElButton size="small" @click="cancel">Нет</ElButton>
-                            <ElButton type="danger" size="small" @click="handleConfirm(row.id)">Да</ElButton>
-                        </template>
-                    </ElPopconfirm>
-                </template>
-            </ElTableColumn>
         </ElTable>
+        <div
+          v-if="contextMenu.visible"
+          class="context-menu"
+          :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+          role="menu"
+          @click.stop
+        >
+          <button type="button" role="menuitem" @click="handleEditFromContextMenu">
+            Редактировать
+          </button>
+        </div>
     </div>
 </template>
+
+<style scoped>
+.context-menu {
+  position: fixed;
+  z-index: 3000;
+  min-width: 160px;
+  padding: 4px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.context-menu button {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #303133;
+  cursor: pointer;
+  text-align: left;
+}
+
+.context-menu button:hover {
+  background: #ecf5ff;
+  color: #409eff;
+}
+</style>

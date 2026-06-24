@@ -4,6 +4,8 @@ import { useAuthStore } from '@/shared/store/auth.store';
 import { ElCard, ElForm, ElFormItem, ElInput, FormInstance } from 'element-plus';
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { ElNotification } from 'element-plus';
+import DeviceConnectionDialog from './DeviceConnectionDialog.vue';
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -14,6 +16,7 @@ const form = reactive({
 })
 
 const formRef = ref<FormInstance>()
+const deviceConnectionDialogVisible = ref(false)
 
 function submitForm() {
     if (!formRef.value)
@@ -27,6 +30,20 @@ function goToRegister() {
 
 function goToResetPassword() {
     router.push({ name: AUTH_ROUTE.RESET_PASSWORD.NAME })
+}
+
+function handleDeviceConnected(syncCompleted: boolean) {
+  authStore.setAuthenticated(false)
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+
+  ElNotification({
+    title: 'Устройство подключено',
+    message: syncCompleted
+      ? 'Войдите в аккаунт с прежним паролем.'
+      : 'Аккаунт восстановлен. Войдите в аккаунт и повторите синхронизацию.',
+    type: syncCompleted ? 'success' : 'warning',
+  })
 }
 </script>
 
@@ -84,6 +101,13 @@ function goToResetPassword() {
                     Забыли пароль?
                 </ElButton>
             </div>
+            <ElButton link type="primary" @click="deviceConnectionDialogVisible = true">
+                Подключить новое устройство
+            </ElButton>
         </ElCard>
+        <DeviceConnectionDialog
+            v-model="deviceConnectionDialogVisible"
+            @completed="handleDeviceConnected"
+        />
     </div>
 </template>

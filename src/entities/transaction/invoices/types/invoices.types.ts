@@ -1,3 +1,5 @@
+export type AccountCurrency = 'RUB' | 'USD'
+
 export interface accountsResponse {
     title: string,
     type: string,
@@ -9,7 +11,8 @@ export interface accountsResponse {
     group_id: number | null,
     id: number,
     amount: string,
-    currency: string,
+    currency: AccountCurrency,
+    exchange_rate?: number | string | null,
     sort_order: number
 }
 
@@ -22,6 +25,7 @@ export interface accountsCreateRequest {
     note: string,
     status: boolean,
     group_id: number | null,
+    currency: AccountCurrency,
 }
 
 export interface accountsCreateResponse {
@@ -67,8 +71,8 @@ export type accountUserItemResponse = accountsResponse
 
 export type accountPartialEditItemRequestData = accountsCreateRequest
 
-export type accountEditRequesData = Omit<accountsCreateRequest, 'credit_limit_amount'> & {
-  credit_limit_amount?: number
+export type accountEditRequesData = accountsCreateRequest & {
+  exchange_rate: number | null
 }
 
 

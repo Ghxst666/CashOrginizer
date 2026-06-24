@@ -26,6 +26,7 @@ const newAccountFormData = ref<NewAccountFormData>({
     note: '',
     status: true,
     group_id: NO_GROUP,
+    currency: 'RUB',
 })
 
 const disabled = computed(() => isPending.value)
@@ -51,6 +52,7 @@ function handleCloseDialog() {
     note: '',
     status: true,
     group_id: NO_GROUP,
+    currency: 'RUB',
   }
 }
 
@@ -65,6 +67,7 @@ watch(isSuccess, () => {
     note: '',
     status: true,
     group_id: NO_GROUP,
+    currency: 'RUB',
   }
 })
 </script>
@@ -128,6 +131,13 @@ watch(isSuccess, () => {
                             :label="group.title"
                             :value="group.id"
                         />
+                    </ElSelect>
+                </ElFormItem>
+
+                <ElFormItem label="Валюта">
+                    <ElSelect v-model="newAccountFormData.currency">
+                        <ElOption label="Российский рубль (RUB)" value="RUB" />
+                        <ElOption label="Доллар США (USD)" value="USD" />
                     </ElSelect>
                 </ElFormItem>
             </ElForm>

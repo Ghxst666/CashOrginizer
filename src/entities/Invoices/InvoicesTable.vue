@@ -112,9 +112,10 @@ watch(
     >
       <ElTableColumn width="50" type="index" label="№" />
       <ElTableColumn prop="title" label="Название счёта" />
+      <ElTableColumn width="100" prop="currency" label="Валюта" />
       <ElTableColumn width="500" prop="amount" label="Общий баланс">
         <template #default="{ row }">
-          <span>{{ row.amount }} ₽</span>
+          <span>{{ row.amount }} {{ row.currency }}</span>
         </template>
       </ElTableColumn>
       <ElTableColumn width="56" align="center">

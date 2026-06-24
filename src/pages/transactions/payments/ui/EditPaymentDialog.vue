@@ -36,6 +36,7 @@ interface SelectOptionNode {
 interface PaymentEditFormData {
   check: number | null
   toAccount: number | null
+  exchangeRate: string
   date: string
   type: PaymentDialogType
   purpose: number | null
@@ -77,6 +78,7 @@ const deletePaymentSplit = useDeletePaymentSplit()
 const formData = ref<PaymentEditFormData>({
   check: null,
   toAccount: null,
+  exchangeRate: '',
   date: '',
   type: 'expenses',
   purpose: null,
@@ -99,6 +101,21 @@ const pickerSearch = ref('')
 const isNewPurposeDialogOpen = ref(false)
 const newPurposeTitle = ref('')
 const accountOptions = computed(() => accounts.value ?? [])
+const destinationAccountOptions = computed(() => (
+  accountOptions.value.filter(account => account.id !== formData.value.check)
+))
+const sourceAccount = computed(() => (
+  accountOptions.value.find(account => account.id === formData.value.check) ?? null
+))
+const destinationAccount = computed(() => (
+  accountOptions.value.find(account => account.id === formData.value.toAccount) ?? null
+))
+const isExchangeRateRequired = computed(() => (
+  formData.value.type === 'transfers'
+  && sourceAccount.value !== null
+  && destinationAccount.value !== null
+  && sourceAccount.value.currency !== destinationAccount.value.currency
+))
 const categoryOptions = computed(() => (
   flattenCategoryOptions((categories.value?.rows ?? []) as PaymentCategoryOptionNode[])
     .filter(category => category.type === formData.value.type)
@@ -108,7 +125,8 @@ const purposeOptions = computed(() => purposesData.value?.rows ?? [])
 const pickerOptions = computed<PickerOption[]>(() => {
   let options: PickerOption[] = []
 
-  if (activePicker.value === 'account' || activePicker.value === 'to_account') options = accountOptions.value
+  if (activePicker.value === 'account') options = accountOptions.value
+  if (activePicker.value === 'to_account') options = destinationAccountOptions.value
   if (activePicker.value === 'purpose') options = purposeOptions.value
   if (activePicker.value === 'category') options = categoryOptions.value
   if (activePicker.value === 'project') options = projectOptions.value
@@ -154,8 +172,22 @@ watch(
       split.sum = formatAmountForType(split.sum, type)
     })
     ensureSelectedCategoryMatchesType()
+
+    if (type === 'transfers') setActivePicker('to_account')
+    else formData.value.toAccount = null
   },
 )
+
+watch(
+  () => formData.value.check,
+  (accountId) => {
+    if (formData.value.toAccount === accountId) formData.value.toAccount = null
+  },
+)
+
+watch(isExchangeRateRequired, (required) => {
+  if (!required) formData.value.exchangeRate = ''
+})
 
 watch(categoryOptions, () => {
   ensureSelectedCategoryMatchesType()
@@ -168,11 +200,18 @@ watch(firstSplitProject, (projectId) => {
 watch(
   () => props.payment,
   (payment) => {
+    if (payment.project_id !== null && payment.project_id !== undefined) {
+      projectsEnabled.value = true
+    }
+
     formData.value = {
       check: payment.account_id,
       date: payment.payment_date || '',
       type: payment.type === 'profits' || payment.type === 'transfers' ? payment.type : 'expenses',
       toAccount: payment.to_account_id || null,
+      exchangeRate: payment.exchange_rate === null || payment.exchange_rate === undefined
+        ? ''
+        : String(payment.exchange_rate),
       purpose: payment.purpose_id || null,
       sum: formatAmountForType(payment.amount || '', payment.type === 'profits' ? 'profits' : 'expenses'),
       note: payment.note || '',
@@ -247,6 +286,7 @@ function buildPaymentPayload(): EditPaymentRequest {
       : formatAmountForPayload(formData.value.sum, formData.value.type),
     type: formData.value.type,
     to_account_id: formData.value.type === 'transfers' ? formData.value.toAccount : null,
+    exchange_rate: isExchangeRateRequired.value ? exchangeRateToPayload(formData.value.exchangeRate) : null,
     purpose_id: formData.value.purpose,
     note: hasSplitData.value ? 'split' : formData.value.note || null,
     category_id: formData.value.category,
@@ -298,6 +338,11 @@ function handlePaymentNoteInput(value: string) {
 
 function handlePaymentProjectInput(value: number | null) {
   formData.value.project = value
+}
+
+function exchangeRateToPayload(value: string): number | null {
+  const rate = Number(value.replace(',', '.'))
+  return Number.isFinite(rate) && rate > 0 ? rate : null
 }
 
 function handlePurposeSelection(purposeId: number | null) {
@@ -353,9 +398,14 @@ async function savePaymentFields() {
     throw new Error('account_required')
   }
 
-  if (formData.value.type === 'transfers' && formData.value.category !== null && formData.value.toAccount === null) {
+  if (formData.value.type === 'transfers' && formData.value.toAccount === null) {
     ElMessage.error({ message: 'Выберите счет назначения', plain: true })
     throw new Error('destination_account_required')
+  }
+
+  if (isExchangeRateRequired.value && exchangeRateToPayload(formData.value.exchangeRate) === null) {
+    ElMessage.error({ message: 'Укажите курс обмена', plain: true })
+    throw new Error('exchange_rate_required')
   }
 
   await editPayment.mutateAsync({
@@ -524,6 +574,7 @@ async function handleDeletePayment() {
               v-model="formData.category"
               clearable
               filterable
+              :placeholder="formData.type === 'transfers' ? 'Без категории' : 'Выберите категорию'"
               @focus="setActivePicker('category')"
               @visible-change="handleCategoryVisibleChange"
             >
@@ -537,7 +588,7 @@ async function handleDeletePayment() {
           </ElFormItem>
 
           <ElFormItem
-            v-if="formData.type === 'transfers' && formData.category !== null"
+            v-if="formData.type === 'transfers'"
             label="В счет"
             required
           >
@@ -549,12 +600,19 @@ async function handleDeletePayment() {
               @focus="setActivePicker('to_account')"
             >
               <ElOption
-                v-for="account in accountOptions.filter(account => account.id !== formData.check)"
+                v-for="account in destinationAccountOptions"
                 :key="account.id"
                 :label="account.title"
                 :value="account.id"
               />
             </ElSelect>
+          </ElFormItem>
+
+          <ElFormItem v-if="isExchangeRateRequired" label="Курс обмена" required>
+            <ElInput
+              v-model="formData.exchangeRate"
+              placeholder="Например, 73"
+            />
           </ElFormItem>
 
           <ElFormItem label="Проект">

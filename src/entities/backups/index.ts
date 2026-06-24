@@ -1,8 +1,13 @@
 export { BackupsService } from "./service/backups.service"
 export type {
-    BackupActionRequest,
+    BackupClearResponse,
+    BackupClearTableSummary,
+    BackupCreateResponse,
     BackupDownloadResponse,
-    BackupResponse,
+    BackupListItem,
+    BackupRestoreMode,
+    BackupRestoreResponse,
+    BackupRestoreTableSummary,
     ClearDatabaseRequest,
     DownloadBackupRequest,
     GetBackupsResponse,

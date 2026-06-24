@@ -1,274 +1,254 @@
 <script setup lang="ts">
-import { BackupsService, BackupResponse } from '@/entities/backups';
-import { Download, Refresh } from '@element-plus/icons-vue';
-import { ElNotification, FormInstance, FormRules } from 'element-plus';
-import { computed, reactive, ref } from 'vue';
+import { BackupsService } from '@/entities/backups'
+import type { BackupListItem, BackupRestoreMode, BackupRestoreResponse } from '@/entities/backups'
+import { Download, Refresh } from '@element-plus/icons-vue'
+import axios from 'axios'
+import { ElNotification } from 'element-plus'
+import { computed, ref } from 'vue'
 
 const visible = ref(false)
-const passwordDialogVisible = ref(false)
-const backups = ref<BackupResponse[]>([])
+const backups = ref<BackupListItem[]>([])
 const isLoading = ref(false)
-const restoringBackupId = ref<number | string | null>(null)
-const downloadingBackupId = ref<number | string | null>(null)
-const pendingAction = ref<'restore' | 'download' | null>(null)
-const selectedBackup = ref<BackupResponse | null>(null)
-const passwordFormRef = ref<FormInstance>()
+const isDownloading = ref(false)
+const isPreviewingRestore = ref(false)
+const isApplyingRestore = ref(false)
+const selectedBackup = ref<BackupListItem | null>(null)
+const downloadDialogVisible = ref(false)
+const restoreDialogVisible = ref(false)
+const applyRestoreDialogVisible = ref(false)
+const downloadPassword = ref('')
+const restorePassword = ref('')
+const restoreMode = ref<BackupRestoreMode>('replace')
+const restorePreview = ref<BackupRestoreResponse | null>(null)
 
-const passwordForm = reactive({
-    current_password: '',
-})
+const selectedFilename = computed(() => selectedBackup.value?.filename ?? '')
+const restoreSummaryRows = computed(() => Object.entries(restorePreview.value?.summary ?? {}).map(([table, summary]) => ({
+  table,
+  ...summary,
+})))
 
-const passwordRules: FormRules<typeof passwordForm> = {
-    current_password: [
-        {
-            required: true,
-            message: 'Введите текущий пароль',
-            trigger: 'blur',
-        },
-    ],
+defineExpose({ open, refresh: loadBackups })
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const detail = error.response?.data?.detail
+    if (typeof detail === 'string') return detail
+  }
+
+  return fallback
 }
-
-const passwordDialogTitle = computed(() => {
-    if (pendingAction.value === 'restore')
-        return 'Восстановить резервную копию'
-
-    return 'Скачать резервную копию'
-})
-
-defineExpose({
-    open,
-})
 
 async function open() {
-    visible.value = true
-    await loadBackups()
-}
-
-function getBackupId(backup: BackupResponse): number | string {
-    return backup.id ?? backup.backup_id ?? backup.filename ?? backup.name ?? ''
-}
-
-function getBackupTitle(backup: BackupResponse): string {
-    return backup.filename || backup.name || `Backup ${getBackupId(backup)}`
-}
-
-function getBackupSize(backup: BackupResponse): string {
-    if (!backup.size)
-        return '-'
-
-    return String(backup.size)
+  visible.value = true
+  await loadBackups()
 }
 
 async function loadBackups() {
-    try {
-        isLoading.value = true
-        const response = await BackupsService.getBackups()
-        backups.value = response.data
-    }
-    catch {
-        ElNotification({
-            title: 'Резервные копии',
-            message: 'Не получилось загрузить резервные копии',
-            type: 'error',
-        })
-    }
-    finally {
-        isLoading.value = false
-    }
+  try {
+    isLoading.value = true
+    const response = await BackupsService.getBackups()
+    backups.value = response.data
+  } catch (error) {
+    ElNotification({
+      title: 'Резервные копии',
+      message: getErrorMessage(error, 'Не получилось загрузить резервные копии'),
+      type: 'error',
+    })
+  } finally {
+    isLoading.value = false
+  }
 }
 
-function openPasswordDialog(backup: BackupResponse, action: 'restore' | 'download') {
-    selectedBackup.value = backup
-    pendingAction.value = action
-    passwordForm.current_password = ''
-    passwordDialogVisible.value = true
+function formatDate(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ru-RU')
 }
 
-async function submitPasswordAction() {
-    if (!passwordFormRef.value || !selectedBackup.value || !pendingAction.value)
-        return
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} Б`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`
 
-    const isValid = await passwordFormRef.value.validate().catch(() => false)
-    if (!isValid)
-        return
-
-    if (pendingAction.value === 'restore') {
-        await restoreBackup(selectedBackup.value, passwordForm.current_password)
-    }
-    else {
-        await downloadBackup(selectedBackup.value, passwordForm.current_password)
-    }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
 }
 
-async function restoreBackup(backup: BackupResponse, currentPassword: string) {
-    const backupId = getBackupId(backup)
-
-    try {
-        restoringBackupId.value = backupId
-        await BackupsService.restoreBackup({
-            backup_id: backupId,
-            current_password: currentPassword,
-            dry_run: false,
-            confirm: true,
-            mode: 'replace',
-        })
-        passwordDialogVisible.value = false
-        ElNotification({
-            title: 'Восстановление',
-            message: 'База данных успешно восстановлена',
-            type: 'success',
-        })
-    }
-    catch {
-        ElNotification({
-            title: 'Восстановление',
-            message: 'Не получилось восстановить базу данных',
-            type: 'error',
-        })
-    }
-    finally {
-        restoringBackupId.value = null
-    }
+function openDownloadDialog(backup: BackupListItem) {
+  selectedBackup.value = backup
+  downloadPassword.value = ''
+  downloadDialogVisible.value = true
 }
 
-async function downloadBackup(backup: BackupResponse, currentPassword: string) {
-    const backupId = getBackupId(backup)
+function openRestoreDialog(backup: BackupListItem) {
+  selectedBackup.value = backup
+  restoreMode.value = 'replace'
+  restorePreview.value = null
+  restorePassword.value = ''
+  restoreDialogVisible.value = true
+}
 
-    try {
-        downloadingBackupId.value = backupId
-        const response = await BackupsService.downloadBackup({
-            backup_id: backupId,
-            current_password: currentPassword,
-        })
-        const url = URL.createObjectURL(response.data as unknown as Blob)
-        const link = document.createElement('a')
+async function downloadBackup() {
+  if (!selectedFilename.value || !downloadPassword.value) return
 
-        link.href = url
-        link.download = getBackupTitle(backup)
-        link.click()
-        URL.revokeObjectURL(url)
-        passwordDialogVisible.value = false
-    }
-    catch {
-        ElNotification({
-            title: 'Скачивание',
-            message: 'Не получилось скачать резервную копию',
-            type: 'error',
-        })
-    }
-    finally {
-        downloadingBackupId.value = null
-    }
+  try {
+    isDownloading.value = true
+    const response = await BackupsService.downloadBackup(selectedFilename.value, {
+      current_password: downloadPassword.value,
+    })
+    const url = URL.createObjectURL(response.data as unknown as Blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = selectedFilename.value
+    link.click()
+    URL.revokeObjectURL(url)
+    downloadDialogVisible.value = false
+  } catch (error) {
+    ElNotification({ title: 'Скачивание', message: getErrorMessage(error, 'Не получилось скачать резервную копию'), type: 'error' })
+  } finally {
+    downloadPassword.value = ''
+    isDownloading.value = false
+  }
+}
+
+async function previewRestore() {
+  if (!selectedFilename.value) return
+
+  try {
+    isPreviewingRestore.value = true
+    const response = await BackupsService.restoreBackup(selectedFilename.value, {
+      mode: restoreMode.value,
+      dry_run: true,
+    })
+    restorePreview.value = response.data
+  } catch (error) {
+    ElNotification({ title: 'Восстановление', message: getErrorMessage(error, 'Не удалось проверить резервную копию'), type: 'error' })
+  } finally {
+    isPreviewingRestore.value = false
+  }
+}
+
+function openApplyRestoreDialog() {
+  restorePassword.value = ''
+  applyRestoreDialogVisible.value = true
+}
+
+async function applyRestore() {
+  if (!selectedFilename.value || !restorePassword.value) return
+
+  try {
+    isApplyingRestore.value = true
+    await BackupsService.restoreBackup(selectedFilename.value, {
+      mode: restoreMode.value,
+      dry_run: false,
+      confirm: true,
+      current_password: restorePassword.value,
+    })
+    restoreDialogVisible.value = false
+    applyRestoreDialogVisible.value = false
+    ElNotification({ title: 'Восстановление', message: 'База данных восстановлена. Приложение перезагружается.', type: 'success' })
+    window.setTimeout(() => window.location.reload(), 300)
+  } catch (error) {
+    ElNotification({ title: 'Восстановление', message: getErrorMessage(error, 'Не получилось восстановить базу данных'), type: 'error' })
+  } finally {
+    restorePassword.value = ''
+    isApplyingRestore.value = false
+  }
 }
 </script>
 
 <template>
-    <ElDialog
-        v-model="visible"
-        title="Резервные копии"
-        width="760px"
-    >
-        <ElTable
-            v-loading="isLoading"
-            :data="backups"
-            height="360"
-        >
-            <ElTableColumn
-                label="ID"
-                width="90"
-            >
-                <template #default="{ row }">
-                    {{ getBackupId(row) }}
-                </template>
-            </ElTableColumn>
-            <ElTableColumn label="Название">
-                <template #default="{ row }">
-                    {{ getBackupTitle(row) }}
-                </template>
-            </ElTableColumn>
-            <ElTableColumn
-                prop="created_at"
-                label="Создано"
-                width="180"
-            />
-            <ElTableColumn
-                label="Размер"
-                width="120"
-            >
-                <template #default="{ row }">
-                    {{ getBackupSize(row) }}
-                </template>
-            </ElTableColumn>
-            <ElTableColumn
-                label=""
-                width="120"
-                fixed="right"
-            >
-                <template #default="{ row }">
-                    <div class="flex gap-2 justify-end">
-                        <ElTooltip content="Восстановить">
-                            <ElButton
-                                circle
-                                :icon="Refresh"
-                                :loading="restoringBackupId === getBackupId(row)"
-                                @click.stop="openPasswordDialog(row, 'restore')"
-                            />
-                        </ElTooltip>
-                        <ElTooltip content="Скачать">
-                            <ElButton
-                                circle
-                                :icon="Download"
-                                :loading="downloadingBackupId === getBackupId(row)"
-                                @click.stop="openPasswordDialog(row, 'download')"
-                            />
-                        </ElTooltip>
-                    </div>
-                </template>
-            </ElTableColumn>
-        </ElTable>
-        <template #footer>
-            <ElButton @click="loadBackups">
-                Обновить
-            </ElButton>
-            <ElButton @click="visible = false">
-                Закрыть
-            </ElButton>
+  <ElDialog v-model="visible" title="Резервные копии" width="860px">
+    <ElTable v-loading="isLoading" :data="backups" height="360">
+      <ElTableColumn prop="filename" label="Название" min-width="370" />
+      <ElTableColumn label="Создано" width="210">
+        <template #default="{ row }">{{ formatDate(row.last_modified) }}</template>
+      </ElTableColumn>
+      <ElTableColumn label="Размер" width="110">
+        <template #default="{ row }">{{ formatSize(row.size_bytes) }}</template>
+      </ElTableColumn>
+      <ElTableColumn width="120" fixed="right">
+        <template #default="{ row }">
+          <div class="flex justify-end gap-2">
+            <ElTooltip content="Восстановить">
+              <ElButton circle :icon="Refresh" @click.stop="openRestoreDialog(row)" />
+            </ElTooltip>
+            <ElTooltip content="Скачать">
+              <ElButton circle :icon="Download" @click.stop="openDownloadDialog(row)" />
+            </ElTooltip>
+          </div>
         </template>
-    </ElDialog>
+      </ElTableColumn>
+    </ElTable>
+    <template #footer>
+      <ElButton @click="loadBackups">Обновить</ElButton>
+      <ElButton @click="visible = false">Закрыть</ElButton>
+    </template>
+  </ElDialog>
 
-    <ElDialog
-        v-model="passwordDialogVisible"
-        :title="passwordDialogTitle"
-        width="520px"
-    >
-        <ElForm
-            ref="passwordFormRef"
-            label-position="top"
-            :model="passwordForm"
-            :rules="passwordRules"
-        >
-            <ElFormItem
-                label="Текущий пароль"
-                prop="current_password"
-            >
-                <ElInput
-                    v-model="passwordForm.current_password"
-                    show-password
-                    type="password"
-                />
-            </ElFormItem>
-        </ElForm>
-        <template #footer>
-            <ElButton @click="passwordDialogVisible = false">
-                Отмена
-            </ElButton>
-            <ElButton
-                type="primary"
-                :loading="restoringBackupId !== null || downloadingBackupId !== null"
-                @click="submitPasswordAction"
-            >
-                Продолжить
-            </ElButton>
-        </template>
-    </ElDialog>
+  <ElDialog v-model="downloadDialogVisible" title="Скачать резервную копию" width="520px" @closed="downloadPassword = ''">
+    <ElForm label-position="top">
+      <ElFormItem label="Текущий пароль" required>
+        <ElInput v-model="downloadPassword" type="password" show-password />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <ElButton @click="downloadDialogVisible = false">Отмена</ElButton>
+      <ElButton type="primary" :loading="isDownloading" :disabled="!downloadPassword" @click="downloadBackup">Скачать</ElButton>
+    </template>
+  </ElDialog>
+
+  <ElDialog v-model="restoreDialogVisible" title="Восстановление из резервной копии" width="820px">
+    <template v-if="!restorePreview">
+      <ElAlert
+        class="mb-4"
+        title="Сначала будет выполнена проверка без изменения данных."
+        type="info"
+        :closable="false"
+      />
+      <ElRadioGroup v-model="restoreMode" class="flex flex-col items-start gap-3">
+        <ElRadio value="replace">Заменить текущие данные данными из копии</ElRadio>
+        <ElRadio value="merge">Добавить только отсутствующие записи из копии</ElRadio>
+      </ElRadioGroup>
+      <div class="mt-5 flex justify-end gap-2">
+        <ElButton @click="restoreDialogVisible = false">Отмена</ElButton>
+        <ElButton type="primary" :loading="isPreviewingRestore" @click="previewRestore">Проверить</ElButton>
+      </div>
+    </template>
+    <template v-else>
+      <ElAlert
+        class="mb-4"
+        :title="restoreMode === 'replace' ? 'Все текущие данные из перечисленных таблиц будут заменены.' : 'Существующие записи не будут изменены.'"
+        :type="restoreMode === 'replace' ? 'warning' : 'info'"
+        :closable="false"
+      />
+      <ElTable :data="restoreSummaryRows" max-height="360">
+        <ElTableColumn prop="table" label="Таблица" min-width="180" />
+        <ElTableColumn prop="existing_count" label="Сейчас" width="100" />
+        <ElTableColumn prop="backup_count" label="В копии" width="100" />
+        <ElTableColumn prop="would_insert" label="Добавится" width="110" />
+        <ElTableColumn prop="would_skip" label="Пропустится" width="120" />
+        <ElTableColumn prop="would_delete" label="Удалится" width="100" />
+      </ElTable>
+      <div class="mt-5 flex justify-end gap-2">
+        <ElButton @click="restorePreview = null">Изменить режим</ElButton>
+        <ElButton type="danger" @click="openApplyRestoreDialog">Восстановить</ElButton>
+      </div>
+    </template>
+  </ElDialog>
+
+  <ElDialog v-model="applyRestoreDialogVisible" title="Подтвердите восстановление" width="520px" @closed="restorePassword = ''">
+    <ElAlert
+      class="mb-4"
+      title="Операция изменит локальную базу данных."
+      type="warning"
+      :closable="false"
+    />
+    <ElForm label-position="top">
+      <ElFormItem label="Текущий пароль" required>
+        <ElInput v-model="restorePassword" type="password" show-password />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <ElButton @click="applyRestoreDialogVisible = false">Отмена</ElButton>
+      <ElButton type="danger" :loading="isApplyingRestore" :disabled="!restorePassword" @click="applyRestore">Подтвердить</ElButton>
+    </template>
+  </ElDialog>
 </template>

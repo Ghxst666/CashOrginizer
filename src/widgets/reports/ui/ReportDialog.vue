@@ -45,9 +45,9 @@ const paymentSearch = defineModel<string>('paymentSearch', { required: true })
 const selectedRow = defineModel<TableRow | null>('selectedRow', { required: true })
 const filters = defineModel<ReportFilters>('filters', { required: true })
 const customDateRange = defineModel<string[]>('customDateRange', { required: true })
+const categoryType = defineModel<string | null>('categoryType', { required: true })
 const activeSettingsField = ref('title')
 const rightSearch = ref('')
-const categoryType = ref<string | null>(null)
 const isReferenceField = computed(() => ['accounts_ids', 'purposes_ids', 'categories_ids', 'projects_ids'].includes(activeSettingsField.value))
 const rightOptions = computed(() => {
     const source = activeSettingsField.value === 'accounts_ids' ? props.accountOptions
@@ -56,7 +56,12 @@ const rightOptions = computed(() => {
         : activeSettingsField.value === 'projects_ids' ? props.projectOptions
         : []
     const query = rightSearch.value.trim().toLocaleLowerCase()
-    return source.filter(option => (!query || option.label.toLocaleLowerCase().includes(query)) && (!categoryType.value || option.type === categoryType.value))
+    const isCategoryField = activeSettingsField.value === 'categories_ids'
+
+    return source.filter(option => (
+        (!query || option.label.toLocaleLowerCase().includes(query))
+        && (!isCategoryField || !categoryType.value || option.type === categoryType.value)
+    ))
 })
 
 function selectedIds() {
@@ -147,6 +152,7 @@ function toggleOption(id: number | string) {
 
                 <ReportSettingsPanel
                     v-else
+                    class="report-main__settings"
                     v-model:filters="filters"
                     v-model:active-field="activeSettingsField"
                     v-model:custom-date-range="customDateRange"
@@ -166,6 +172,8 @@ function toggleOption(id: number | string) {
                 :properties="properties"
             />
             <aside v-else-if="activeTab === 'settings'" class="report-settings-side">
+              <ElScrollbar class="report-settings-side__scroll">
+                <div class="report-settings-side__content">
                 <template v-if="isReferenceField">
                     <ElInput v-model="rightSearch" placeholder="Найти" clearable />
                     <div v-if="activeSettingsField === 'categories_ids'" class="category-types">
@@ -201,6 +209,8 @@ function toggleOption(id: number | string) {
                     />
                 </div>
                 <span v-else class="report-settings-side__hint">Выберите поле слева</span>
+                </div>
+              </ElScrollbar>
             </aside>
         </div>
     </ElDialog>
@@ -237,6 +247,7 @@ function toggleOption(id: number | string) {
 .report-window {
   display: grid;
   height: 84vh;
+  min-height: 0;
   grid-template-columns: minmax(0, 1fr) 360px;
   background: #fff;
 }
@@ -244,8 +255,14 @@ function toggleOption(id: number | string) {
 .report-main {
   display: flex;
   min-width: 0;
+  min-height: 0;
   flex-direction: column;
   border-right: 1px solid #aeb8c2;
+}
+
+.report-main__settings {
+  flex: 1;
+  min-height: 0;
 }
 
 .report-toolbar {
@@ -273,7 +290,9 @@ function toggleOption(id: number | string) {
   font-size: 12px;
 }
 
-.report-settings-side { display: flex; min-width: 0; flex-direction: column; gap: 10px; padding: 12px; }
+.report-settings-side { display: flex; min-width: 0; min-height: 0; flex-direction: column; }
+.report-settings-side__scroll { flex: 1; min-height: 0; }
+.report-settings-side__content { display: flex; min-width: 0; flex-direction: column; gap: 10px; padding: 12px; }
 .category-types, .side-inline { display: flex; flex-wrap: wrap; gap: 6px; }
 .side-option { margin-right: 0; padding: 8px 0; }
 .report-settings-side__hint { color: #6b7280; font-size: 14px; }

@@ -5,7 +5,7 @@ import { computed, ref, watch } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
 import { useAccountsQuery, useAccountsReorder, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
-import { accountsCreateRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
+import { accountEditRequesData, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
 import { GroupsContainer } from '@/features/groups';
@@ -49,7 +49,7 @@ const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsBy
 const filteredAccountsByGroupsData = computed(() => filterAccountGroups(accountsByGroupsData.value ?? []))
 const totalBalance = computed(() => sumAmounts(balanceAccountsData.value ?? []))
 
-const formData = ref<accountsCreateRequest>({
+const formData = ref<accountEditRequesData>({
   title: '',
   type: '',
   start_amount: 0,
@@ -58,6 +58,8 @@ const formData = ref<accountsCreateRequest>({
   note: '',
   status: true,
   group_id: 0,
+  currency: 'RUB',
+  exchange_rate: null,
 })
 
 function handleSortByType() {
@@ -118,6 +120,10 @@ function handleOpenUpdateDialog(row: accountsResponse) {
     note: row.note,
     status: row.status,
     group_id: row.group_id,
+    currency: row.currency || 'RUB',
+    exchange_rate: row.exchange_rate === null || row.exchange_rate === undefined
+      ? null
+      : Number(row.exchange_rate),
   }
   updateDialogVisible.value = true
 }
@@ -169,6 +175,7 @@ function getAccountSearchValues(account: accountsResponse) {
     account.start_amount,
     account.min_amount,
     account.credit_limit_amount,
+    account.currency,
     mapperStatus(account.status),
   ]
 }
@@ -308,7 +315,7 @@ function sumAmounts(items: Array<{ amount?: string | null }>) {
             <span class="text-[#6b7280]">{{ selectedAccount.amount }}</span>
           </ElFormItem>
           <ElFormItem label="Валюта">
-            <span class="text-[#6b7280]">RUB</span>
+            <span class="text-[#6b7280]">{{ selectedAccount.currency }}</span>
           </ElFormItem>
           <ElFormItem label="Примечание">
             <span class="text-[#6b7280]">

@@ -1,19 +1,26 @@
 <script setup lang="ts">
 import { useAccountsEdit, useDelete } from '@/entities/transaction/invoices';
-import { accountsCreateRequest } from '@/entities/transaction/invoices/types/invoices.types';
-import { ElDialog } from 'element-plus';
+import { useGroupsQuery } from '@/entities/transaction/groups';
+import { accountEditRequesData } from '@/entities/transaction/invoices/types/invoices.types';
+import { ElDialog, ElMessage } from 'element-plus';
 import { computed, ref, watch } from 'vue';
 const props = defineProps<{
   title: string
   id: number | null
-  updateData: accountsCreateRequest
+  updateData: accountEditRequesData
 }>()
 
 const isOpen = defineModel<boolean>({ default: false })
 const { mutate, isPending } = useAccountsEdit()
 const { mutate: deleteAccount, isPending: isDeleting } = useDelete()
+const { data: groups, isLoading: isGroupsLoading } = useGroupsQuery()
 
-const formData  = ref<accountsCreateRequest>({
+const NO_GROUP = 'no-group'
+type EditAccountFormData = Omit<accountEditRequesData, 'group_id'> & {
+  group_id: number | typeof NO_GROUP
+}
+
+const formData  = ref<EditAccountFormData>({
   title: '',
   type: '',
   start_amount: 0,
@@ -21,14 +28,23 @@ const formData  = ref<accountsCreateRequest>({
   credit_limit_amount: 0,
   note: '',
   status: true,
-  group_id: 0,
+  group_id: NO_GROUP,
+  currency: 'RUB',
+  exchange_rate: null,
 })
 
 const disabled = computed(() => isPending.value)
 
 watch(
   () => props.updateData,
-  (val) => { if (val) formData .value = { ...val } },
+  (val) => {
+    if (val) {
+      formData.value = {
+        ...val,
+        group_id: val.group_id ?? NO_GROUP,
+      }
+    }
+  },
   { immediate: true }
 )
 
@@ -36,6 +52,16 @@ function handleUpdate() {
   if (!props.id) return
 
   const payload: any = { ...formData.value }
+
+  if (payload.group_id === NO_GROUP) payload.group_id = null
+  const exchangeRate = Number(String(payload.exchange_rate ?? '').replace(',', '.'))
+
+  if (payload.currency === 'USD' && (!Number.isFinite(exchangeRate) || exchangeRate <= 0)) {
+    ElMessage.error({ message: 'Укажите корректный курс к RUB', plain: true })
+    return
+  }
+
+  payload.exchange_rate = payload.currency === 'USD' ? exchangeRate : null
 
   if (payload.type !== 'creditcard') {
     delete payload.credit_limit_amount
@@ -118,10 +144,26 @@ function handleDelete() {
         </ElFormItem>
 
         <ElFormItem label="Группа счетов">
-          <ElSelect v-model="formData.group_id">
-            <ElOption label="1" :value="1" />
-            <ElOption label="2" :value="2" />
+          <ElSelect v-model="formData.group_id" :loading="isGroupsLoading">
+            <ElOption label="Без группы" :value="NO_GROUP" />
+            <ElOption
+              v-for="group in groups"
+              :key="group.id"
+              :label="group.title"
+              :value="group.id"
+            />
           </ElSelect>
+        </ElFormItem>
+
+        <ElFormItem label="Валюта">
+          <ElSelect v-model="formData.currency">
+            <ElOption label="Российский рубль (RUB)" value="RUB" />
+            <ElOption label="Доллар США (USD)" value="USD" />
+          </ElSelect>
+        </ElFormItem>
+
+        <ElFormItem v-if="formData.currency === 'USD'" label="Курс к RUB" required>
+          <ElInput v-model="formData.exchange_rate" placeholder="Например, 73" />
         </ElFormItem>
       </ElForm>
       <aside class="account-inputs-panel">

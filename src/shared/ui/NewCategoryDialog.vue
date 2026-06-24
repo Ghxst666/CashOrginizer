@@ -41,7 +41,9 @@ function flattenCategories(categories: any[]): any {
 }
 
 const flatCategories = computed(() =>
-    flattenCategories(props.categories)
+    flattenCategories(props.categories).filter((category: { type: string, title: string }) => (
+      category.type !== 'transfers' && category.title !== 'Без категории'
+    ))
 )
 
 watch(isSuccess, () => {

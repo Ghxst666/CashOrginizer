@@ -11,7 +11,7 @@ export interface ReportsRequest {
     amount_to?: string | null
     number_from?: string | null
     number_to?: string | null
-    accounts_ids?: string
+    accounts_ids?: number[]
     purposes_ids?: string
     categories_ids?: string
     projects_ids?: string

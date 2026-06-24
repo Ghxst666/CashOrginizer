@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useUpdateCategory } from '@/entities/category';
+import { useDeleteCategory, useUpdateCategory } from '@/entities/category';
 import { CategoryResponseData, CreateCategoryData } from '@/entities/category/types/category.types';
 import { ElDialog, ElForm, ElFormItem, ElInput, ElOption, ElSelect } from 'element-plus';
 import { computed, ref, watch } from 'vue';
@@ -11,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const { mutate, isPending } = useUpdateCategory()
+const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory()
 
 const newCategoryData = ref<CreateCategoryData>({
     title: '',
@@ -39,6 +40,15 @@ function handleClose() {
     isOpen.value = false
 }
 
+function handleDelete() {
+    if (!props.id) return
+
+    deleteCategory(
+        { category_id: props.id },
+        { onSuccess: () => { isOpen.value = false } },
+    )
+}
+
 function flattenCategories(categories: any[]): any {
     return categories.flatMap(category => [
         category,
@@ -47,7 +57,9 @@ function flattenCategories(categories: any[]): any {
 }
 
 const flatCategories = computed(() =>
-    flattenCategories(props.categories)
+    flattenCategories(props.categories).filter((category: { type: string, id: number, title: string }) => (
+      category.type !== 'transfers' && category.id !== props.id && category.title !== 'Без категории'
+    ))
 )
 
 watch(
@@ -92,13 +104,26 @@ watch(
 
         <template #footer>
             <div class="flex justify-between">
-                <ElButton @click="handleUpdate" type="primary" :disabled="disabled">
-                    Сохранить
-                </ElButton>
-
+              <ElPopconfirm
+                width="220"
+                :icon="undefined"
+                title="Вы хотите удалить категорию?"
+                @confirm="handleDelete"
+              >
+                <template #reference>
+                  <ElButton type="danger" :loading="isDeleting" :disabled="disabled">
+                    Удалить
+                  </ElButton>
+                </template>
+              </ElPopconfirm>
+              <div class="flex gap-2">
                 <ElButton @click="handleClose">
-                    Отмена
+                  Отмена
                 </ElButton>
+                <ElButton @click="handleUpdate" type="primary" :disabled="disabled">
+                  Сохранить
+                </ElButton>
+              </div>
             </div>
         </template>
     </ElDialog>

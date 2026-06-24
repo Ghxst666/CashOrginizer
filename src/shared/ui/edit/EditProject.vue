@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useUpdateProject } from '@/entities/project';
+import { useDeleteProject, useUpdateProject } from '@/entities/project';
 import { projectCreateData, projectsResponseData } from '@/entities/project/types/project.types';
 import { ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElOption, ElSelect } from 'element-plus';
 import { computed, ref, watch } from 'vue';
@@ -11,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const { mutate, isPending } = useUpdateProject()
+const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject()
 
 const FormData = ref<projectCreateData>({
     title: '',
@@ -38,6 +39,15 @@ function handleUpdate() {
 
 function handleClose() {
     isOpen.value = false
+}
+
+function handleDelete() {
+    if (!props.id) return
+
+    deleteProject(
+        { project_id: props.id },
+        { onSuccess: () => { isOpen.value = false } },
+    )
 }
 
 function flattenProjects(projects: any[]): any {
@@ -99,13 +109,26 @@ watch(
 
         <template #footer>
             <div class="flex justify-between">
-                <ElButton @click="handleUpdate" type="primary" :disabled="disabled">
-                    Сохранить
-                </ElButton>
-
+              <ElPopconfirm
+                width="220"
+                :icon="undefined"
+                title="Вы хотите удалить проект?"
+                @confirm="handleDelete"
+              >
+                <template #reference>
+                  <ElButton type="danger" :loading="isDeleting" :disabled="disabled">
+                    Удалить
+                  </ElButton>
+                </template>
+              </ElPopconfirm>
+              <div class="flex gap-2">
                 <ElButton @click="handleClose">
-                    Отмена
+                  Отмена
                 </ElButton>
+                <ElButton @click="handleUpdate" type="primary" :disabled="disabled">
+                  Сохранить
+                </ElButton>
+              </div>
             </div>
         </template>
     </ElDialog>

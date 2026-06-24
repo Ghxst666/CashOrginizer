@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useCategoriesQuery } from '@/entities/category'
 import { useProjectsQuery } from '@/entities/project'
-import { useCreatePurposes, useUpdatePurposes } from '@/entities/purposes'
+import { useCreatePurposes, useDeletePurposes, useUpdatePurposes } from '@/entities/purposes'
 import type { createPurposesData, purposesRowData, updatePurposesData } from '@/entities/purposes/types/purposes.types'
 
 interface SelectOptionNode {
@@ -31,6 +31,7 @@ const emit = defineEmits<{
 const isOpen = defineModel<boolean>({ required: true })
 const createPurpose = useCreatePurposes()
 const updatePurpose = useUpdatePurposes()
+const deletePurpose = useDeletePurposes()
 const categoriesEnabled = ref(false)
 const projectsEnabled = ref(false)
 const { data: categories } = useCategoriesQuery(undefined, categoriesEnabled)
@@ -53,7 +54,9 @@ const dialogTitle = computed(() => (
 ))
 const categoryOptions = computed(() => flattenOptions(categories.value?.rows ?? []))
 const projectOptions = computed(() => flattenOptions(projects.value?.rows ?? []))
-const isPending = computed(() => createPurpose.isPending.value || updatePurpose.isPending.value)
+const isPending = computed(() => (
+  createPurpose.isPending.value || updatePurpose.isPending.value || deletePurpose.isPending.value
+))
 
 watch(
   () => [isOpen.value, props.purpose] as const,
@@ -161,6 +164,17 @@ async function handleSubmit() {
     // Mutation handlers show user-facing errors.
   }
 }
+
+async function handleDelete() {
+  if (!props.purpose) return
+
+  try {
+    await deletePurpose.mutateAsync({ purpose_id: props.purpose.id })
+    handleClose()
+  } catch {
+    // Mutation handlers show user-facing errors.
+  }
+}
 </script>
 
 <template>
@@ -211,12 +225,28 @@ async function handleSubmit() {
 
     <template #footer>
       <div class="flex justify-between">
-        <ElButton @click="handleClose">
-          Отмена
-        </ElButton>
-        <ElButton type="primary" :loading="isPending" @click="handleSubmit">
-          Готово
-        </ElButton>
+        <ElPopconfirm
+          v-if="isEditMode"
+          width="220"
+          :icon="undefined"
+          title="Вы хотите удалить название?"
+          @confirm="handleDelete"
+        >
+          <template #reference>
+            <ElButton type="danger" :loading="deletePurpose.isPending.value" :disabled="isPending">
+              Удалить
+            </ElButton>
+          </template>
+        </ElPopconfirm>
+        <span v-else />
+        <div class="flex gap-2">
+          <ElButton @click="handleClose">
+            Отмена
+          </ElButton>
+          <ElButton type="primary" :loading="isPending" @click="handleSubmit">
+            Готово
+          </ElButton>
+        </div>
       </div>
     </template>
   </ElDialog>

@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { useDeleteCategory } from '@/entities/category';
 import { CategoryResponseData, CategoryRowData, CreateCategoryData } from '@/entities/category/types/category.types';
 import type { PaymentType } from '@/entities/transaction/payments/types/payments.types';
 import { filterTreeRowsBySearch } from '@/shared/lib/search';
 import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import EditCategory from '@/shared/ui/edit/EditCategory.vue';
-import { Delete, EditPen } from '@element-plus/icons-vue';
-import { ElButton, ElPopconfirm, ElText } from 'element-plus';
-import { computed, ref } from 'vue';
+import { ElText } from 'element-plus';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     data: CategoryResponseData
@@ -21,8 +19,12 @@ const headerSearchStore = useHeaderSearchStore()
 const selectedRow = ref<CreateCategoryData>()
 const selectedId = ref<number>()
 const isOpenEdit = ref(false)
-
-const { mutate } = useDeleteCategory()
+const contextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    row: null as CategoryRowData | null,
+})
 const tableRows = computed(() => filterTreeRowsBySearch(
     props.data.rows,
     headerSearchStore.debouncedQuery,
@@ -34,13 +36,6 @@ const tableRows = computed(() => filterTreeRowsBySearch(
         row.total_formatted,
     ],
 ))
-
-function handleConfirm(id: number) {
-  mutate({
-    category_id: id,
-  })
-}
-
 
 function paymentTypeTitle(type?: PaymentType | null) {
     if (type === 'expenses') return 'Расход'
@@ -66,6 +61,34 @@ function handleUpdate(row: any) {
 function handleRowClick(row: CategoryRowData) {
     emit('select', row)
 }
+
+function handleRowContextMenu(row: CategoryRowData, _column: unknown, event: MouseEvent) {
+  event.preventDefault()
+
+  if (row.type === 'transfers' || row.title === 'Без категории') {
+    closeContextMenu()
+    return
+  }
+
+  contextMenu.value = {
+    visible: true,
+    x: Math.min(event.clientX, window.innerWidth - 180),
+    y: Math.min(event.clientY, window.innerHeight - 48),
+    row,
+  }
+}
+
+function closeContextMenu() {
+  contextMenu.value.visible = false
+}
+
+function handleEditFromContextMenu() {
+  if (contextMenu.value.row) handleUpdate(contextMenu.value.row)
+  closeContextMenu()
+}
+
+onMounted(() => window.addEventListener('click', closeContextMenu))
+onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
 </script>
 
 <template>
@@ -85,6 +108,7 @@ function handleRowClick(row: CategoryRowData) {
             row-key="id"
             :tree-props="{ children: 'children' }"
             @row-click="handleRowClick"
+            @row-contextmenu="handleRowContextMenu"
         >
             <ElTableColumn prop="title" label="Название категории" />
             <ElTableColumn width="300" prop="type" label="Тип">
@@ -95,30 +119,46 @@ function handleRowClick(row: CategoryRowData) {
                 </template>
             </ElTableColumn>
             <ElTableColumn width="300" prop="total_formatted" label="Операция" />
-
-            <ElTableColumn
-            
-                width="140px"
-                align="center"
-            >
-                <template #default="{ row }">
-                    <ElButton type="primary" @click="handleUpdate(row)" :icon="EditPen" />
-                    <ElPopconfirm
-                        width="220"
-                        :icon="undefined"
-                        title="Вы хотите удалить категорию?"
-                    >
-                        <template #reference>
-                            <ElButton type="danger" :icon="Delete" />
-                        </template>
-
-                        <template #actions="{ cancel }">
-                            <ElButton size="small" @click="cancel">Нет</ElButton>
-                            <ElButton type="danger" size="small" @click="handleConfirm(row.id)">Да</ElButton>
-                        </template>
-                    </ElPopconfirm>
-                </template>
-            </ElTableColumn>
         </ElTable>
+        <div
+          v-if="contextMenu.visible"
+          class="context-menu"
+          :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+          role="menu"
+          @click.stop
+        >
+          <button type="button" role="menuitem" @click="handleEditFromContextMenu">
+            Редактировать
+          </button>
+        </div>
     </div>
 </template>
+
+<style scoped>
+.context-menu {
+  position: fixed;
+  z-index: 3000;
+  min-width: 160px;
+  padding: 4px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.context-menu button {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #303133;
+  cursor: pointer;
+  text-align: left;
+}
+
+.context-menu button:hover {
+  background: #ecf5ff;
+  color: #409eff;
+}
+</style>

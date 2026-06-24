@@ -35,6 +35,7 @@ const dialogVisible = ref(false)
 const activeTab = ref<ReportTab>('list')
 const activeReportCode = ref(REPORTS[0].code)
 const customDateRange = ref<string[]>([])
+const categoryType = ref<string | null>(null)
 const selectedRow = ref<TableRow | null>(null)
 const paymentSearch = ref('')
 const exportLoading = ref(false)
@@ -72,7 +73,9 @@ const requestData = computed<ReportsRequest | undefined>(() => {
         period: filters.period,
         title: filters.title || undefined,
         note: filters.note || undefined,
-        accounts_ids: filters.accounts_ids.join(',') || undefined,
+        accounts_ids: filters.accounts_ids.length
+            ? filters.accounts_ids.map(id => categoryType.value === 'transfers' ? -id : id)
+            : undefined,
         purposes_ids: filters.purposes_ids.join(',') || undefined,
         categories_ids: filters.categories_ids.join(',') || undefined,
         projects_ids: filters.projects_ids.join(',') || undefined,
@@ -213,6 +216,7 @@ watch(tableRows, rows => {
 function openReport(report: ReportDefinition) {
     activeReportCode.value = report.code
     activeTab.value = 'list'
+    categoryType.value = null
     paymentSearch.value = ''
     selectedRow.value = null
     dialogVisible.value = true
@@ -297,6 +301,7 @@ function formatDate(value: string) {
             v-model:selected-row="selectedRow"
             v-model:filters="filters"
             v-model:custom-date-range="customDateRange"
+            v-model:category-type="categoryType"
             :report="activeReport"
             :rows="tableRows"
             :columns="tableColumns"

@@ -13,12 +13,14 @@ import ChangePasswordDialog from './ChangePasswordDialog.vue';
 import ClearDatabaseDialog from './ClearDatabaseDialog.vue';
 import ExportQifDialog from './ExportQifDialog.vue';
 import ReissueCodesDialog from './ReissueCodesDialog.vue';
+import SyncAccessDialog from './SyncAccessDialog.vue';
 
 const qifFileInput = ref<HTMLInputElement>()
 const backupsDialogRef = ref<InstanceType<typeof BackupsDialog>>()
 
 const changePasswordDialogVisible = ref(false)
 const reissueCodesDialogVisible = ref(false)
+const syncAccessDialogVisible = ref(false)
 const exportQifDialogVisible = ref(false)
 const clearDatabaseDialogVisible = ref(false)
 const isCreatingBackup = ref(false)
@@ -114,6 +116,10 @@ function handleHeaderCommand(command: string) {
     if (command === 'reissueCodes') {
         reissueCodesDialogVisible.value = true
     }
+
+    if (command === 'syncAccess') {
+        syncAccessDialogVisible.value = true
+    }
 }
 
 function onQifFileChange(event: Event) {
@@ -130,10 +136,11 @@ function onQifFileChange(event: Event) {
 async function createBackup() {
     try {
         isCreatingBackup.value = true
-        await BackupsService.createBackup()
+        const response = await BackupsService.createBackup()
+        await backupsDialogRef.value?.refresh()
         ElNotification({
             title: 'Резервная копия',
-            message: 'Резервная копия успешно создана',
+            message: `Создана: ${new Date(response.data.created_at).toLocaleString('ru-RU')}, ${formatBackupSize(response.data.size_bytes)}`,
             type: 'success',
         })
     }
@@ -147,6 +154,13 @@ async function createBackup() {
     finally {
         isCreatingBackup.value = false
     }
+}
+
+function formatBackupSize(bytes: number) {
+    if (bytes < 1024) return `${bytes} Б`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
 }
 
 async function syncNow() {
@@ -356,6 +370,9 @@ function formatConflictValue(value: unknown): string {
                             <ElDropdownItem command="reissueCodes">
                                 Сбросить коды
                             </ElDropdownItem>
+                            <ElDropdownItem command="syncAccess">
+                                Подключить устройство / Recovery Kit
+                            </ElDropdownItem>
                         </ElDropdownMenu>
                     </template>
                 </ElDropdown>
@@ -365,6 +382,7 @@ function formatConflictValue(value: unknown): string {
         <BackupsDialog ref="backupsDialogRef" />
         <ChangePasswordDialog v-model="changePasswordDialogVisible" />
         <ReissueCodesDialog v-model="reissueCodesDialogVisible" />
+        <SyncAccessDialog v-model="syncAccessDialogVisible" />
         <ExportQifDialog v-model="exportQifDialogVisible" />
         <ClearDatabaseDialog v-model="clearDatabaseDialogVisible" />
 

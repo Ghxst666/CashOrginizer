@@ -1,6 +1,7 @@
 export type PaymentType = 'expenses' | 'profits' | 'transfers'
 
 export type PaymentAmount = string | null
+export type PaymentExchangeRate = number | null
 
 export interface GetPaymentsRequest {
     page?: number
@@ -14,6 +15,7 @@ export interface CreatePaymentRequest {
     amount?: PaymentAmount
     type?: PaymentType | null
     to_account_id?: number | null
+    exchange_rate?: PaymentExchangeRate
     note?: string | null
     category_id?: number | null
     project_id?: number | null
@@ -27,6 +29,7 @@ export interface EditPaymentRequest {
     amount?: PaymentAmount
     type?: PaymentType | null
     to_account_id?: number | null
+    exchange_rate?: PaymentExchangeRate
     note?: string | null
     category_id?: number | null
     project_id?: number | null
@@ -65,6 +68,7 @@ export interface PaymentResponse {
     amount?: PaymentAmount
     type?: PaymentType | null
     to_account_id?: number | null
+    exchange_rate?: PaymentExchangeRate
     note?: string | null
     category_id?: number | null
     project_id?: number | null
@@ -81,6 +85,7 @@ export interface PaymentListItemResponse {
     amount?: PaymentAmount
     type?: PaymentType | null
     to_account_id?: number | null
+    exchange_rate?: PaymentExchangeRate
     note?: string | null
     category_id?: number | null
     project_id?: number | null

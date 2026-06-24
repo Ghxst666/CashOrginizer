@@ -26,7 +26,8 @@ function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'pur
 </script>
 
 <template>
-    <div class="settings-panel">
+    <ElScrollbar class="settings-panel">
+      <div class="settings-panel__content">
         <div class="settings-row">
             <span>Название отчёта</span>
             <ElInput v-model="filters.title" class="settings-control" clearable @focus="activeField = 'title'" />
@@ -152,14 +153,14 @@ function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'pur
                 <ElInput v-model="filters.amount_to" placeholder="До" clearable @focus="activeField = 'amount'" />
             </div>
         </div>
-    </div>
+      </div>
+    </ElScrollbar>
 </template>
 
 <style scoped>
 .settings-panel {
   flex: 1;
   min-height: 0;
-  overflow: auto;
 }
 
 .settings-row {
