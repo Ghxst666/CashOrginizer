@@ -65,8 +65,8 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
             @row-click="handleRowClick"
             @row-contextmenu="handleRowContextMenu"
         >
-            <ElTableColumn width="400" prop="title" label="Название" />
-            <ElTableColumn prop="note" label="Примечание" />
+            <ElTableColumn show-overflow-tooltip width="400" prop="title" label="Название" />
+            <ElTableColumn show-overflow-tooltip prop="note" label="Примечание" />
         </ElTable>
         <div
           v-if="contextMenu.visible"

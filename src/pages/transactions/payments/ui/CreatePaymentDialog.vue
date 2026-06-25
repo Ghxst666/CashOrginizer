@@ -11,7 +11,6 @@ import { useAccountsQuery } from '@/entities/transaction/invoices'
 import { useCategoriesQuery } from '@/entities/category'
 import { useProjectsQuery } from '@/entities/project'
 import { useCreatePurposes, usePurposesQuery } from '@/entities/purposes'
-import type { purposesRowData } from '@/entities/purposes/types/purposes.types'
 import {
   amountToNumber,
   flattenCategoryOptions,
@@ -55,6 +54,7 @@ interface PickerOption {
   id: number
   title: string
   note?: string | null
+  level?: number
 }
 
 const emit = defineEmits<{
@@ -71,7 +71,7 @@ const emptyPaymentForm = (): PaymentFormData => ({
   check: null,
   toAccount: null,
   exchangeRate: '',
-  date: '',
+  date: todayDateString(),
   type: 'expenses',
   purpose: null,
   sum: '',
@@ -111,11 +111,15 @@ const sourceAccount = computed(() => (
 const destinationAccount = computed(() => (
   accountOptions.value.find(account => account.id === formData.value.toAccount) ?? null
 ))
-const isExchangeRateRequired = computed(() => (
+const isTransferBetweenDifferentCurrencies = computed(() => (
   formData.value.type === 'transfers'
   && sourceAccount.value !== null
   && destinationAccount.value !== null
   && sourceAccount.value.currency !== destinationAccount.value.currency
+))
+const isExchangeRateRequired = computed(() => (
+  isTransferBetweenDifferentCurrencies.value
+  || (formData.value.type !== 'transfers' && sourceAccount.value?.currency === 'USD')
 ))
 const categoryOptions = computed(() => (
   flattenCategoryOptions((categories.value?.rows ?? []) as PaymentCategoryOptionNode[])
@@ -154,6 +158,19 @@ const paymentNoteValue = computed(() => (
 ))
 const paymentProjectValue = computed(() => (
   hasSplitData.value ? firstSplitProject.value : formData.value.project
+))
+const accountLabel = computed(() => selectedOptionLabel(formData.value.check, accountOptions.value, 'Выберите счет'))
+const destinationAccountLabel = computed(() => selectedOptionLabel(formData.value.toAccount, destinationAccountOptions.value, 'Выберите счет'))
+const purposeLabel = computed(() => selectedOptionLabel(formData.value.purpose, purposeOptions.value, 'Выберите название'))
+const categoryLabel = computed(() => {
+  if (formData.value.category === null && formData.value.type === 'transfers') return 'Без категории'
+
+  return selectedOptionLabel(formData.value.category, categoryOptions.value, 'Выберите категорию')
+})
+const projectLabel = computed(() => (
+  hasSplitData.value
+    ? 'Смотрите во вкладке Сплиты'
+    : selectedOptionLabel(paymentProjectValue.value, projectOptions.value, 'Выберите проект')
 ))
 
 const isPending = computed(() => (
@@ -201,15 +218,20 @@ function resetForm() {
   pickerSearch.value = ''
 }
 
+function todayDateString() {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 function flattenOptions(options: SelectOptionNode[]): SelectOptionNode[] {
   return options.flatMap(option => [
     option,
     ...flattenOptions(option.children ?? []),
   ])
-}
-
-function handleCategoryVisibleChange(visible: boolean) {
-  if (visible) categoriesEnabled.value = true
 }
 
 function handleProjectVisibleChange(visible: boolean) {
@@ -246,15 +268,17 @@ function removeSplit(index: number) {
 }
 
 function buildPaymentPayload(): CreatePaymentRequest {
+  const exchangeRate = exchangeRateToPayload(formData.value.exchangeRate)
+
   return {
     account_id: Number(formData.value.check),
-    payment_date: formData.value.date,
+    payment_date: formData.value.date || todayDateString(),
     amount: hasSplitData.value
       ? formatAmountForPayload(splitTotalAmountText.value, formData.value.type)
       : formatAmountForPayload(formData.value.sum, formData.value.type),
     type: formData.value.type,
     to_account_id: formData.value.type === 'transfers' ? formData.value.toAccount : null,
-    exchange_rate: isExchangeRateRequired.value ? exchangeRateToPayload(formData.value.exchangeRate) : null,
+    exchange_rate: isExchangeRateRequired.value ? exchangeRate : null,
     purpose_id: formData.value.purpose,
     note: hasSplitData.value ? 'split' : formData.value.note || null,
     category_id: formData.value.category,
@@ -282,8 +306,10 @@ function handlePaymentNoteInput(value: string) {
   formData.value.note = value
 }
 
-function handlePaymentProjectInput(value: number | null) {
-  formData.value.project = value
+function selectedOptionLabel(id: number | null, options: PickerOption[], emptyLabel: string) {
+  if (id === null) return emptyLabel
+
+  return options.find(option => option.id === id)?.title ?? emptyLabel
 }
 
 function exchangeRateToPayload(value: string): number | null {
@@ -306,10 +332,6 @@ function handlePickerOptionSelect(optionId: number) {
 function handleOpenNewPurposeDialog() {
   newPurposeTitle.value = ''
   isNewPurposeDialogOpen.value = true
-}
-
-function getPurposeLabel(purpose: purposesRowData) {
-  return purpose.title
 }
 
 async function handleCreatePurpose() {
@@ -390,20 +412,12 @@ async function handleCreatePayment() {
           class="payment-form"
         >
           <ElFormItem label="Счет">
-            <ElSelect
-              v-model="formData.check"
-              placeholder="Выберите счет"
-              clearable
-              filterable
+            <ElInput
+              :model-value="accountLabel"
+              readonly
               @focus="setActivePicker('account')"
-            >
-              <ElOption
-                v-for="account in accountOptions"
-                :key="account.id"
-                :label="account.title"
-                :value="account.id"
-              />
-            </ElSelect>
+              @click="setActivePicker('account')"
+            />
           </ElFormItem>
 
           <ElFormItem label="Дата">
@@ -426,21 +440,12 @@ async function handleCreatePayment() {
           </ElFormItem>
 
           <ElFormItem label="Название">
-            <ElSelect
-              v-model="formData.purpose"
-              clearable
-              filterable
-              placeholder="Выберите название"
+            <ElInput
+              :model-value="purposeLabel"
+              readonly
               @focus="setActivePicker('purpose')"
-              @change="handlePurposeSelection"
-            >
-              <ElOption
-                v-for="purpose in purposeOptions"
-                :key="purpose.id"
-                :label="getPurposeLabel(purpose)"
-                :value="purpose.id"
-              />
-            </ElSelect>
+              @click="setActivePicker('purpose')"
+            />
           </ElFormItem>
 
           <ElFormItem label="Сумма">
@@ -463,21 +468,12 @@ async function handleCreatePayment() {
           </ElFormItem>
 
           <ElFormItem label="Категория">
-            <ElSelect
-              v-model="formData.category"
-              clearable
-              filterable
-              :placeholder="formData.type === 'transfers' ? 'Без категории' : 'Выберите категорию'"
+            <ElInput
+              :model-value="categoryLabel"
+              readonly
               @focus="setActivePicker('category')"
-              @visible-change="handleCategoryVisibleChange"
-            >
-              <ElOption
-                v-for="category in categoryOptions"
-                :key="category.id"
-                :label="category.title"
-                :value="category.id"
-              />
-            </ElSelect>
+              @click="setActivePicker('category')"
+            />
           </ElFormItem>
 
           <ElFormItem
@@ -485,20 +481,12 @@ async function handleCreatePayment() {
             label="В счет"
             required
           >
-            <ElSelect
-              v-model="formData.toAccount"
-              clearable
-              filterable
-              placeholder="Выберите счет"
+            <ElInput
+              :model-value="destinationAccountLabel"
+              readonly
               @focus="setActivePicker('to_account')"
-            >
-              <ElOption
-                v-for="account in destinationAccountOptions"
-                :key="account.id"
-                :label="account.title"
-                :value="account.id"
-              />
-            </ElSelect>
+              @click="setActivePicker('to_account')"
+            />
           </ElFormItem>
 
           <ElFormItem v-if="isExchangeRateRequired" label="Курс обмена" required>
@@ -509,23 +497,13 @@ async function handleCreatePayment() {
           </ElFormItem>
 
           <ElFormItem label="Проект">
-            <ElSelect
-              :model-value="paymentProjectValue"
-              clearable
-              filterable
+            <ElInput
+              :model-value="projectLabel"
               :disabled="hasSplitData"
-              :placeholder="hasSplitData ? 'Смотрите во вкладке Сплиты' : ''"
+              readonly
               @focus="setActivePicker('project')"
-              @visible-change="handleProjectVisibleChange"
-              @update:model-value="handlePaymentProjectInput"
-            >
-              <ElOption
-                v-for="project in projectOptions"
-                :key="project.id"
-                :label="project.title"
-                :value="project.id"
-              />
-            </ElSelect>
+              @click="setActivePicker('project')"
+            />
           </ElFormItem>
 
         </ElForm>
@@ -576,7 +554,12 @@ async function handleCreatePayment() {
               @click="handlePickerOptionSelect(option.id)"
             >
               <OverflowTooltip :content="option.title">
-                <span class="purpose-picker__title">{{ option.title }}</span>
+                <span
+                  class="purpose-picker__title"
+                  :style="{ paddingLeft: `${activePicker === 'category' ? (option.level ?? 0) * 16 : 0}px` }"
+                >
+                  {{ option.title }}
+                </span>
               </OverflowTooltip>
               <OverflowTooltip v-if="option.note" :content="option.note">
                 <span class="purpose-picker__note">{{ option.note }}</span>

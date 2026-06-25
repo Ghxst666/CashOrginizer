@@ -110,7 +110,7 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
             @row-click="handleRowClick"
             @row-contextmenu="handleRowContextMenu"
         >
-            <ElTableColumn prop="title" label="Название категории" />
+            <ElTableColumn show-overflow-tooltip prop="title" label="Название категории" />
             <ElTableColumn width="300" prop="type" label="Тип">
                 <template #default="{ row }">
                     <ElText :type="paymentTypeTextType(row.type as PaymentType)">
@@ -118,7 +118,7 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
                     </ElText>
                 </template>
             </ElTableColumn>
-            <ElTableColumn width="300" prop="total_formatted" label="Операция" />
+            <ElTableColumn show-overflow-tooltip width="300" prop="total_formatted" label="Операция" />
         </ElTable>
         <div
           v-if="contextMenu.visible"

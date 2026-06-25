@@ -89,7 +89,7 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
             @row-click="handleRowClick"
             @row-contextmenu="handleRowContextMenu"
         >
-            <ElTableColumn prop="title" label="Название проекта">
+            <ElTableColumn show-overflow-tooltip prop="title" label="Название проекта">
                 <template #default="{ row }">
                     <span>{{ row.title }}</span>
                     <span class="text-[red] ml-1" v-if="row.status === 'closed'">(Закрыт)</span>

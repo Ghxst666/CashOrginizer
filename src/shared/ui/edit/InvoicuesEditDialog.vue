@@ -24,7 +24,10 @@ const activeField = ref<AccountField>('title')
 const originalCurrency = ref<'RUB' | 'USD'>('RUB')
 const formData = ref<EditAccountFormData>(emptyForm())
 const disabled = computed(() => isPending.value)
-const currencyChangeRequiresRate = computed(() => formData.value.currency !== originalCurrency.value)
+const currencyChangeRequiresRate = computed(() => (
+  formData.value.currency !== originalCurrency.value
+  && formData.value.currency === 'USD'
+))
 const typeLabel = computed(() => ACCOUNT_TYPES.find(option => option.value === formData.value.type)?.label || 'Не выбран')
 const groupLabel = computed(() => formData.value.group_id === NO_GROUP
   ? 'Без группы'
@@ -54,6 +57,8 @@ function handleUpdate() {
       return
     }
     payload.exchange_rate = exchangeRate
+  } else {
+    delete payload.exchange_rate
   }
 
   if (payload.type !== 'creditcard') delete payload.credit_limit_amount
@@ -83,7 +88,7 @@ watch(() => props.updateData, (value) => {
 <template>
   <ElDialog v-model="isOpen" :title="props.title" width="900">
     <div class="account-editor-layout">
-      <ElScrollbar height="400px" class="account-editor-layout__form">
+      <ElScrollbar class="account-editor-layout__form">
         <div class="account-settings">
           <div class="account-setting-row"><span>Название</span><ElInput v-model="formData.title" @focus="activeField = 'title'" /></div>
           <div class="account-setting-row"><span>Тип</span><ElInput :model-value="typeLabel" readonly @focus="activeField = 'type'" @click="activeField = 'type'" /></div>
@@ -98,18 +103,20 @@ watch(() => props.updateData, (value) => {
         </div>
       </ElScrollbar>
 
-      <aside class="account-detail-panel">
-        <ElInput v-if="activeField === 'title'" v-model="formData.title" placeholder="Название" autofocus />
-        <ElInput v-else-if="activeField === 'start_amount'" v-model="formData.start_amount" placeholder="Начальный баланс" />
-        <ElInput v-else-if="activeField === 'min_amount'" v-model="formData.min_amount" placeholder="Минимальный баланс" />
-        <ElInput v-else-if="activeField === 'credit_limit_amount'" v-model="formData.credit_limit_amount" placeholder="Кредитный лимит" />
-        <ElInput v-else-if="activeField === 'note'" v-model="formData.note" type="textarea" :rows="8" placeholder="Примечание" />
-        <ElInput v-else-if="activeField === 'exchange_rate'" v-model="formData.exchange_rate" placeholder="Например, 73" />
-        <template v-else-if="activeField === 'type'"><ElButton v-for="option in ACCOUNT_TYPES" :key="option.value" class="account-option" :type="formData.type === option.value ? 'primary' : 'default'" @click="formData.type = option.value">{{ option.label }}</ElButton></template>
-        <template v-else-if="activeField === 'status'"><ElButton class="account-option" :type="formData.status ? 'primary' : 'default'" @click="formData.status = true">Открытый</ElButton><ElButton class="account-option" :type="!formData.status ? 'primary' : 'default'" @click="formData.status = false">Закрытый</ElButton></template>
-        <template v-else-if="activeField === 'group_id'"><ElButton class="account-option" :type="formData.group_id === NO_GROUP ? 'primary' : 'default'" @click="formData.group_id = NO_GROUP">Без группы</ElButton><ElButton v-for="group in groups" :key="group.id" class="account-option" :loading="isGroupsLoading" :type="formData.group_id === group.id ? 'primary' : 'default'" @click="formData.group_id = group.id">{{ group.title }}</ElButton></template>
-        <template v-else-if="activeField === 'currency'"><ElButton class="account-option" :type="formData.currency === 'RUB' ? 'primary' : 'default'" @click="setCurrency('RUB')">Российский рубль (RUB)</ElButton><ElButton class="account-option" :type="formData.currency === 'USD' ? 'primary' : 'default'" @click="setCurrency('USD')">Доллар США (USD)</ElButton></template>
-      </aside>
+      <ElScrollbar>
+        <aside class="account-detail-panel">
+          <ElInput v-if="activeField === 'title'" v-model="formData.title" placeholder="Название" autofocus />
+          <ElInput v-else-if="activeField === 'start_amount'" v-model="formData.start_amount" placeholder="Начальный баланс" />
+          <ElInput v-else-if="activeField === 'min_amount'" v-model="formData.min_amount" placeholder="Минимальный баланс" />
+          <ElInput v-else-if="activeField === 'credit_limit_amount'" v-model="formData.credit_limit_amount" placeholder="Кредитный лимит" />
+          <ElInput v-else-if="activeField === 'note'" v-model="formData.note" type="textarea" :rows="8" placeholder="Примечание" />
+          <ElInput v-else-if="activeField === 'exchange_rate'" v-model="formData.exchange_rate" placeholder="Например, 73" />
+          <template v-else-if="activeField === 'type'"><ElButton v-for="option in ACCOUNT_TYPES" :key="option.value" class="account-option" :type="formData.type === option.value ? 'primary' : 'default'" @click="formData.type = option.value">{{ option.label }}</ElButton></template>
+          <template v-else-if="activeField === 'status'"><ElButton class="account-option" :type="formData.status ? 'primary' : 'default'" @click="formData.status = true">Открытый</ElButton><ElButton class="account-option" :type="!formData.status ? 'primary' : 'default'" @click="formData.status = false">Закрытый</ElButton></template>
+          <template v-else-if="activeField === 'group_id'"><ElButton class="account-option" :type="formData.group_id === NO_GROUP ? 'primary' : 'default'" @click="formData.group_id = NO_GROUP">Без группы</ElButton><ElButton v-for="group in groups" :key="group.id" class="account-option" :loading="isGroupsLoading" :type="formData.group_id === group.id ? 'primary' : 'default'" @click="formData.group_id = group.id">{{ group.title }}</ElButton></template>
+          <template v-else-if="activeField === 'currency'"><ElButton class="account-option" :type="formData.currency === 'RUB' ? 'primary' : 'default'" @click="setCurrency('RUB')">Российский рубль (RUB)</ElButton><ElButton class="account-option" :type="formData.currency === 'USD' ? 'primary' : 'default'" @click="setCurrency('USD')">Доллар США (USD)</ElButton></template>
+        </aside>
+      </ElScrollbar>
     </div>
 
     <template #footer>
@@ -130,4 +137,24 @@ watch(() => props.updateData, (value) => {
 .account-setting-row :deep(.el-input__wrapper) { cursor: pointer; }
 .account-detail-panel { display: flex; flex-direction: column; gap: 8px; padding: 16px; overflow: auto; }
 .account-option { width: 100%; justify-content: flex-start; margin: 0; white-space: normal; height: auto; min-height: 32px; }
+
+.account-editor-layout__form {
+  border-right: 1px solid #dcdfe6;
+  padding: 16px;
+  border-radius: 12px;
+  background: #eef3f4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.account-editor-layout__form :deep(.el-form-item__label) {
+  font-weight: 700;
+  color: #2f3a3d;
+  margin-bottom: 6px;
+}
+
+.account-editor-layout__form :deep(.el-input__wrapper),
+.account-editor-layout__form :deep(.el-select__wrapper) {
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(120, 140, 145, 0.18) inset;
+}
 </style>

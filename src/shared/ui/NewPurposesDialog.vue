@@ -131,7 +131,7 @@ async function handleDelete() {
 
 <template>
   <ElDialog v-model="isOpen" :title="dialogTitle" width="800" @close="handleClose">
-    <ElScrollbar height="400px">
+    <ElScrollbar>
       <ElForm :model="formData" label-position="top" class="purpose-form">
         <ElFormItem label="Название">
           <ElInput v-model="formData.title" />

@@ -13,6 +13,7 @@ export interface PaymentCategoryOption {
   id: number
   title: string
   type: PaymentDialogType
+  level?: number
 }
 
 export const paymentTypeOptions: Array<{ label: string, value: PaymentDialogType }> = [
@@ -24,17 +25,18 @@ export const paymentTypeOptions: Array<{ label: string, value: PaymentDialogType
 export function flattenCategoryOptions(
   options: PaymentCategoryOptionNode[],
   inheritedType: PaymentDialogType | null = null,
+  level = 0,
 ): PaymentCategoryOption[] {
   return options.flatMap((option) => {
     const ownType = toPaymentDialogType(option.type)
     const type = ownType ?? inheritedType
     const currentOption = type
-      ? [{ id: option.id, title: option.title, type }]
+      ? [{ id: option.id, title: option.title, type, level }]
       : []
 
     return [
       ...currentOption,
-      ...flattenCategoryOptions(option.children ?? [], type),
+      ...flattenCategoryOptions(option.children ?? [], type, level + 1),
     ]
   })
 }

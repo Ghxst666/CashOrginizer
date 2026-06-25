@@ -111,7 +111,7 @@ watch(
       @row-contextmenu="handleRowContextMenu"
     >
       <ElTableColumn width="50" type="index" label="№" />
-      <ElTableColumn prop="title" label="Название счёта" />
+      <ElTableColumn show-overflow-tooltip prop="title" label="Название счёта" />
       <ElTableColumn width="100" prop="currency" label="Валюта" />
       <ElTableColumn width="500" prop="amount" label="Общий баланс">
         <template #default="{ row }">

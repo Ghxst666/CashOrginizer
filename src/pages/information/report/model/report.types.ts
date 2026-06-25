@@ -1,13 +1,11 @@
-import type { ReportsRequest, ReportsSummaryData } from '@/entities/reports'
+import type { ReportsSummaryData } from '@/entities/reports'
 
 export type ReportCode = 'purposes' | 'categories' | 'projects' | 'income_expense' | 'payments'
 export type ReportTab = 'list' | 'settings'
-export type ReportKind = NonNullable<ReportsRequest['kind']>
 export type ReportExportType = 'pdf' | 'excel'
 
 export interface ReportDefinition {
     code: ReportCode
-    kind?: ReportKind
     title: string
     listTitle: string
     description: string
@@ -33,6 +31,7 @@ export interface SelectOption {
     label: string
     value: number | string
     type?: string
+    level?: number
 }
 
 export interface TableRow {

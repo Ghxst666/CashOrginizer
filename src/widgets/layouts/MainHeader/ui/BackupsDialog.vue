@@ -157,11 +157,11 @@ async function applyRestore() {
 <template>
   <ElDialog v-model="visible" title="Резервные копии" width="860px">
     <ElTable v-loading="isLoading" :data="backups" height="360">
-      <ElTableColumn prop="filename" label="Название" min-width="370" />
-      <ElTableColumn label="Создано" width="210">
+      <ElTableColumn show-overflow-tooltip prop="filename" label="Название" min-width="370" />
+      <ElTableColumn show-overflow-tooltip label="Создано" width="210">
         <template #default="{ row }">{{ formatDate(row.last_modified) }}</template>
       </ElTableColumn>
-      <ElTableColumn label="Размер" width="110">
+      <ElTableColumn show-overflow-tooltip label="Размер" width="110">
         <template #default="{ row }">{{ formatSize(row.size_bytes) }}</template>
       </ElTableColumn>
       <ElTableColumn width="120" fixed="right">

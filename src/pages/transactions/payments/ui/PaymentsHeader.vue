@@ -56,13 +56,17 @@ function resetSelection() {
           <div class="account-filter-dropdown" @click.stop>
             <ElInput v-model="filterSearch" placeholder="Найти" clearable />
             <div class="account-filter-dropdown__section">Счета</div>
-            <ElCheckboxGroup v-model="draftAccountIds" class="account-filter-dropdown__options">
-              <ElCheckbox v-for="account in filteredAccounts" :key="account.id" :value="account.id">{{ account.title }} ({{ account.currency || 'RUB' }})</ElCheckbox>
-            </ElCheckboxGroup>
+            <ElScrollbar max-height="300px">
+              <ElCheckboxGroup v-model="draftAccountIds" class="account-filter-dropdown__options">
+                <ElCheckbox v-for="account in filteredAccounts" :key="account.id" :value="account.id">{{ account.title }} ({{ account.currency || 'RUB' }})</ElCheckbox>
+              </ElCheckboxGroup>
+            </ElScrollbar>
             <div class="account-filter-dropdown__section">Группы счетов</div>
-            <ElCheckboxGroup v-model="draftGroupIds" class="account-filter-dropdown__options">
-              <ElCheckbox v-for="group in filteredGroups" :key="group.id" :value="group.id">{{ group.title }}</ElCheckbox>
-            </ElCheckboxGroup>
+            <ElScrollbar max-height="300px">
+              <ElCheckboxGroup v-model="draftGroupIds" class="account-filter-dropdown__options">
+                <ElCheckbox v-for="group in filteredGroups" :key="group.id" :value="group.id">{{ group.title }}</ElCheckbox>
+              </ElCheckboxGroup>
+            </ElScrollbar>
             <div class="account-filter-dropdown__actions">
               <ElButton text @click="resetSelection">Сбросить всё</ElButton>
               <ElButton type="primary" round @click="applySelection">ОК</ElButton>
@@ -83,7 +87,7 @@ function resetSelection() {
 .account-filter-dropdown { width: 300px; padding: 8px 0 0; }
 .account-filter-dropdown :deep(.el-input) { padding: 0 8px 8px; }
 .account-filter-dropdown__section { padding: 9px 12px; border-top: 1px solid #d9dee5; background: #f3f5f8; color: #6b7280; font-size: 14px; }
-.account-filter-dropdown__options { display: flex; max-height: 180px; flex-direction: column; overflow-y: auto; }
+.account-filter-dropdown__options { display: flex; flex-direction: column; }
 .account-filter-dropdown__options :deep(.el-checkbox) { height: 36px; margin-right: 0; padding: 0 12px; }
 .account-filter-dropdown__actions { display: flex; justify-content: space-between; border-top: 1px solid #d9dee5; padding: 8px; }
 </style>

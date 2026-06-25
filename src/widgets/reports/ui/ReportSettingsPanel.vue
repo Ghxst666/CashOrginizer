@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { PERIOD_OPTIONS } from '@/pages/information/report/model/report.config'
 import type { ReportDefinition, ReportFilters, SelectOption } from '@/pages/information/report/model/report.types'
 
-defineProps<{
+const props = defineProps<{
     report: ReportDefinition
     accountOptions: SelectOption[]
     purposeOptions: SelectOption[]
@@ -18,10 +19,39 @@ const filters = defineModel<ReportFilters>('filters', { required: true })
 const customDateRange = defineModel<string[]>('customDateRange', { required: true })
 const activeField = defineModel<string>('activeField', { required: true })
 
-function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'purposes' | 'categories' | 'projects'>) {
-    if (!visible) return
+const periodLabel = computed(() => {
+    const [dateFrom, dateTo] = customDateRange.value
 
-    types.forEach(type => emit('loadOptions', type))
+    if (filters.value.period === 'custom' && dateFrom && dateTo) {
+        return `${formatDate(dateFrom)} - ${formatDate(dateTo)}`
+    }
+
+    return PERIOD_OPTIONS.find(option => option.value === filters.value.period)?.label ?? 'Период'
+})
+
+const accountLabels = computed(() => selectedOptionsLabel(filters.value.accounts_ids, props.accountOptions, 'Все счета'))
+const purposeLabels = computed(() => selectedOptionsLabel(filters.value.purposes_ids, props.purposeOptions, 'Все названия'))
+const categoryLabels = computed(() => selectedOptionsLabel(filters.value.categories_ids, props.categoryOptions, 'Все категории'))
+const projectLabels = computed(() => selectedOptionsLabel(filters.value.projects_ids, props.projectOptions, 'Все проекты'))
+
+function activateField(field: string, type?: 'accounts' | 'purposes' | 'categories' | 'projects') {
+    activeField.value = field
+    if (type) emit('loadOptions', type)
+}
+
+function selectedOptionsLabel(ids: number[], options: SelectOption[], emptyLabel: string) {
+    if (!ids.length) return emptyLabel
+
+    const optionById = new Map(options.map(option => [Number(option.value), option.label]))
+
+    return ids.map(id => optionById.get(id) ?? String(id)).join(', ')
+}
+
+function formatDate(value: string) {
+    const [year, month, day] = value.split('-')
+    if (!year || !month || !day) return value
+
+    return `${day}.${month}.${year}`
 }
 </script>
 
@@ -29,7 +59,7 @@ function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'pur
     <ElScrollbar class="settings-panel">
       <div class="settings-panel__content">
         <div class="settings-row">
-            <span>Название отчёта</span>
+            <span>Название отчета</span>
             <ElInput v-model="filters.title" class="settings-control" clearable @focus="activeField = 'title'" />
         </div>
         <div class="settings-row">
@@ -38,104 +68,53 @@ function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'pur
         </div>
         <div class="settings-row">
             <span>Дата</span>
-            <div class="settings-control settings-control--stack">
-                <ElSelect v-model="filters.period" @focus="activeField = 'period'">
-                    <ElOption
-                        v-for="option in PERIOD_OPTIONS"
-                        :key="option.value"
-                        :label="option.label"
-                        :value="option.value"
-                    />
-                </ElSelect>
-                <ElDatePicker
-                    v-if="filters.period === 'custom'"
-                    v-model="customDateRange"
-                    type="daterange"
-                    value-format="YYYY-MM-DD"
-                    start-placeholder="Дата с"
-                    end-placeholder="Дата по"
-                />
-            </div>
+            <ElInput
+                :model-value="periodLabel"
+                class="settings-control settings-control--picker"
+                readonly
+                @focus="activateField('period')"
+                @click="activateField('period')"
+            />
         </div>
         <div class="settings-row">
             <span>Счет</span>
-            <ElSelect
-                v-model="filters.accounts_ids"
-                class="settings-control"
-                multiple
-                collapse-tags
-                clearable
-                placeholder="Все счета"
-                @visible-change="visible => handleVisibleChange(visible, 'accounts')"
-                @focus="activeField = 'accounts_ids'"
-            >
-                <ElOption
-                    v-for="option in accountOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </ElSelect>
+            <ElInput
+                :model-value="accountLabels"
+                class="settings-control settings-control--picker"
+                readonly
+                @focus="activateField('accounts_ids', 'accounts')"
+                @click="activateField('accounts_ids', 'accounts')"
+            />
         </div>
         <div class="settings-row">
             <span>Название</span>
-            <ElSelect
-                v-model="filters.purposes_ids"
-                class="settings-control"
-                multiple
-                collapse-tags
-                clearable
-                placeholder="Все названия"
-                @visible-change="visible => handleVisibleChange(visible, 'purposes')"
-                @focus="activeField = 'purposes_ids'"
-            >
-                <ElOption
-                    v-for="option in purposeOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </ElSelect>
+            <ElInput
+                :model-value="purposeLabels"
+                class="settings-control settings-control--picker"
+                readonly
+                @focus="activateField('purposes_ids', 'purposes')"
+                @click="activateField('purposes_ids', 'purposes')"
+            />
         </div>
         <div class="settings-row">
             <span>Категория</span>
-            <ElSelect
-                v-model="filters.categories_ids"
-                class="settings-control"
-                multiple
-                collapse-tags
-                clearable
-                placeholder="Все категории"
-                @visible-change="visible => handleVisibleChange(visible, 'categories')"
-                @focus="activeField = 'categories_ids'"
-            >
-                <ElOption
-                    v-for="option in categoryOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </ElSelect>
+            <ElInput
+                :model-value="categoryLabels"
+                class="settings-control settings-control--picker"
+                readonly
+                @focus="activateField('categories_ids', 'categories')"
+                @click="activateField('categories_ids', 'categories')"
+            />
         </div>
         <div class="settings-row">
             <span>Проект</span>
-            <ElSelect
-                v-model="filters.projects_ids"
-                class="settings-control"
-                multiple
-                collapse-tags
-                clearable
-                placeholder="Все проекты"
-                @visible-change="visible => handleVisibleChange(visible, 'projects')"
-                @focus="activeField = 'projects_ids'"
-            >
-                <ElOption
-                    v-for="option in projectOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </ElSelect>
+            <ElInput
+                :model-value="projectLabels"
+                class="settings-control settings-control--picker"
+                readonly
+                @focus="activateField('projects_ids', 'projects')"
+                @click="activateField('projects_ids', 'projects')"
+            />
         </div>
         <div class="settings-row">
             <span>Текст</span>
@@ -186,13 +165,12 @@ function handleVisibleChange(visible: boolean, ...types: Array<'accounts' | 'pur
   max-width: 520px;
 }
 
-.settings-control--stack,
+.settings-control--picker :deep(.el-input__wrapper) {
+  cursor: pointer;
+}
+
 .settings-control--inline {
   display: flex;
   gap: 8px;
-}
-
-.settings-control--stack {
-  flex-direction: column;
 }
 </style>

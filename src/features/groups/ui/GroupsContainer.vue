@@ -130,8 +130,8 @@ function handleDelete(groupId: number) {
         class="w-full"
       >
         <ElTableColumn type="index" label="№" width="70" />
-        <ElTableColumn prop="title" label="Название" min-width="220" />
-        <ElTableColumn label="Действия" width="140" align="center">
+        <ElTableColumn show-overflow-tooltip prop="title" label="Название" min-width="220" />
+        <ElTableColumn show-overflow-tooltip label="Действия" width="140" align="center">
           <template #default="{ row }">
             <div class="flex justify-center gap-2">
               <ElButton

@@ -181,7 +181,20 @@ function toggleOption(id: number | string) {
                         <ElButton size="small" :type="categoryType === 'profits' ? 'primary' : 'default'" @click="categoryType = categoryType === 'profits' ? null : 'profits'">Доходы</ElButton>
                         <ElButton size="small" :type="categoryType === 'transfers' ? 'primary' : 'default'" @click="categoryType = categoryType === 'transfers' ? null : 'transfers'">Переводы</ElButton>
                     </div>
-                    <ElCheckbox v-for="option in rightOptions" :key="option.value" :model-value="selectedIds().includes(Number(option.value))" class="side-option" @change="toggleOption(option.value)">{{ option.label }}</ElCheckbox>
+                    <ElCheckbox
+                        v-for="option in rightOptions"
+                        :key="option.value"
+                        :model-value="selectedIds().includes(Number(option.value))"
+                        class="side-option"
+                        @change="toggleOption(option.value)"
+                    >
+                        <span
+                            class="side-option__label"
+                            :style="{ paddingLeft: `${(option.level ?? 0) * 16}px` }"
+                        >
+                            {{ option.label }}
+                        </span>
+                    </ElCheckbox>
                 </template>
                 <ElInput v-else-if="activeSettingsField === 'title'" v-model="filters.title" placeholder="Название отчёта" />
                 <ElInput v-else-if="activeSettingsField === 'note'" v-model="filters.note" type="textarea" :rows="8" placeholder="Примечание" />
@@ -295,6 +308,7 @@ function toggleOption(id: number | string) {
 .report-settings-side__content { display: flex; min-width: 0; flex-direction: column; gap: 10px; padding: 12px; }
 .category-types, .side-inline { display: flex; flex-wrap: wrap; gap: 6px; }
 .side-option { margin-right: 0; padding: 8px 0; }
+.side-option__label { display: inline-block; }
 .report-settings-side__hint { color: #6b7280; font-size: 14px; }
 .report-settings-side__date { display: flex; flex-direction: column; gap: 8px; }
 .period-option { width: 100%; justify-content: flex-start; margin: 0; }

@@ -116,11 +116,11 @@ function paymentTypeTextType(type?: PaymentType | null) {
             @row-click="handleRowClick"
             @row-dblclick="handleOpenEditPayment"
         >
-            <ElTableColumn width="100" prop="payment_date" label="Дата" />
-            <ElTableColumn prop="purpose_title" label="Название" />
-            <ElTableColumn prop="project_title" label="Проект" />
-            <ElTableColumn prop="category_title" label="Категория" />
-            <ElTableColumn prop="note" label="Примечание" />
+            <ElTableColumn show-overflow-tooltip width="100" prop="payment_date" label="Дата" />
+            <ElTableColumn show-overflow-tooltip prop="purpose_title" label="Название" />
+            <ElTableColumn show-overflow-tooltip prop="project_title" label="Проект" />
+            <ElTableColumn show-overflow-tooltip prop="category_title" label="Категория" />
+            <ElTableColumn show-overflow-tooltip prop="note" label="Примечание" />
             <ElTableColumn prop="type" label="Тип">
                 <template #default="{ row }">
                     <ElText :type="paymentTypeTextType(row.type)">
@@ -130,7 +130,7 @@ function paymentTypeTextType(type?: PaymentType | null) {
             </ElTableColumn>
             <ElTableColumn label="Сумма/Баланс">
                 <template #default="{ row }">
-                    <span>{{ row.type === 'transfers' && row.to_amount !== null && row.to_amount !== undefined ? row.to_amount : row.amount }} ₽</span>
+                    <span>{{ row.type === 'transfers' && row.to_amount !== null && row.to_amount !== undefined ? row.to_amount : row.amount }} {{ row.account_currency === 'RUB' ? '₽' : '$' }}</span>
                 </template>
             </ElTableColumn>
             <template #append>

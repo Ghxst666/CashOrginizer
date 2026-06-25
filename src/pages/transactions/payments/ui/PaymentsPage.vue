@@ -17,8 +17,10 @@ const router = useRouter()
 const isPropertiesOpen = ref(false)
 const selectedPayment = ref<PaymentListItemResponse | null>(null)
 const { data: paymentsData } = usePaymentsQuery()
-const paymentsSummary = computed(() => calculatePaymentsSummary(paymentsData.value ?? []))
-const totalBalance = computed(() => paymentsSummary.value.income - paymentsSummary.value.expense)
+const totalBalance = computed(() => (paymentsData.value ?? []).reduce(
+  (total, payment) => total + getPaymentAmountInRub(payment),
+  0,
+))
 
 function handleOpenDialog() {
   newPayDialogVisible.value = true
@@ -102,24 +104,19 @@ function displayedPaymentAmount(payment: PaymentListItemResponse) {
   return payment.amount
 }
 
-function amountToNumber(amount?: string | null) {
+function amountToNumber(amount?: string | number | null) {
   const parsedAmount = Number(String(amount ?? 0).replace(/\s/g, '').replace(',', '.'))
 
   return Number.isFinite(parsedAmount) ? parsedAmount : 0
 }
 
-function calculatePaymentsSummary(payments: PaymentListItemResponse[]) {
-  return payments.reduce(
-    (summary, payment) => {
-      const amount = Math.abs(amountToNumber(payment.amount))
+function getPaymentAmountInRub(payment: PaymentListItemResponse) {
+  const amount = amountToNumber(payment.amount)
+  const currency = payment.account_currency?.toUpperCase()
 
-      if (payment.type === 'profits') summary.income += amount
-      if (payment.type === 'expenses') summary.expense += amount
+  if (currency === 'USD') return amount * amountToNumber(payment.exchange_rate)
 
-      return summary
-    },
-    { income: 0, expense: 0 },
-  )
+  return amount
 }
 
 watch(
@@ -164,8 +161,6 @@ watch(
         @select="handleSelectPayment"
       />
       <TransactionBalanceBar
-        :income="paymentsSummary.income"
-        :expense="paymentsSummary.expense"
         :balance="totalBalance"
       />
     </div>

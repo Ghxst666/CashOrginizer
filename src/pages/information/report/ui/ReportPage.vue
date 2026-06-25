@@ -68,18 +68,18 @@ const activeReport = computed(() => REPORTS.find(report => report.code === activ
 
 const requestData = computed<ReportsRequest | undefined>(() => {
     const [dateFrom, dateTo] = customDateRange.value
+
+    if (filters.period === 'custom' && (!dateFrom || !dateTo)) return undefined
+
     const payload: ReportsRequest = {
-        kind: activeReport.value.kind,
         period: filters.period,
-        title: filters.title || undefined,
-        note: filters.note || undefined,
         accounts_ids: filters.accounts_ids.length
-            ? filters.accounts_ids.map(id => categoryType.value === 'transfers' ? -id : id)
+            ? filters.accounts_ids
             : undefined,
-        purposes_ids: filters.purposes_ids.join(',') || undefined,
-        categories_ids: filters.categories_ids.join(',') || undefined,
-        projects_ids: filters.projects_ids.join(',') || undefined,
-        text: filters.text,
+        purposes_ids: filters.purposes_ids.length ? filters.purposes_ids : undefined,
+        categories_ids: filters.categories_ids.length ? filters.categories_ids : undefined,
+        projects_ids: filters.projects_ids.length ? filters.projects_ids : undefined,
+        text: filters.text.trim() || undefined,
         amount_from: filters.amount_from,
         amount_to: filters.amount_to,
         date_from: filters.period === 'custom' ? dateFrom : undefined,
@@ -89,25 +89,27 @@ const requestData = computed<ReportsRequest | undefined>(() => {
     return clearEmptyProperties(payload) as ReportsRequest | undefined
 })
 
+const isReportRequestEnabled = computed(() => Boolean(requestData.value))
+
 const purposesReportQuery = usePurposesReportQuery(
     requestData,
-    computed(() => dialogVisible.value && activeReportCode.value === 'purposes'),
+    computed(() => dialogVisible.value && activeReportCode.value === 'purposes' && isReportRequestEnabled.value),
 )
 const categoriesReportQuery = useCategoriesReportQuery(
     requestData,
-    computed(() => dialogVisible.value && activeReportCode.value === 'categories'),
+    computed(() => dialogVisible.value && activeReportCode.value === 'categories' && isReportRequestEnabled.value),
 )
 const projectsReportQuery = useProjectsReportQuery(
     requestData,
-    computed(() => dialogVisible.value && activeReportCode.value === 'projects'),
+    computed(() => dialogVisible.value && activeReportCode.value === 'projects' && isReportRequestEnabled.value),
 )
 const incomeExpenseReportQuery = useIncomeExpenseReportQuery(
     requestData,
-    computed(() => dialogVisible.value && activeReportCode.value === 'income_expense'),
+    computed(() => dialogVisible.value && activeReportCode.value === 'income_expense' && isReportRequestEnabled.value),
 )
 const paymentsReportQuery = usePaymentsReportQuery(
     requestData,
-    computed(() => dialogVisible.value && activeReportCode.value === 'payments'),
+    computed(() => dialogVisible.value && activeReportCode.value === 'payments' && isReportRequestEnabled.value),
 )
 
 const currentQuery = computed(() => {
@@ -259,15 +261,16 @@ function isAbortError(error: unknown) {
     return error instanceof DOMException && error.name === 'AbortError'
 }
 
-function mapRowsToOptions(rows: readonly unknown[]): SelectOption[] {
+function mapRowsToOptions(rows: readonly unknown[], level = 0): SelectOption[] {
     return rows.flatMap(row => {
         const item = row as TableRow
         const option = {
             label: String(item.title ?? 'Без названия'),
             value: Number(item.id),
             type: typeof item.type === 'string' ? item.type : undefined,
+            level,
         }
-        const children = Array.isArray(item.children) ? mapRowsToOptions(item.children) : []
+        const children = Array.isArray(item.children) ? mapRowsToOptions(item.children, level + 1) : []
 
         return Number.isFinite(option.value) ? [option, ...children] : children
     })

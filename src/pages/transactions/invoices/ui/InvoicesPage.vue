@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InvoicesTable from '@/entities/Invoices/InvoicesTable.vue';
 import InvoicesHeader from './InvoicesHeader.vue';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
 import { useAccountsQuery, useAccountsReorder, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
@@ -34,17 +34,15 @@ const isTypeSort = computed(() => tableMode.value === 'type')
 const isGroupSort = computed(() => tableMode.value === 'group')
 const isDefaultTable = computed(() => tableMode.value === 'default')
 
-const { data: accountsData } = useAccountsQuery(accountsStatus, isDefaultTable)
+const { data: accountsData, refetch: refetchAccounts } = useAccountsQuery(accountsStatus, isDefaultTable)
 const { data: balanceAccountsData } = useAccountsQuery(true)
 const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
 const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
-const { mutate: reorderAccounts } = useAccountsReorder()
-const accountOrder = ref<number[]>([])
+const { mutateAsync: reorderAccounts } = useAccountsReorder()
 const invoicesTableData = computed(() => {
   return accountsData.value ?? []
 })
-const orderedInvoicesTableData = computed(() => sortAccountsByOrder(invoicesTableData.value))
-const filteredInvoicesTableData = computed(() => filterAccounts(orderedInvoicesTableData.value))
+const filteredInvoicesTableData = computed(() => filterAccounts(invoicesTableData.value))
 const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsByTypeData.value ?? []))
 const filteredAccountsByGroupsData = computed(() => filterAccountGroups(accountsByGroupsData.value ?? []))
 const totalBalance = computed(() => sumAmounts(balanceAccountsData.value ?? []))
@@ -128,35 +126,23 @@ function handleOpenUpdateDialog(row: accountsResponse) {
   updateDialogVisible.value = true
 }
 
-function sortAccountsByOrder(accounts: accountsResponse[]) {
-  const positions = new Map(accountOrder.value.map((accountId, index) => [accountId, index]))
-
-  return [...accounts].sort((first, second) => {
-    const firstPosition = positions.get(first.id) ?? Number.MAX_SAFE_INTEGER
-    const secondPosition = positions.get(second.id) ?? Number.MAX_SAFE_INTEGER
-
-    return firstPosition - secondPosition
-  })
-}
-
-function handleReorder(nextOrder: number[]) {
-  const previousOrder = [...accountOrder.value]
-  const currentOrder = sortAccountsByOrder(invoicesTableData.value).map(account => account.id)
+async function handleReorder(nextOrder: number[]) {
+  const currentOrder = invoicesTableData.value.map(account => account.id)
   const hasSameAccounts = nextOrder.length === currentOrder.length
     && nextOrder.every(accountId => currentOrder.includes(accountId))
 
-  if (!hasSameAccounts || nextOrder.every((accountId, index) => accountId === currentOrder[index])) return
+  if (!hasSameAccounts || nextOrder.every((accountId, index) => accountId === currentOrder[index])) {
+    await refetchAccounts()
+    return
+  }
 
-  accountOrder.value = [...nextOrder]
-
-  reorderAccounts(
-    { account_ids: accountOrder.value },
-    {
-      onError: () => {
-        accountOrder.value = previousOrder
-      },
-    },
-  )
+  try {
+    await reorderAccounts({ account_ids: nextOrder })
+  } catch {
+    // Mutation handlers show user-facing errors.
+  } finally {
+    await refetchAccounts()
+  }
 }
 
 function mapperStatus(status: boolean) {
@@ -194,22 +180,6 @@ function matchesSelectedAccounts(account: accountsResponse) {
   return selectedAccountsFilter.value.accountIds.includes(account.id)
     || (account.group_id !== null && selectedAccountsFilter.value.groupIds.includes(account.group_id))
 }
-
-watch(
-  invoicesTableData,
-  (accounts) => {
-    const accountIds = accounts.map(account => account.id)
-    const accountIdsSet = new Set(accountIds)
-    const existingAccountIds = accountOrder.value.filter(accountId => accountIdsSet.has(accountId))
-    const existingAccountIdsSet = new Set(existingAccountIds)
-
-    accountOrder.value = [
-      ...existingAccountIds,
-      ...accountIds.filter(accountId => !existingAccountIdsSet.has(accountId)),
-    ]
-  },
-  { immediate: true },
-)
 
 function filterAccountGroups(groups: AccountsGroup[]) {
   return groups.flatMap((group) => {

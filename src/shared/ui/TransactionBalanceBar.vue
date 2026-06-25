@@ -1,13 +1,7 @@
 <script setup lang="ts">
 withDefaults(defineProps<{
-  income?: number
-  expense?: number
   balance: number
-  showOperations?: boolean
 }>(), {
-  income: 0,
-  expense: 0,
-  showOperations: true,
 })
 
 function formatMoney(value: number) {
@@ -20,13 +14,6 @@ function formatMoney(value: number) {
 
 <template>
   <footer class="transaction-balance-bar">
-    <span
-      v-if="showOperations"
-      class="transaction-balance-bar__operations"
-    >
-      Приход: {{ formatMoney(income) }}<br>
-      Расход: -{{ formatMoney(expense) }}
-    </span>
     <strong>Общий баланс: {{ formatMoney(balance) }}</strong>
   </footer>
 </template>

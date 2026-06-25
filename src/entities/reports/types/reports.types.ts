@@ -1,20 +1,14 @@
 export interface ReportsRequest {
-    title?: string | null
-    note?: string | null
-    kind?: 'purposes' | 'income_expense' | 'categories' | 'projects' | 'cash_flow_monthly' | null
     period?: string
     date_from?: string
     date_to?: string
-    method?: string
     text?: string | null
-    amount_from?: string | null
-    amount_to?: string | null
-    number_from?: string | null
-    number_to?: string | null
+    amount_from?: string | number | null
+    amount_to?: string | number | null
     accounts_ids?: number[]
-    purposes_ids?: string
-    categories_ids?: string
-    projects_ids?: string
+    purposes_ids?: number[]
+    categories_ids?: number[]
+    projects_ids?: number[]
 }
 
 export interface ReportsPeriodData {
@@ -26,16 +20,16 @@ export interface ReportsPeriodData {
 
 export interface ReportsSummaryData {
     rows_count: number
-    income: string
-    income_formatted: string
+    income?: string
+    income_formatted?: string
     total_income_formatted?: string
-    expense: string
-    expense_formatted: string
+    expense?: string
+    expense_formatted?: string
     total_expense_formatted?: string
-    transfer: string
-    transfer_formatted: string
-    total: string
-    total_formatted: string
+    transfer?: string
+    transfer_formatted?: string
+    total?: string
+    total_formatted?: string
     total_amount_formatted?: string
 }
 
@@ -47,42 +41,49 @@ export interface ReportsResponseData<TRow> {
 }
 
 export interface ReportsTotalFields {
-    income: string
-    income_formatted: string
-    expense: string
-    expense_formatted: string
-    transfer: string
-    transfer_formatted: string
-    total: string
-    total_formatted: string
+    income?: string
+    income_formatted?: string
+    expense?: string
+    expense_formatted?: string
+    transfer?: string
+    transfer_formatted?: string
+    total?: string
+    total_formatted?: string
+    amount?: string
+    amount_formatted?: string
 }
 
 export interface ReportsPurposeRowData extends ReportsTotalFields {
     title: string
-    amount: string | null
     note: string | null
     category_id: number | null
     project_id: number | null
-    id: number
+    purpose_id?: number
+    id?: number
     category_title: string | null
     project_title: string | null
+    payments_count?: number
 }
 
 export interface ReportsCategoryRowData extends ReportsTotalFields {
     title: string
+    kind?: string
     type: string
     parent_id: number | null
-    id: number
+    category_id?: number
+    id?: number
     children: ReportsCategoryRowData[]
 }
 
 export interface ReportsProjectRowData extends ReportsTotalFields {
     title: string
+    kind?: string
     parent_id: number | null
-    money_limit: number
-    note: string | null
-    status: string
-    id: number
+    money_limit?: number
+    note?: string | null
+    status?: string
+    project_id?: number
+    id?: number
     children: ReportsProjectRowData[]
 }
 

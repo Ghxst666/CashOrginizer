@@ -4,7 +4,6 @@ import type { ReportDefinition } from './report.types'
 export const REPORTS: ReportDefinition[] = [
     {
         code: 'purposes',
-        kind: 'purposes',
         title: 'Отчет по названию',
         listTitle: 'Отчет по названию',
         description: 'Показывает расходы и доходы сгруппированные по названию.',
@@ -14,7 +13,6 @@ export const REPORTS: ReportDefinition[] = [
     },
     {
         code: 'income_expense',
-        kind: 'income_expense',
         title: 'Приходы и Расходы',
         listTitle: 'Приходы и Расходы',
         description: 'Показывает приходы и расходы сгруппированные по месяцам.',
@@ -24,7 +22,6 @@ export const REPORTS: ReportDefinition[] = [
     },
     {
         code: 'categories',
-        kind: 'categories',
         title: 'Отчет по категориям',
         listTitle: 'Отчет по категориям',
         description: 'Показывает расходы и доходы сгруппированные по категориям.',
@@ -34,7 +31,6 @@ export const REPORTS: ReportDefinition[] = [
     },
     {
         code: 'projects',
-        kind: 'projects',
         title: 'Отчет по проектам',
         listTitle: 'Отчет по проектам',
         description: 'Показывает расходы и доходы сгруппированные по проектам.',

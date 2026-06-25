@@ -100,6 +100,7 @@ export interface PaymentListItemResponse {
     purpose_title: string
     to_account_title?: string | null
     project?: string | null
+    account_currency: string
     splits?: PaymentSplitResponse[]
 }
 

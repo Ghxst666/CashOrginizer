@@ -20,7 +20,15 @@ const filteredRows = computed(() => filterTreeRowsBySearch(
 ))
 
 function getTableRowKey(row: TableRow) {
-    return String(row.id ?? row.payment_id ?? row.category_id ?? row.project_id ?? row.purpose_id ?? row.title)
+    return [
+        row.payment_id,
+        row.category_id,
+        row.project_id,
+        row.purpose_id,
+        row.id,
+        row.kind,
+        row.title,
+    ].filter(value => value !== undefined && value !== null).join(':')
 }
 
 function getCellValue(row: TableRow, column: ReportColumn) {
