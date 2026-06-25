@@ -54,6 +54,7 @@ const filteredTableData = computed(() => filterRowsBySearch(
         payment.type,
         formatedTypeName(payment.type),
         payment.amount,
+        payment.to_amount,
         payment.note,
         payment.number,
     ],
@@ -129,7 +130,7 @@ function paymentTypeTextType(type?: PaymentType | null) {
             </ElTableColumn>
             <ElTableColumn label="Сумма/Баланс">
                 <template #default="{ row }">
-                    <span>{{ row.amount }}  ₽</span>
+                    <span>{{ row.type === 'transfers' && row.to_amount !== null && row.to_amount !== undefined ? row.to_amount : row.amount }} ₽</span>
                 </template>
             </ElTableColumn>
             <template #append>

@@ -36,13 +36,8 @@ export interface purposesSummaryData {
 
 export interface purposesRowData {
     title: string,
-    amount: string | null,
     note: string | null,
-    category_id: number | null,
-    project_id: number | null,
     id: number,
-    category_title: string | null,
-    project_title: string | null,
     income: string,
     income_formatted: string,
     expense: string,
@@ -55,23 +50,15 @@ export interface purposesRowData {
 
 export interface createPurposesData {
     title: string
-    amount?: string | null
     note?: string | null
-    category_id?: number | null
-    project_id?: number | null
 }
 
 export type updatePurposesData = Partial<createPurposesData>
 
 export interface PurposeData {
     title: string
-    amount: string | null
     note: string | null
-    category_id: number | null
-    project_id: number | null
     id: number
-    category_title?: string | null
-    project_title?: string | null
 }
 
 export interface CreatePurposesResponseData {
@@ -81,11 +68,6 @@ export interface CreatePurposesResponseData {
 
 export interface ItemPurposesResponseData {
     title: string,
-    amount: string | null,
     note: string | null,
-    category_id: number | null,
-    project_id: number | null,
     id: number,
-    category_title: string | null,
-    project_title: string | null,
 }

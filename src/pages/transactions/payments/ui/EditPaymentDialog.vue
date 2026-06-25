@@ -90,7 +90,7 @@ const formData = ref<PaymentEditFormData>({
 const splits = ref<SplitEditFormData[]>([])
 const deletedSplitIds = ref<number[]>([])
 
-const { data: accounts } = useAccountsQuery(false)
+const { data: accounts } = useAccountsQuery(true)
 const categoriesEnabled = ref(false)
 const projectsEnabled = ref(false)
 const { data: categories } = useCategoriesQuery(undefined, categoriesEnabled)

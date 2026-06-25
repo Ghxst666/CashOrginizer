@@ -65,10 +65,8 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
             @row-click="handleRowClick"
             @row-contextmenu="handleRowContextMenu"
         >
-            <ElTableColumn prop="title" label="Название" />
-            <ElTableColumn width="400" prop="category_title" label="Категория" />
-            <ElTableColumn width="400" prop="project_title" label="Проект" />
-            <ElTableColumn width="300" prop="total_formatted" label="Период" />
+            <ElTableColumn width="400" prop="title" label="Название" />
+            <ElTableColumn prop="note" label="Примечание" />
         </ElTable>
         <div
           v-if="contextMenu.visible"

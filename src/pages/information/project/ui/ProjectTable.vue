@@ -37,15 +37,6 @@ const tableRows = computed(() => filterTreeRowsBySearch(
     ],
 ))
 
-function getPercentage(total: string | number, limit: string | number) {
-    const spent = Number(total)
-    const max = Number(limit)
-
-    if (!max) return 0
-
-    return Math.min(Math.round((spent / max) * 100), 100)
-}
-
 function handleUpdate(row: any) {
     selectedRow.value = { ...row }
     selectedId.value = row.id
@@ -102,23 +93,6 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
                 <template #default="{ row }">
                     <span>{{ row.title }}</span>
                     <span class="text-[red] ml-1" v-if="row.status === 'closed'">(Закрыт)</span>
-                </template>
-            </ElTableColumn>
-            <ElTableColumn width="300" label="Текущий" align="center">
-                <template #default="{ row }">
-                    <ElProgress
-                        :text-inside="true"
-                        :stroke-width="20"
-                        :percentage="getPercentage(row.total, row.money_limit)"
-                        :status="getPercentage(row.total, row.money_limit) > 90
-                            ? 'exception'
-                            : 'success'"
-                    >
-                        <span>{{ row.total_formatted }}</span>
-                    </ElProgress>
-                    <p>
-                        Лимит {{ row.money_limit }} р
-                    </p>
                 </template>
             </ElTableColumn>
             <ElTableColumn width="300" prop="current" label="Период"> 

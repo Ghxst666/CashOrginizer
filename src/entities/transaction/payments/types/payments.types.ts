@@ -66,6 +66,7 @@ export interface PaymentResponse {
     payment_date?: string | null
     purpose_id?: number | null
     amount?: PaymentAmount
+    to_amount?: PaymentAmount
     type?: PaymentType | null
     to_account_id?: number | null
     exchange_rate?: PaymentExchangeRate
@@ -83,6 +84,7 @@ export interface PaymentListItemResponse {
     payment_date?: string | null
     purpose_id?: number | null
     amount?: PaymentAmount
+    to_amount?: PaymentAmount
     type?: PaymentType | null
     to_account_id?: number | null
     exchange_rate?: PaymentExchangeRate

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDown, Plus, Setting } from '@element-plus/icons-vue';
+import { ArrowDown, Plus } from '@element-plus/icons-vue';
 import { computed, ref } from 'vue';
 import { ElButton, ElDatePicker, ElDialog, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus';
 
@@ -20,7 +20,6 @@ const props = defineProps<{
 const emits = defineEmits<{
     openDialog: []
     selectPeriod: [filter: InformationPeriodFilter]
-    showProperties: []
 }>()
 
 const periodTitles: Record<InformationPeriod, string> = {
@@ -71,10 +70,6 @@ function applyCustomDates() {
     })
     customDateDialog.value = false
 }
-
-function handleSettingsCommand(command: string) {
-    if (command === 'show-properties') emits('showProperties')
-}
 </script>
 
 <template>
@@ -109,19 +104,6 @@ function handleSettingsCommand(command: string) {
                 Новое название
             </ElButton>
         </div>
-
-        <ElDropdown @command="handleSettingsCommand">
-            <ElButton class="h-[40px]"> 
-                <ElIcon size="18">
-                    <Setting />
-                </ElIcon>
-            </ElButton>
-            <template #dropdown>
-                <ElDropdownMenu>
-                    <ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem>
-                </ElDropdownMenu>
-            </template>
-        </ElDropdown>
     </div>
 
     <ElDialog v-model="customDateDialog" title="Установить свои даты" width="520px">

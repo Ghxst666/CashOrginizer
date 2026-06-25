@@ -94,6 +94,14 @@ function paymentBalanceTitle(payment: PaymentListItemResponse) {
   return formatMoney(payment.amount)
 }
 
+function displayedPaymentAmount(payment: PaymentListItemResponse) {
+  if (payment.type === 'transfers' && payment.to_amount !== null && payment.to_amount !== undefined) {
+    return payment.to_amount
+  }
+
+  return payment.amount
+}
+
 function amountToNumber(amount?: string | null) {
   const parsedAmount = Number(String(amount ?? 0).replace(/\s/g, '').replace(',', '.'))
 
@@ -174,7 +182,7 @@ watch(
           class="payment-properties-form"
         >
           <ElFormItem label="Сумма">
-            <span class="text-[#374151] font-semibold">{{ formatMoney(selectedPayment.amount) }}</span>
+            <span class="text-[#374151] font-semibold">{{ formatMoney(displayedPaymentAmount(selectedPayment)) }}</span>
           </ElFormItem>
           <ElFormItem label="Счет">
             <span class="text-[#374151] font-semibold">{{ selectedPayment.account_title || 'Счет не задан' }}</span>
