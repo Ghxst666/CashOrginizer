@@ -4,12 +4,14 @@ import EditPaymentDialog from '@/pages/transactions/payments/ui/EditPaymentDialo
 import { filterRowsBySearch } from '@/shared/lib/search'
 import { useHeaderSearchStore } from '@/shared/store/header-search.store'
 import {
+    usePaymentsFilteredInfiniteScrollQuery,
     usePaymentsInfiniteScrollQuery,
     usePaymentsQuery,
 } from '@/entities/transaction/payments'
 import { useAccountsQuery } from '@/entities/transaction/invoices'
 import type { PaymentListItemResponse, PaymentType } from '@/entities/transaction/payments/types/payments.types'
 import type { PaymentsFilter } from '@/pages/transactions/payments/payments-filter'
+import type { PaymentsRemoteFilterType } from '@/entities/transaction/payments/composables/payments.queries'
 
 const props = defineProps<{
     filter: PaymentsFilter
@@ -22,6 +24,24 @@ const emit = defineEmits<{
 const headerSearchStore = useHeaderSearchStore()
 const isAllPayments = computed(() => props.filter.type === 'all')
 const isSelectionFilter = computed(() => props.filter.type === 'selection')
+const isRemoteFilter = computed(() => isPaymentRemoteFilter(props.filter))
+const remoteFilterType = computed<PaymentsRemoteFilterType>(() => {
+    if (props.filter.type === 'group') return 'group'
+    if (props.filter.type === 'purpose') return 'purpose'
+    if (props.filter.type === 'project') return 'project'
+    if (props.filter.type === 'category') return 'category'
+
+    return 'account'
+})
+const remoteFilterId = computed(() => {
+    if (props.filter.type === 'account') return props.filter.accountId
+    if (props.filter.type === 'group') return props.filter.groupId
+    if (props.filter.type === 'purpose') return props.filter.purposeId
+    if (props.filter.type === 'project') return props.filter.projectId
+    if (props.filter.type === 'category') return props.filter.categoryId
+
+    return 0
+})
 const shouldLoadAllPayments = computed(() => isSelectionFilter.value || (isAllPayments.value && Boolean(headerSearchStore.debouncedQuery)))
 
 const {
@@ -31,6 +51,13 @@ const {
     isFetchingNextPage,
 } = usePaymentsInfiniteScrollQuery(30, isAllPayments)
 
+const {
+    data: remotePaymentsData,
+    target: remoteTarget,
+    isLoading: isRemotePaymentsLoading,
+    isFetchingNextPage: isFetchingRemoteNextPage,
+} = usePaymentsFilteredInfiniteScrollQuery(remoteFilterType, remoteFilterId, 30, isRemoteFilter)
+
 const allPaymentsSearchQuery = usePaymentsQuery(shouldLoadAllPayments)
 const { data: accounts } = useAccountsQuery(true, isSelectionFilter)
 
@@ -38,6 +65,7 @@ const selectedPayment = ref<PaymentListItemResponse | null>(null)
 const isOpenEdit = ref(false)
 
 const tableData = computed(() => {
+    if (isRemoteFilter.value) return remotePaymentsData.value?.pages.flat() ?? []
     if (isSelectionFilter.value) return allPaymentsSearchQuery.data.value ?? []
     if (headerSearchStore.debouncedQuery && allPaymentsSearchQuery.data.value) return allPaymentsSearchQuery.data.value
 
@@ -61,10 +89,19 @@ const filteredTableData = computed(() => filterRowsBySearch(
 ))
 
 const isLoading = computed(() => {
+    if (isRemoteFilter.value) return isRemotePaymentsLoading.value
     if (shouldLoadAllPayments.value && allPaymentsSearchQuery.isLoading.value) return true
 
     return isAllPaymentsLoading.value
 })
+
+function isPaymentRemoteFilter(filter: PaymentsFilter): filter is Extract<PaymentsFilter, { type: PaymentsRemoteFilterType }> {
+    return filter.type === 'account'
+        || filter.type === 'group'
+        || filter.type === 'purpose'
+        || filter.type === 'project'
+        || filter.type === 'category'
+}
 
 function matchesSelectedAccounts(payment: PaymentListItemResponse) {
     if (props.filter.type !== 'selection') return true
@@ -140,7 +177,12 @@ function paymentTypeTextType(type?: PaymentType | null) {
                     class="h-px"
                 />
                 <div
-                    v-if="isAllPayments && isFetchingNextPage"
+                    v-if="isRemoteFilter"
+                    ref="remoteTarget"
+                    class="h-px"
+                />
+                <div
+                    v-if="(isAllPayments && isFetchingNextPage) || (isRemoteFilter && isFetchingRemoteNextPage)"
                     class="py-2 text-center text-sm text-gray-500"
                 >
                     Загрузка...

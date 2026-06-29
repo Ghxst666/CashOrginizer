@@ -4,7 +4,7 @@ import InvoicesHeader from './InvoicesHeader.vue';
 import { computed, ref } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
-import { useAccountsQuery, useAccountsReorder, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
+import { useAccountsQuery, useAccountsReorder, useAccountsSummaryQuery, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
 import { accountEditRequesData, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse } from '@/entities/transaction/invoices/types/invoices.types.ts';
 import InvoicesTypeGroupesTable from '@/entities/Invoices/InvoicesTypeGroupesTable.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
@@ -35,7 +35,7 @@ const isGroupSort = computed(() => tableMode.value === 'group')
 const isDefaultTable = computed(() => tableMode.value === 'default')
 
 const { data: accountsData, refetch: refetchAccounts } = useAccountsQuery(accountsStatus, isDefaultTable)
-const { data: balanceAccountsData } = useAccountsQuery(true)
+const { data: accountsSummary } = useAccountsSummaryQuery(true)
 const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
 const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
 const { mutateAsync: reorderAccounts } = useAccountsReorder()
@@ -45,7 +45,7 @@ const invoicesTableData = computed(() => {
 const filteredInvoicesTableData = computed(() => filterAccounts(invoicesTableData.value))
 const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsByTypeData.value ?? []))
 const filteredAccountsByGroupsData = computed(() => filterAccountGroups(accountsByGroupsData.value ?? []))
-const totalBalance = computed(() => sumAmounts(balanceAccountsData.value ?? []))
+const totalBalance = computed(() => amountToNumber(accountsSummary.value?.total_amount))
 
 const formData = ref<accountEditRequesData>({
   title: '',
@@ -192,14 +192,10 @@ function filterAccountGroups(groups: AccountsGroup[]) {
   })
 }
 
-function amountToNumber(amount?: string | null) {
+function amountToNumber(amount?: string | number | null) {
   const parsedAmount = Number(String(amount ?? 0).replace(/\s/g, '').replace(',', '.'))
 
   return Number.isFinite(parsedAmount) ? parsedAmount : 0
-}
-
-function sumAmounts(items: Array<{ amount?: string | null }>) {
-  return items.reduce((total, item) => total + amountToNumber(item.amount), 0)
 }
 
 </script>

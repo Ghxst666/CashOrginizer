@@ -16,3 +16,7 @@ export interface ResetPasswordRequestData {
 export interface RecoveryCodesReissueRequestData {
     current_password: string
 }
+
+export interface logoutRequestData {
+    refresh_token: string
+}

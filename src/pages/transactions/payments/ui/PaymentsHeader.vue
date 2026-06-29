@@ -18,8 +18,16 @@ const { data: groups } = useGroupsQuery()
 
 const selectedFilterTitle = computed(() => {
   if (props.selectedFilter.type === 'all') return 'Все платежи'
-  const count = props.selectedFilter.accountIds.length + props.selectedFilter.groupIds.length
-  return count ? `Выбрано: ${count}` : 'Все платежи'
+  if (props.selectedFilter.type === 'selection') {
+    const count = props.selectedFilter.accountIds.length + props.selectedFilter.groupIds.length
+    return count ? `Выбрано: ${count}` : 'Все платежи'
+  }
+  if (props.selectedFilter.type === 'account') return props.selectedFilter.title || 'Платежи по счету'
+  if (props.selectedFilter.type === 'group') return props.selectedFilter.title || 'Платежи по группе'
+  if (props.selectedFilter.type === 'purpose') return props.selectedFilter.title || 'Платежи по названию'
+  if (props.selectedFilter.type === 'project') return props.selectedFilter.title || 'Платежи по проекту'
+
+  return props.selectedFilter.title || 'Платежи по категории'
 })
 const filteredAccounts = computed(() => filterOptions(accounts.value ?? []))
 const filteredGroups = computed(() => filterOptions(groups.value ?? []))

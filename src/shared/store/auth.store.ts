@@ -3,7 +3,7 @@ import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { LoginRequestData } from "../types/api/auth.types"
 import { authService } from "../service/auth.service"
-import { TRANSACTION_ROUTE } from "../router"
+import { AUTH_ROUTE, TRANSACTION_ROUTE } from "../router"
 import axios from "axios"
 import { ApiErrorResponse } from "../types/api/error"
 import { errorMessageHandler } from "../lib/api/errorMessageHandler"
@@ -53,12 +53,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(): Promise<void> {
+    const refreshToken = localStorage.getItem('refresh_token')
+
     try {
-      await authService.logout()
+      if (refreshToken) {
+        await authService.logout(refreshToken)
+      }
     }
     finally {
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('access_token')
       setAuthenticated(false)
-      window.location.href = '/auth'
+      router.replace({ name: AUTH_ROUTE.BASE.NAME })
     }
   }
 

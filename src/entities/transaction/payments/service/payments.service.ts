@@ -17,7 +17,10 @@ import {
     GetAllPaymentsResponse,
     GetPaymentsRequest,
     GetPaymentFilteredByAccountResponse,
+    GetPaymentFilteredByCategoryResponse,
     GetPaymentFilteredByGroupResponse,
+    GetPaymentFilteredByProjectResponse,
+    GetPaymentFilteredByPurposeResponse,
     GetPaymentOneOrNoneResponse,
     ImportPaymentsFromCsvRequest,
     ImportPaymentsFromCsvResponse,
@@ -94,6 +97,30 @@ export const PaymentsService = {
     getPaymentsFilteredByGroup(group_id: number, params?: GetPaymentsRequest): BaseResponse<GetPaymentFilteredByGroupResponse> {
         return api.makeRequest<GetPaymentFilteredByGroupResponse>({
             url: `${ENDPOINTS.FILTERED_BY_GROUP}/${group_id}`,
+            method: REQUEST_METHODS.GET,
+            params,
+        })
+    },
+
+    getPaymentsFilteredByPurpose(purpose_id: number, params?: GetPaymentsRequest): BaseResponse<GetPaymentFilteredByPurposeResponse> {
+        return api.makeRequest<GetPaymentFilteredByPurposeResponse>({
+            url: `${ENDPOINTS.FILTERED_BY_PURPOSE}/${purpose_id}`,
+            method: REQUEST_METHODS.GET,
+            params,
+        })
+    },
+
+    getPaymentsFilteredByProject(project_id: number, params?: GetPaymentsRequest): BaseResponse<GetPaymentFilteredByProjectResponse> {
+        return api.makeRequest<GetPaymentFilteredByProjectResponse>({
+            url: `${ENDPOINTS.FILTERED_BY_PROJECT}/${project_id}`,
+            method: REQUEST_METHODS.GET,
+            params,
+        })
+    },
+
+    getPaymentsFilteredByCategory(category_id: number, params?: GetPaymentsRequest): BaseResponse<GetPaymentFilteredByCategoryResponse> {
+        return api.makeRequest<GetPaymentFilteredByCategoryResponse>({
+            url: `${ENDPOINTS.FILTERED_BY_CATEGORY}/${category_id}`,
             method: REQUEST_METHODS.GET,
             params,
         })

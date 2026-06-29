@@ -6,6 +6,8 @@ import { useCategoriesQuery } from '@/entities/category';
 import NewCategoryDialog from '@/shared/ui/NewCategoryDialog.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
 import type { CategoryRowData } from '@/entities/category/types/category.types';
+import { useRouter } from 'vue-router';
+import { TRANSACTION_ROUTE } from '@/shared/router';
 
 interface CategoryPeriodFilter {
     period: string
@@ -19,6 +21,7 @@ const { data } = useCategoriesQuery(periodFilter)
 const newCategory = ref<boolean>(false)
 const isPropertiesOpen = ref(false)
 const selectedCategory = ref<CategoryRowData | null>(null)
+const router = useRouter()
 
 function handleOpenCategoryDialog() {
     newCategory.value = true
@@ -30,6 +33,16 @@ function handleShowProperties() {
 
 function handleSelectCategory(category: CategoryRowData) {
     selectedCategory.value = category
+}
+
+function handleOpenPayments(category: CategoryRowData) {
+    router.push({
+        name: TRANSACTION_ROUTE.PAYMENTS.NAME,
+        query: {
+            category_id: String(category.id),
+            category_title: category.title,
+        },
+    })
 }
 
 function handleSelectPeriod(filter: CategoryPeriodFilter) {
@@ -73,6 +86,7 @@ function childrenTitles(category: CategoryRowData) {
                     v-if="data"
                     :data="data"
                     @select="handleSelectCategory"
+                    @open-payments="handleOpenPayments"
                 />
             </div>
         </div>

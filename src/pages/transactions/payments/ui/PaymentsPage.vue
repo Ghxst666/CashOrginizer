@@ -41,28 +41,88 @@ function handleSelectPayment(payment: PaymentListItemResponse) {
 function handleSelectFilter(filter: PaymentsFilter) {
   paymentsFilter.value = filter
 
-  if (filter.type === 'selection') {
-    router.replace({
-      query: {
-        ...route.query,
-        account_ids: filter.accountIds.join(',') || undefined,
-        group_ids: filter.groupIds.join(',') || undefined,
-      },
-    })
-    return
-  }
-
   router.replace({
     query: {
       ...route.query,
-      account_ids: undefined,
-      group_ids: undefined,
+      ...getPaymentsFilterQuery(filter),
     },
   })
 }
 
 function getQueryValue(value: unknown) {
   return Array.isArray(value) ? value[0] : value
+}
+
+function getQueryString(query: Record<string, unknown>, key: string) {
+  return String(getQueryValue(query[key]) || '')
+}
+
+function getQueryNumber(query: Record<string, unknown>, key: string) {
+  const value = Number(getQueryString(query, key))
+
+  return Number.isFinite(value) && value > 0 ? value : null
+}
+
+function getPaymentsFilterQuery(filter: PaymentsFilter) {
+  const clearedFilterQuery = {
+    account_id: undefined,
+    account_ids: undefined,
+    account_title: undefined,
+    group_id: undefined,
+    group_ids: undefined,
+    group_title: undefined,
+    purpose_id: undefined,
+    purpose_title: undefined,
+    project_id: undefined,
+    project_title: undefined,
+    category_id: undefined,
+    category_title: undefined,
+  }
+
+  if (filter.type === 'selection') {
+    return {
+      ...clearedFilterQuery,
+      account_ids: filter.accountIds.join(',') || undefined,
+      group_ids: filter.groupIds.join(',') || undefined,
+    }
+  }
+  if (filter.type === 'account') {
+    return {
+      ...clearedFilterQuery,
+      account_id: String(filter.accountId),
+      account_title: filter.title,
+    }
+  }
+  if (filter.type === 'group') {
+    return {
+      ...clearedFilterQuery,
+      group_id: String(filter.groupId),
+      group_title: filter.title,
+    }
+  }
+  if (filter.type === 'purpose') {
+    return {
+      ...clearedFilterQuery,
+      purpose_id: String(filter.purposeId),
+      purpose_title: filter.title,
+    }
+  }
+  if (filter.type === 'project') {
+    return {
+      ...clearedFilterQuery,
+      project_id: String(filter.projectId),
+      project_title: filter.title,
+    }
+  }
+  if (filter.type === 'category') {
+    return {
+      ...clearedFilterQuery,
+      category_id: String(filter.categoryId),
+      category_title: filter.title,
+    }
+  }
+
+  return clearedFilterQuery
 }
 
 function formatMoney(value?: string | null) {
@@ -122,10 +182,60 @@ function getPaymentAmountInRub(payment: PaymentListItemResponse) {
 watch(
   () => route.query,
   (query) => {
-    const accountIds = String(getQueryValue(query.account_ids) || getQueryValue(query.account_id) || '')
+    const purposeId = getQueryNumber(query, 'purpose_id')
+    const projectId = getQueryNumber(query, 'project_id')
+    const categoryId = getQueryNumber(query, 'category_id')
+    const accountId = getQueryNumber(query, 'account_id')
+    const groupId = getQueryNumber(query, 'group_id')
+    const accountIds = String(getQueryValue(query.account_ids) || '')
       .split(',').map(Number).filter(id => Number.isFinite(id) && id > 0)
-    const groupIds = String(getQueryValue(query.group_ids) || getQueryValue(query.group_id) || '')
+    const groupIds = String(getQueryValue(query.group_ids) || '')
       .split(',').map(Number).filter(id => Number.isFinite(id) && id > 0)
+
+    if (purposeId) {
+      paymentsFilter.value = {
+        type: 'purpose',
+        purposeId,
+        title: getQueryString(query, 'purpose_title') || undefined,
+      }
+      return
+    }
+
+    if (projectId) {
+      paymentsFilter.value = {
+        type: 'project',
+        projectId,
+        title: getQueryString(query, 'project_title') || undefined,
+      }
+      return
+    }
+
+    if (categoryId) {
+      paymentsFilter.value = {
+        type: 'category',
+        categoryId,
+        title: getQueryString(query, 'category_title') || undefined,
+      }
+      return
+    }
+
+    if (accountId) {
+      paymentsFilter.value = {
+        type: 'account',
+        accountId,
+        title: getQueryString(query, 'account_title') || undefined,
+      }
+      return
+    }
+
+    if (groupId) {
+      paymentsFilter.value = {
+        type: 'group',
+        groupId,
+        title: getQueryString(query, 'group_title') || undefined,
+      }
+      return
+    }
 
     if (accountIds.length || groupIds.length) {
       paymentsFilter.value = {

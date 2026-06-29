@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { BaseTransitionProps, computed, ref, TransitionProps } from 'vue';
 import { useEventListener } from '@vueuse/core'
-import { DArrowLeft } from '@element-plus/icons-vue';
+import { DArrowLeft, SwitchButton } from '@element-plus/icons-vue';
 import { menuItems } from '../const/menu.const';
 import { useRoute, useRouter } from 'vue-router';
 import logoUrl from '@/shared/assets/logo.svg'
+import { useAuthStore } from '@/shared/store/auth.store'
 
 const BREAKPOINT_COLLAPSE = 1327
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 const activeMenuItem = computed(() => String(route.name ?? ''))
 
 const isCollapsed = ref<boolean>(window.innerWidth <= BREAKPOINT_COLLAPSE)
@@ -22,6 +24,10 @@ function handleGoTo(pageName: string | undefined) {
   if (pageName) {
     router.push({ name: pageName })
   }
+}
+
+function handleLogout() {
+  authStore.logout()
 }
 
 function updateWidth() {
@@ -153,6 +159,17 @@ const logoListeners = {
                     </template>
                 </ElMenu>
             </ElScrollbar>
+        </div>
+        <div class="shrink-0 border-t border-[#e2e3e6] p-3">
+            <ElButton
+                :class="isCollapsed ? 'w-10 items-center' : 'w-full items-center'"
+                type="danger"
+                :icon="SwitchButton"
+                :circle="isCollapsed"
+                @click="handleLogout"
+            >
+                <span v-if="!isCollapsed">Выйти</span>
+            </ElButton>
         </div>
     </div>
 </template>

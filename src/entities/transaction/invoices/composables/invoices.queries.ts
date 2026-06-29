@@ -1,8 +1,51 @@
 import { DefaultError, useMutation, UseMutationReturnType, useQuery, useQueryClient, UseQueryReturnType } from "@tanstack/vue-query";
 import { InvoicessService } from "../service/invoices.service";
-import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsReorderRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
+import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsGroupItemResponse, accountsReorderRequest, AccountsListResponse, accountsResponse, AccountsSummaryResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { ElMessage } from "element-plus";
 import { computed, unref, type MaybeRef } from "vue";
+
+const EMPTY_ACCOUNTS_SUMMARY: AccountsSummaryResponse = {
+    accounts_count: 0,
+    total_amount: '0.00',
+    total_amount_formatted: '0,00 р',
+    total_income: '0.00',
+    total_income_formatted: '0,00 р',
+    total_expense: '0.00',
+    total_expense_formatted: '0,00 р',
+}
+
+function amountToNumber(amount?: string | number | null) {
+    const parsedAmount = Number(String(amount ?? 0).replace(/\s/g, '').replace(',', '.'))
+
+    return Number.isFinite(parsedAmount) ? parsedAmount : 0
+}
+
+function createSummaryFromAccounts(accounts: accountsResponse[]): AccountsSummaryResponse {
+    const totalAmount = accounts.reduce((total, account) => total + amountToNumber(account.amount), 0).toFixed(2)
+
+    return {
+        ...EMPTY_ACCOUNTS_SUMMARY,
+        accounts_count: accounts.length,
+        total_amount: totalAmount,
+    }
+}
+
+function normalizeAccountsResponse<T>(
+    response: T[] | AccountsListResponse<T>,
+    createSummary: (items: T[]) => AccountsSummaryResponse = () => EMPTY_ACCOUNTS_SUMMARY,
+): AccountsListResponse<T> {
+    if (Array.isArray(response)) {
+        return {
+            summary: createSummary(response),
+            data: response,
+        }
+    }
+
+    return {
+        summary: response.summary ?? createSummary(response.data ?? []),
+        data: response.data ?? [],
+    }
+}
 
 export function useAccountsQuery(
     status?: MaybeRef<boolean | undefined>,
@@ -10,7 +53,18 @@ export function useAccountsQuery(
 ): UseQueryReturnType<accountsResponse[], DefaultError> {
     return useQuery({
         queryKey: computed(() => ['Accounts', unref(status)]),
-        queryFn: () => InvoicessService.getAllInvoices(unref(status)).then(res => res.data),
+        queryFn: () => InvoicessService.getAllInvoices(unref(status)).then(res => normalizeAccountsResponse<accountsResponse>(res.data, createSummaryFromAccounts).data),
+        enabled: computed(() => unref(enabled)),
+    })
+}
+
+export function useAccountsSummaryQuery(
+    status?: MaybeRef<boolean | undefined>,
+    enabled: MaybeRef<boolean> = true,
+): UseQueryReturnType<AccountsSummaryResponse, DefaultError> {
+    return useQuery({
+        queryKey: computed(() => ['Accounts', 'summary', unref(status)]),
+        queryFn: () => InvoicessService.getAllInvoices(unref(status)).then(res => normalizeAccountsResponse<accountsResponse>(res.data, createSummaryFromAccounts).summary),
         enabled: computed(() => unref(enabled)),
     })
 }
@@ -21,7 +75,7 @@ export function useFilteredInvoicesByType(
 ): UseQueryReturnType<accountsSortedByTypeResponse[], DefaultError> {
     return useQuery({
         queryKey: computed(() => ['Accounts', 'by_type', unref(status)]),
-        queryFn: () => InvoicessService.getAllInvoicesSortedByType(unref(status)).then(res => res.data),
+        queryFn: () => InvoicessService.getAllInvoicesSortedByType(unref(status)).then(res => normalizeAccountsResponse<accountsSortedByTypeResponse>(res.data).data),
         enabled: computed(() => unref(enabled)),
     })
 }
@@ -32,7 +86,7 @@ export function useFilteredInvoicesByGroups(
 ): UseQueryReturnType<accountsSortedByGroupsResponse[], DefaultError> {
     return useQuery({
         queryKey: computed(() => ['Accounts', 'by_groups', unref(status)]),
-        queryFn: () => InvoicessService.getAllInvoicesSortedByGroups(unref(status)).then(res => res.data),
+        queryFn: () => InvoicessService.getAllInvoicesSortedByGroups(unref(status)).then(res => normalizeAccountsResponse<accountsSortedByGroupsResponse>(res.data).data),
         enabled: computed(() => unref(enabled)),
     })
 }

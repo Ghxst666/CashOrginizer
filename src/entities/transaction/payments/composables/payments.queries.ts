@@ -18,6 +18,8 @@ import {
 
 const DEFAULT_PAYMENTS_PER_PAGE = 30
 
+export type PaymentsRemoteFilterType = 'account' | 'group' | 'purpose' | 'project' | 'category'
+
 type UsePaymentsInfiniteScrollQueryReturn = UseInfiniteQueryReturnType<InfiniteData<GetAllPaymentsResponse, number>, DefaultError> & ReturnType<typeof useInfiniteScroll>
 
 export function usePaymentsQuery(
@@ -51,6 +53,44 @@ export function usePaymentsInfiniteScrollQuery(
         ...query,
         target,
     }
+}
+
+export function usePaymentsFilteredInfiniteScrollQuery(
+    filterType: MaybeRef<PaymentsRemoteFilterType>,
+    filterId: MaybeRef<number>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+): UsePaymentsInfiniteScrollQueryReturn {
+    const query = useInfiniteQuery<GetAllPaymentsResponse, DefaultError, InfiniteData<GetAllPaymentsResponse, number>, readonly unknown[], number>({
+        queryKey: computed(() => ['payments', 'filtered', unref(filterType), unref(filterId), perPage]),
+        queryFn: ({ pageParam }) => getPaymentsFilteredByType(unref(filterType), unref(filterId), {
+            page: pageParam,
+            per_page: perPage,
+        }).then(res => res.data),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, allPages) => lastPage.length === perPage ? allPages.length + 1 : undefined,
+        enabled: computed(() => unref(enabled) && Number.isFinite(unref(filterId)) && unref(filterId) > 0),
+    })
+
+    const { target } = useInfiniteScroll(query.fetchNextPage, query.hasNextPage, query.isFetchingNextPage)
+
+    return {
+        ...query,
+        target,
+    }
+}
+
+function getPaymentsFilteredByType(
+    filterType: PaymentsRemoteFilterType,
+    filterId: number,
+    params: { page: number, per_page: number },
+) {
+    if (filterType === 'account') return PaymentsService.getPaymentsFilteredByAccount(filterId, params)
+    if (filterType === 'group') return PaymentsService.getPaymentsFilteredByGroup(filterId, params)
+    if (filterType === 'purpose') return PaymentsService.getPaymentsFilteredByPurpose(filterId, params)
+    if (filterType === 'project') return PaymentsService.getPaymentsFilteredByProject(filterId, params)
+
+    return PaymentsService.getPaymentsFilteredByCategory(filterId, params)
 }
 
 export function useCreatePayment(): UseMutationReturnType<

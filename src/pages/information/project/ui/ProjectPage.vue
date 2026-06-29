@@ -6,6 +6,8 @@ import { useProjectsQuery } from '@/entities/project';
 import NewProject from '@/shared/ui/NewProject.vue';
 import SidePropertiesPanel from '@/shared/ui/SidePropertiesPanel.vue';
 import type { projectsRowData } from '@/entities/project/types/project.types';
+import { useRouter } from 'vue-router';
+import { TRANSACTION_ROUTE } from '@/shared/router';
 
 interface ProjectPeriodFilter {
     period: string
@@ -19,6 +21,7 @@ const { data } = useProjectsQuery(periodFilter)
 const newProject = ref<boolean>(false)
 const isPropertiesOpen = ref(false)
 const selectedProject = ref<projectsRowData | null>(null)
+const router = useRouter()
 
 function handleOpenProjectDialog() {
     newProject.value = true
@@ -30,6 +33,16 @@ function handleShowProperties() {
 
 function handleSelectProject(project: projectsRowData) {
     selectedProject.value = project
+}
+
+function handleOpenPayments(project: projectsRowData) {
+    router.push({
+        name: TRANSACTION_ROUTE.PAYMENTS.NAME,
+        query: {
+            project_id: String(project.id),
+            project_title: project.title,
+        },
+    })
 }
 
 function handleSelectPeriod(filter: ProjectPeriodFilter) {
@@ -82,6 +95,7 @@ function childrenTitles(project: projectsRowData) {
                     v-if="data"
                     :data="data"
                     @select="handleSelectProject"
+                    @open-payments="handleOpenPayments"
                 />
             </div>
         </div>

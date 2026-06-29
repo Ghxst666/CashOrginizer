@@ -1,12 +1,12 @@
 import { BaseResponse } from "@/shared/types/api/request";
-import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsCreateResponse, accountsGroupItemResponse, accountsReorderRequest, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
+import { accountEditRequesData, accountPartialEditItemRequestData, accountsCreateRequest, accountsCreateResponse, accountsGroupItemResponse, accountsReorderRequest, AccountsListResponse, accountsResponse, accountsSortedByGroupsResponse, accountsSortedByTypeResponse, accountUserItemResponse } from "../types/invoices.types";
 import { api } from "@/shared/service/api";
 import { ENDPOINTS } from "../config/invoices.config";
 import { REQUEST_METHODS } from "@/shared/config/api/request.config";
 
 export const InvoicessService = {
-    getAllInvoices(status?: boolean): BaseResponse<accountsResponse[]> {
-        return api.makeRequest<accountsResponse[]>({
+    getAllInvoices(status?: boolean): BaseResponse<accountsResponse[] | AccountsListResponse<accountsResponse>> {
+        return api.makeRequest<accountsResponse[] | AccountsListResponse<accountsResponse>>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,
             params: {
@@ -15,8 +15,8 @@ export const InvoicessService = {
         })
     },
 
-    getAllInvoicesSortedByType(status?: boolean): BaseResponse<accountsSortedByTypeResponse[]> {
-        return api.makeRequest<accountsSortedByTypeResponse[]>({
+    getAllInvoicesSortedByType(status?: boolean): BaseResponse<accountsSortedByTypeResponse[] | AccountsListResponse<accountsSortedByTypeResponse>> {
+        return api.makeRequest<accountsSortedByTypeResponse[] | AccountsListResponse<accountsSortedByTypeResponse>>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,
             params: {
@@ -26,8 +26,8 @@ export const InvoicessService = {
         })
     },
 
-    getAllInvoicesSortedByGroups(status?: boolean): BaseResponse<accountsSortedByGroupsResponse[]> {
-        return api.makeRequest<accountsSortedByGroupsResponse[]>({
+    getAllInvoicesSortedByGroups(status?: boolean): BaseResponse<accountsSortedByGroupsResponse[] | AccountsListResponse<accountsSortedByGroupsResponse>> {
+        return api.makeRequest<accountsSortedByGroupsResponse[] | AccountsListResponse<accountsSortedByGroupsResponse>>({
             url: ENDPOINTS.BASE,
             method: REQUEST_METHODS.GET,
             params: {

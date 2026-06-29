@@ -1,5 +1,6 @@
 import { 
     useAccountsQuery,
+    useAccountsSummaryQuery,
     useCreateAccount,
     useAccountsItemGroup,
     useFilteredInvoicesByType,
@@ -15,6 +16,7 @@ import {
 
 export {
     useAccountsQuery,
+    useAccountsSummaryQuery,
     useCreateAccount,
     useAccountsItemGroup,
     useFilteredInvoicesByType,

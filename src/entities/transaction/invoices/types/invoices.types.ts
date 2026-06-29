@@ -16,6 +16,21 @@ export interface accountsResponse {
     sort_order: number
 }
 
+export interface AccountsSummaryResponse {
+    accounts_count: number
+    total_amount: string
+    total_amount_formatted: string
+    total_income: string
+    total_income_formatted: string
+    total_expense: string
+    total_expense_formatted: string
+}
+
+export interface AccountsListResponse<T = accountsResponse> {
+    summary: AccountsSummaryResponse
+    data: T[]
+}
+
 export interface accountsCreateRequest {
     title: string,
     type: string,

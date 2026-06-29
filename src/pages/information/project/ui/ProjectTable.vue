@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     select: [row: projectsRowData]
+    openPayments: [row: projectsRowData]
 }>()
 
 const headerSearchStore = useHeaderSearchStore()
@@ -45,6 +46,10 @@ function handleUpdate(row: any) {
 
 function handleRowClick(row: projectsRowData) {
     emit('select', row)
+}
+
+function handleRowDblClick(row: projectsRowData) {
+    emit('openPayments', row)
 }
 
 function handleRowContextMenu(row: projectsRowData, _column: unknown, event: MouseEvent) {
@@ -87,6 +92,7 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
             row-key="id"
             :tree-props="{ children: 'children' }"
             @row-click="handleRowClick"
+            @row-dblclick="handleRowDblClick"
             @row-contextmenu="handleRowContextMenu"
         >
             <ElTableColumn show-overflow-tooltip prop="title" label="Название проекта">

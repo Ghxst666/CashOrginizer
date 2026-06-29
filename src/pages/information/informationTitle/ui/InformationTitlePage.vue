@@ -7,6 +7,8 @@ import type { purposesRowData } from '@/entities/purposes/types/purposes.types';
 import { filterRowsBySearch } from '@/shared/lib/search';
 import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import { NewPurposesDialog } from '@/shared/ui';
+import { useRouter } from 'vue-router';
+import { TRANSACTION_ROUTE } from '@/shared/router';
 
 interface InformationPeriodFilter {
   period: string
@@ -20,6 +22,7 @@ const selectedPurpose = ref<purposesRowData | null>(null)
 const selectedEditPurpose = ref<purposesRowData | null>(null)
 const isPropertiesOpen = ref(false)
 const headerSearchStore = useHeaderSearchStore()
+const router = useRouter()
 
 const periodFilter = ref<InformationPeriodFilter>({ period: 'all_period' })
 const { data } = usePurposesQuery(periodFilter)
@@ -69,6 +72,16 @@ function handleSelectPurpose(purpose: purposesRowData) {
   selectedPurpose.value = purpose
 }
 
+function handleOpenPayments(purpose: purposesRowData) {
+  router.push({
+    name: TRANSACTION_ROUTE.PAYMENTS.NAME,
+    query: {
+      purpose_id: String(purpose.id),
+      purpose_title: purpose.title,
+    },
+  })
+}
+
 function handleSelectPeriod(filter: InformationPeriodFilter) {
   periodFilter.value = filter
 }
@@ -102,6 +115,7 @@ function handleSelectPeriod(filter: InformationPeriodFilter) {
                   :data="filteredData"
                   @edit="handleOpenEditDialog"
                   @select="handleSelectPurpose"
+                  @open-payments="handleOpenPayments"
                 />
             </div>
         </div>

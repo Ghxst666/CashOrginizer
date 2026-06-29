@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     edit: [purpose: purposesRowData]
     select: [purpose: purposesRowData]
+    openPayments: [purpose: purposesRowData]
 }>()
 
 const contextMenu = ref({
@@ -24,6 +25,10 @@ function handleUpdate(row: purposesRowData) {
 
 function handleRowClick(row: purposesRowData) {
     emit('select', row)
+}
+
+function handleRowDblClick(row: purposesRowData) {
+    emit('openPayments', row)
 }
 
 function handleRowContextMenu(row: purposesRowData, _column: unknown, event: MouseEvent) {
@@ -63,6 +68,7 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
             border 
             :data="props.data.rows"
             @row-click="handleRowClick"
+            @row-dblclick="handleRowDblClick"
             @row-contextmenu="handleRowContextMenu"
         >
             <ElTableColumn show-overflow-tooltip width="400" prop="title" label="Название" />

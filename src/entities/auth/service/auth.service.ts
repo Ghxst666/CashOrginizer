@@ -4,6 +4,7 @@ import { auth } from "@/shared/service/auth"
 import { BaseResponse } from "@/shared/types/api/request"
 import { AUTH_ENDPOINTS } from "../config/auth.config"
 import {
+    logoutRequestData,
     RecoveryCodesReissueRequestData,
     RecoveryCodesResponse,
     RegisterRequestData,
@@ -34,4 +35,12 @@ export const AuthEntityService = {
             data,
         })
     },
+
+    logout(data: logoutRequestData): BaseResponse<void> {
+        return api.makeRequest<void>({
+            url: AUTH_ENDPOINTS.LOGOUT,
+            method: REQUEST_METHODS.POST,
+            data
+        })
+    }
 }

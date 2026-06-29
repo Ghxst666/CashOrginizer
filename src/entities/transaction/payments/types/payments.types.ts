@@ -98,6 +98,7 @@ export interface PaymentListItemResponse {
     category_title: string
     project_title: string
     purpose_title: string
+    to_account_currency:string 
     to_account_title?: string | null
     project?: string | null
     account_currency: string
@@ -157,6 +158,12 @@ export interface DeletePaymentResponse {
 export type GetPaymentFilteredByAccountResponse = PaymentListItemResponse[]
 
 export type GetPaymentFilteredByGroupResponse = PaymentListItemResponse[]
+
+export type GetPaymentFilteredByPurposeResponse = PaymentListItemResponse[]
+
+export type GetPaymentFilteredByProjectResponse = PaymentListItemResponse[]
+
+export type GetPaymentFilteredByCategoryResponse = PaymentListItemResponse[]
 
 export interface DeleteManyPaymentsResponse {
     status: string

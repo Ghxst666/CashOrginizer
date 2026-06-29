@@ -19,10 +19,11 @@ export const authService = {
       data: { refresh_token: token }
     })
   },
-  logout(): BaseResponse<void> {
+  logout(refreshToken: string): BaseResponse<void> {
     return auth.request({
       url: AUTH_ENDPOINTS.LOGOUT,
       method: REQUEST_METHODS.POST,
+      data: { refresh_token: refreshToken },
     })
   },
 }
