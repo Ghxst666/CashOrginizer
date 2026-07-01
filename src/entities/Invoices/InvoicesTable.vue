@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Sortable, { type SortableEvent } from 'sortablejs'
+import Sortable from 'sortablejs'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { accountsResponse } from '../transaction/invoices/types/invoices.types'
+import type { accountsResponse } from '../transaction/invoices/types/invoices.types'
 
 const props = withDefaults(defineProps<{
   data: accountsResponse[]
@@ -18,6 +18,8 @@ const emit = defineEmits<{
 }>()
 
 const tableRef = ref<{ $el: HTMLElement } | null>(null)
+const tableData = ref<accountsResponse[]>([])
+const tableBody = ref<HTMLElement | null>(null)
 const contextMenu = ref({
   visible: false,
   x: 0,
@@ -35,13 +37,56 @@ function handleRowDblClick(row: accountsResponse) {
 
 let sortable: Sortable | null = null
 
+function getTableRows() {
+  return Array.from(tableBody.value?.querySelectorAll<HTMLTableRowElement>('tr.el-table__row') ?? [])
+}
+
+function syncSortableRowIds() {
+  getTableRows().forEach((row, index) => {
+    const account = tableData.value[index]
+
+    if (account) {
+      row.dataset.accountId = String(account.id)
+    } else {
+      delete row.dataset.accountId
+    }
+  })
+}
+
+function readSortedAccountIds() {
+  const accountIds = getTableRows().map(row => Number(row.dataset.accountId))
+
+  if (
+    accountIds.length !== tableData.value.length
+    || accountIds.some(accountId => !Number.isFinite(accountId))
+    || new Set(accountIds).size !== accountIds.length
+  ) {
+    return null
+  }
+
+  return accountIds
+}
+
+function applyAccountOrder(accountIds: number[]) {
+  const accountsById = new Map(tableData.value.map(account => [account.id, account]))
+  const nextData = accountIds.map(accountId => accountsById.get(accountId))
+
+  if (nextData.some(account => !account)) return null
+
+  tableData.value = nextData as accountsResponse[]
+
+  return accountIds
+}
+
 async function initializeSortable() {
   await nextTick()
 
-  const tableBody = tableRef.value?.$el.querySelector<HTMLElement>('.el-table__body-wrapper tbody')
-  if (!tableBody) return
+  tableBody.value = tableRef.value?.$el.querySelector<HTMLElement>('.el-table__body-wrapper tbody') ?? null
+  if (!tableBody.value) return
 
-  sortable = Sortable.create(tableBody, {
+  syncSortableRowIds()
+
+  sortable = Sortable.create(tableBody.value, {
     animation: 150,
     disabled: !props.reorderable,
     draggable: 'tr.el-table__row',
@@ -51,15 +96,26 @@ async function initializeSortable() {
     fallbackTolerance: 2,
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
-    onEnd: (event: SortableEvent) => {
-      if (event.oldIndex === undefined || event.newIndex === undefined || event.oldIndex === event.newIndex) return
+    onStart: syncSortableRowIds,
+    onEnd: () => {
+      const accountIds = readSortedAccountIds()
+      if (!accountIds) {
+        void nextTick(syncSortableRowIds)
+        return
+      }
 
-      const accountIds = props.data.map(account => account.id)
-      const [movedAccountId] = accountIds.splice(event.oldIndex, 1)
-      if (movedAccountId === undefined) return
+      const currentOrder = tableData.value.map(account => account.id)
+      if (accountIds.every((accountId, index) => accountId === currentOrder[index])) return
 
-      accountIds.splice(event.newIndex, 0, movedAccountId)
-      emit('reorder', accountIds)
+      const nextOrder = applyAccountOrder(accountIds)
+      if (!nextOrder) {
+        void nextTick(syncSortableRowIds)
+        return
+      }
+
+      void nextTick(syncSortableRowIds)
+
+      emit('reorder', nextOrder)
     },
   })
 }
@@ -97,6 +153,15 @@ watch(
   () => props.reorderable,
   reorderable => sortable?.option('disabled', !reorderable),
 )
+
+watch(
+  () => props.data,
+  data => {
+    tableData.value = [...data]
+    void nextTick(syncSortableRowIds)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -105,7 +170,8 @@ watch(
       ref="tableRef"
       height="100%"
       border
-      :data="data"
+      row-key="id"
+      :data="tableData"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDblClick"
       @row-contextmenu="handleRowContextMenu"

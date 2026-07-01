@@ -59,6 +59,10 @@ async function submitForm() {
     isSubmitting.value = false
   }
 }
+
+function goToLogin() {
+  router.push({ name: AUTH_ROUTE.LOGIN.NAME })
+}
 </script>
 
 <template>
@@ -94,13 +98,21 @@ async function submitForm() {
           />
         </ElFormItem>
       </ElForm>
-      <ElButton
-        type="primary"
-        :loading="isSubmitting"
-        @click="submitForm"
-      >
-        Изменить пароль
-      </ElButton>
+      <div class="flex flex-col gap-1">
+        <ElButton
+          type="primary"
+          :loading="isSubmitting"
+          @click="submitForm"
+        >
+          Изменить пароль
+        </ElButton>
+        <ElButton
+          class="!ml-0"
+          @click="goToLogin"
+        >
+          Назад
+        </ElButton>
+      </div>
     </ElCard>
   </div>
 </template>

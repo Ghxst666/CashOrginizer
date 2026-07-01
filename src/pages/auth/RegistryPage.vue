@@ -73,6 +73,7 @@ async function submitForm() {
       message: 'Регистрация прошла успешно',
       type: 'success',
     })
+    router.push({ name: AUTH_ROUTE.LOGIN.NAME })
   }
   finally {
     isSubmitting.value = false

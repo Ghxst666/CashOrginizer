@@ -26,7 +26,6 @@ const formData = ref<EditAccountFormData>(emptyForm())
 const disabled = computed(() => isPending.value)
 const currencyChangeRequiresRate = computed(() => (
   formData.value.currency !== originalCurrency.value
-  && formData.value.currency === 'USD'
 ))
 const typeLabel = computed(() => ACCOUNT_TYPES.find(option => option.value === formData.value.type)?.label || 'Не выбран')
 const groupLabel = computed(() => formData.value.group_id === NO_GROUP
@@ -99,7 +98,7 @@ watch(() => props.updateData, (value) => {
           <div class="account-setting-row"><span>Статус</span><ElInput :model-value="formData.status ? 'Открытый' : 'Закрытый'" readonly @focus="activeField = 'status'" @click="activeField = 'status'" /></div>
           <div class="account-setting-row"><span>Группа счетов</span><ElInput :model-value="groupLabel" readonly @focus="activeField = 'group_id'" @click="activeField = 'group_id'" /></div>
           <div class="account-setting-row"><span>Валюта</span><ElInput :model-value="formData.currency === 'USD' ? 'Доллар США (USD)' : 'Российский рубль (RUB)'" readonly @focus="activeField = 'currency'" @click="activeField = 'currency'" /></div>
-          <div v-if="currencyChangeRequiresRate" class="account-setting-row"><span>Курс обмена</span><ElInput :model-value="formData.exchange_rate === null ? '' : String(formData.exchange_rate)" readonly @focus="activeField = 'exchange_rate'" @click="activeField = 'exchange_rate'" /></div>
+          <div v-if="currencyChangeRequiresRate" class="account-setting-row"><span>Курс обмена</span><ElInput v-model="formData.exchange_rate" @focus="activeField = 'exchange_rate'" @click="activeField = 'exchange_rate'" /></div>
         </div>
       </ElScrollbar>
 

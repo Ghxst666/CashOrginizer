@@ -75,7 +75,7 @@ const syncStatusType = computed<SyncTagType>(() => {
     return 'success'
 })
 
-const canRunSync = computed(() => Boolean(syncStore.status && syncStore.isCloudConfigured && !syncStore.isSyncing))
+// const canRunSync = computed(() => Boolean(syncStore.status && syncStore.isCloudConfigured && !syncStore.isSyncing))
 
 watch(
     () => syncStore.lastCompletedAt,
@@ -311,7 +311,6 @@ function formatConflictValue(value: unknown): string {
                 >
                     <ElButton
                         circle
-                        :disabled="!canRunSync"
                         :loading="syncStore.isSyncing"
                         @click="syncNow"
                     >

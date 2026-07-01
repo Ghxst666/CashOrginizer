@@ -11,7 +11,10 @@ import {
     ExportPaymentsToCsvRequest,
     GetAllPaymentsResponse,
     GetPaymentFilteredByAccountResponse,
+    GetPaymentFilteredByCategoryResponse,
     GetPaymentFilteredByGroupResponse,
+    GetPaymentFilteredByProjectResponse,
+    GetPaymentFilteredByPurposeResponse,
     GetPaymentOneOrNoneResponse,
     ImportPaymentsFromCsvRequest,
 } from "../types/payments.types";
@@ -91,6 +94,79 @@ function getPaymentsFilteredByType(
     if (filterType === 'project') return PaymentsService.getPaymentsFilteredByProject(filterId, params)
 
     return PaymentsService.getPaymentsFilteredByCategory(filterId, params)
+}
+
+function usePaymentsFilteredByIdInfiniteScrollQuery(
+    queryKeyPart: string,
+    filterId: MaybeRef<number>,
+    fetcher: (filterId: number, params: { page: number, per_page: number, status?: boolean }) => ReturnType<typeof PaymentsService.getPaymentsFilteredByAccount>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+    status?: MaybeRef<boolean | undefined>,
+): UsePaymentsInfiniteScrollQueryReturn {
+    const query = useInfiniteQuery<GetAllPaymentsResponse, DefaultError, InfiniteData<GetAllPaymentsResponse, number>, readonly unknown[], number>({
+        queryKey: computed(() => ['payments', queryKeyPart, 'infinite', unref(filterId), perPage, unref(status)]),
+        queryFn: ({ pageParam }) => fetcher(unref(filterId), {
+            page: pageParam,
+            per_page: perPage,
+            status: unref(status),
+        }).then(res => res.data),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, allPages) => lastPage.length === perPage ? allPages.length + 1 : undefined,
+        enabled: computed(() => unref(enabled) && Number.isFinite(unref(filterId)) && unref(filterId) > 0),
+    })
+
+    const { target } = useInfiniteScroll(query.fetchNextPage, query.hasNextPage, query.isFetchingNextPage)
+
+    return {
+        ...query,
+        target,
+    }
+}
+
+export function usePaymentsFilteredByAccountInfiniteScrollQuery(
+    account_id: MaybeRef<number>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+    status?: MaybeRef<boolean | undefined>,
+): UsePaymentsInfiniteScrollQueryReturn {
+    return usePaymentsFilteredByIdInfiniteScrollQuery('account', account_id, PaymentsService.getPaymentsFilteredByAccount, perPage, enabled, status)
+}
+
+export function usePaymentsFilteredByGroupInfiniteScrollQuery(
+    group_id: MaybeRef<number>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+    status?: MaybeRef<boolean | undefined>,
+): UsePaymentsInfiniteScrollQueryReturn {
+    return usePaymentsFilteredByIdInfiniteScrollQuery('group', group_id, PaymentsService.getPaymentsFilteredByGroup, perPage, enabled, status)
+}
+
+export function usePaymentsFilteredByPurposeInfiniteScrollQuery(
+    purpose_id: MaybeRef<number>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+    status?: MaybeRef<boolean | undefined>,
+): UsePaymentsInfiniteScrollQueryReturn {
+    return usePaymentsFilteredByIdInfiniteScrollQuery('purpose', purpose_id, PaymentsService.getPaymentsFilteredByPurpose, perPage, enabled, status)
+}
+
+export function usePaymentsFilteredByProjectInfiniteScrollQuery(
+    project_id: MaybeRef<number>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+    status?: MaybeRef<boolean | undefined>,
+): UsePaymentsInfiniteScrollQueryReturn {
+    return usePaymentsFilteredByIdInfiniteScrollQuery('project', project_id, PaymentsService.getPaymentsFilteredByProject, perPage, enabled, status)
+}
+
+export function usePaymentsFilteredByCategoryInfiniteScrollQuery(
+    category_id: MaybeRef<number>,
+    perPage = DEFAULT_PAYMENTS_PER_PAGE,
+    enabled: MaybeRef<boolean> = true,
+    status?: MaybeRef<boolean | undefined>,
+): UsePaymentsInfiniteScrollQueryReturn {
+    return usePaymentsFilteredByIdInfiniteScrollQuery('category', category_id, PaymentsService.getPaymentsFilteredByCategory, perPage, enabled, status)
 }
 
 export function useCreatePayment(): UseMutationReturnType<
@@ -208,6 +284,42 @@ export function usePaymentsFilteredByGroupQuery(
     return useQuery({
         queryKey: computed(() => ['payments', 'group', unref(group_id), unref(status)]),
         queryFn: () => PaymentsService.getPaymentsFilteredByGroup(unref(group_id), { status: unref(status) }).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
+    })
+}
+
+export function usePaymentsFilteredByPurposeQuery(
+    purpose_id: MaybeRef<number>,
+    enabled: MaybeRef<boolean> = true,
+    status: MaybeRef<boolean> = true,
+): UseQueryReturnType<GetPaymentFilteredByPurposeResponse, DefaultError> {
+    return useQuery({
+        queryKey: computed(() => ['payments', 'purpose', unref(purpose_id), unref(status)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByPurpose(unref(purpose_id), { status: unref(status) }).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
+    })
+}
+
+export function usePaymentsFilteredByProjectQuery(
+    project_id: MaybeRef<number>,
+    enabled: MaybeRef<boolean> = true,
+    status: MaybeRef<boolean> = true,
+): UseQueryReturnType<GetPaymentFilteredByProjectResponse, DefaultError> {
+    return useQuery({
+        queryKey: computed(() => ['payments', 'project', unref(project_id), unref(status)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByProject(unref(project_id), { status: unref(status) }).then(res => res.data),
+        enabled: computed(() => unref(enabled)),
+    })
+}
+
+export function usePaymentsFilteredByCategoryQuery(
+    category_id: MaybeRef<number>,
+    enabled: MaybeRef<boolean> = true,
+    status: MaybeRef<boolean> = true,
+): UseQueryReturnType<GetPaymentFilteredByCategoryResponse, DefaultError> {
+    return useQuery({
+        queryKey: computed(() => ['payments', 'category', unref(category_id), unref(status)]),
+        queryFn: () => PaymentsService.getPaymentsFilteredByCategory(unref(category_id), { status: unref(status) }).then(res => res.data),
         enabled: computed(() => unref(enabled)),
     })
 }

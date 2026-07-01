@@ -115,11 +115,11 @@ const isTransferBetweenDifferentCurrencies = computed(() => (
   formData.value.type === 'transfers'
   && sourceAccount.value !== null
   && destinationAccount.value !== null
-  && sourceAccount.value.currency !== destinationAccount.value.currency
+  && currencyValue(sourceAccount.value.currency) !== currencyValue(destinationAccount.value.currency)
 ))
 const isExchangeRateRequired = computed(() => (
   isTransferBetweenDifferentCurrencies.value
-  || (formData.value.type !== 'transfers' && sourceAccount.value?.currency === 'USD')
+  || (formData.value.type !== 'transfers' && currencyValue(sourceAccount.value?.currency) === 'USD')
 ))
 const categoryOptions = computed(() => (
   flattenCategoryOptions((categories.value?.rows ?? []) as PaymentCategoryOptionNode[])
@@ -315,6 +315,10 @@ function selectedOptionLabel(id: number | null, options: PickerOption[], emptyLa
 function exchangeRateToPayload(value: string): number | null {
   const rate = Number(value.replace(',', '.'))
   return Number.isFinite(rate) && rate > 0 ? rate : null
+}
+
+function currencyValue(currency?: string | null) {
+  return currency?.toUpperCase() || null
 }
 
 function handlePurposeSelection(purposeId: number | null) {

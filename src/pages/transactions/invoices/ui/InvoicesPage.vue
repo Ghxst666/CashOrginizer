@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InvoicesTable from '@/entities/Invoices/InvoicesTable.vue';
 import InvoicesHeader from './InvoicesHeader.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import NewInvoicesDialog from '@/shared/ui/NewInvoicesDialog.vue';
 import InvoicuesEditDialog from '@/shared/ui/edit/InvoicuesEditDialog.vue';
 import { useAccountsQuery, useAccountsReorder, useAccountsSummaryQuery, useFilteredInvoicesByGroups, useFilteredInvoicesByType } from '@/entities/transaction/invoices/index.ts';
@@ -39,8 +39,9 @@ const { data: accountsSummary } = useAccountsSummaryQuery(true)
 const { data: accountsByTypeData } = useFilteredInvoicesByType(accountsStatus, isTypeSort)
 const { data: accountsByGroupsData } = useFilteredInvoicesByGroups(accountsStatus, isGroupSort)
 const { mutateAsync: reorderAccounts } = useAccountsReorder()
+const optimisticAccountsData = ref<accountsResponse[]>([])
 const invoicesTableData = computed(() => {
-  return accountsData.value ?? []
+  return optimisticAccountsData.value
 })
 const filteredInvoicesTableData = computed(() => filterAccounts(invoicesTableData.value))
 const filteredAccountsByTypeData = computed(() => filterAccountGroups(accountsByTypeData.value ?? []))
@@ -127,23 +128,59 @@ function handleOpenUpdateDialog(row: accountsResponse) {
 }
 
 async function handleReorder(nextOrder: number[]) {
-  const currentOrder = invoicesTableData.value.map(account => account.id)
-  const hasSameAccounts = nextOrder.length === currentOrder.length
-    && nextOrder.every(accountId => currentOrder.includes(accountId))
+  const currentVisibleOrder = filteredInvoicesTableData.value.map(account => account.id)
 
-  if (!hasSameAccounts || nextOrder.every((accountId, index) => accountId === currentOrder[index])) {
+  if (!hasSameAccountIds(nextOrder, currentVisibleOrder) || isSameOrder(nextOrder, currentVisibleOrder)) {
     await refetchAccounts()
     return
   }
 
+  const previousAccounts = optimisticAccountsData.value
+  const nextAccounts = reorderVisibleAccounts(previousAccounts, nextOrder)
+  if (!nextAccounts) {
+    await refetchAccounts()
+    return
+  }
+
+  optimisticAccountsData.value = nextAccounts
+
   try {
-    await reorderAccounts({ account_ids: nextOrder })
+    await reorderAccounts({ account_ids: nextAccounts.map(account => account.id) })
   } catch {
+    optimisticAccountsData.value = previousAccounts
     // Mutation handlers show user-facing errors.
   } finally {
     await refetchAccounts()
   }
 }
+
+function hasSameAccountIds(firstOrder: number[], secondOrder: number[]) {
+  if (firstOrder.length !== secondOrder.length) return false
+
+  const secondOrderIds = new Set(secondOrder)
+
+  return firstOrder.every(accountId => secondOrderIds.has(accountId))
+}
+
+function isSameOrder(firstOrder: number[], secondOrder: number[]) {
+  return firstOrder.length === secondOrder.length
+    && firstOrder.every((accountId, index) => accountId === secondOrder[index])
+}
+
+function reorderVisibleAccounts(accounts: accountsResponse[], visibleOrder: number[]) {
+  const accountsById = new Map(accounts.map(account => [account.id, account]))
+  const visibleIdSet = new Set(visibleOrder)
+  const reorderedVisibleAccounts = visibleOrder.map(accountId => accountsById.get(accountId))
+
+  if (reorderedVisibleAccounts.some(account => !account)) return null
+
+  return accounts.map(account => (
+    visibleIdSet.has(account.id)
+      ? reorderedVisibleAccounts.shift()!
+      : account
+  ))
+}
+
 
 function mapperStatus(status: boolean) {
   if (status === true) {
@@ -197,6 +234,14 @@ function amountToNumber(amount?: string | number | null) {
 
   return Number.isFinite(parsedAmount) ? parsedAmount : 0
 }
+
+watch(
+  () => accountsData.value,
+  accounts => {
+    optimisticAccountsData.value = [...(accounts ?? [])]
+  },
+  { immediate: true },
+)
 
 </script>
 

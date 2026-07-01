@@ -22,6 +22,14 @@
             "--data-dir",
             {
               "validator": ".+"
+            },
+            "--env-file",
+            {
+              "validator": ".+"
+            },
+            "--log-level",
+            {
+              "validator": "trace|debug|info|warn|error"
             }
           ]
         }

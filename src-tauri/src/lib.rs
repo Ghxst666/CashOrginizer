@@ -8,6 +8,13 @@ use std::{
 use tauri::{Manager, State};
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
 
+#[derive(Debug, serde::Deserialize)]
+struct RuntimeInfo {
+    mode: String,
+    sync_enabled: bool,
+    s3_enabled: bool,
+}
+
 struct BackendState {
     api_base_url: String,
     child: Mutex<Option<CommandChild>>,
@@ -53,7 +60,7 @@ fn start_backend(app: &tauri::App) -> Result<BackendState, Box<dyn std::error::E
 
     if !env_path.is_file() {
         return Err(format!(
-            "Файл конфигурации backend не найден: {}",
+            "backend env file was not found: {}",
             env_path.display()
         )
         .into());
@@ -80,7 +87,7 @@ fn start_backend(app: &tauri::App) -> Result<BackendState, Box<dyn std::error::E
     tauri::async_runtime::spawn(async move { while rx.recv().await.is_some() {} });
 
     wait_for_health(port, Duration::from_secs(45))?;
-    wait_for_runtime(port)?;
+    wait_for_runtime(port, &env_path)?;
 
     Ok(BackendState {
         api_base_url,
@@ -106,7 +113,7 @@ fn find_backend_env_path(
     }
 
     Err(format!(
-        "Файл конфигурации backend не найден: {}",
+        "backend env file was not found: {}",
         bundled_env_path.display()
     )
     .into())
@@ -135,15 +142,41 @@ fn health_check(port: u16) -> Result<bool, std::io::Error> {
     endpoint_check(port, "/health")
 }
 
-fn wait_for_runtime(port: u16) -> Result<(), Box<dyn std::error::Error>> {
-    if endpoint_check(port, "/runtime")? {
+fn wait_for_runtime(
+    port: u16,
+    env_path: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let response = endpoint_response(port, "/runtime")?;
+
+    if !is_success_response(&response) {
+        return Err(format!("backend runtime check failed on 127.0.0.1:{port}").into());
+    }
+
+    let body = response
+        .split_once("\r\n\r\n")
+        .map(|(_, body)| body.trim())
+        .unwrap_or("");
+    let runtime: RuntimeInfo = serde_json::from_str(body)?;
+
+    if runtime.mode == "LOCAL" && runtime.sync_enabled && runtime.s3_enabled {
         return Ok(());
     }
 
-    Err(format!("backend runtime check failed on 127.0.0.1:{port}").into())
+    Err(format!(
+        "backend runtime config is invalid: mode={}, sync_enabled={}, s3_enabled={}. Check env file: {}",
+        runtime.mode,
+        runtime.sync_enabled,
+        runtime.s3_enabled,
+        env_path
+    )
+    .into())
 }
 
 fn endpoint_check(port: u16, path: &str) -> Result<bool, std::io::Error> {
+    Ok(is_success_response(&endpoint_response(port, path)?))
+}
+
+fn endpoint_response(port: u16, path: &str) -> Result<String, std::io::Error> {
     let mut stream = TcpStream::connect(("127.0.0.1", port))?;
 
     stream.set_read_timeout(Some(Duration::from_secs(2)))?;
@@ -156,5 +189,9 @@ fn endpoint_check(port: u16, path: &str) -> Result<bool, std::io::Error> {
     let mut response = String::new();
     stream.read_to_string(&mut response)?;
 
-    Ok(response.starts_with("HTTP/1.1 200") || response.starts_with("HTTP/1.0 200"))
+    Ok(response)
+}
+
+fn is_success_response(response: &str) -> bool {
+    response.starts_with("HTTP/1.1 200") || response.starts_with("HTTP/1.0 200")
 }

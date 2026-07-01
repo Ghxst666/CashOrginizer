@@ -88,8 +88,8 @@ const logoListeners = {
         >
             <div
                 :key="String(isCollapsed)"
-                class="flex h-[--el-menu-item-height] items-center justify-between px-5 py-4 [&:not(is-collapsed)]:w-[250px]"
-                :class="isCollapsed && 'is-collapsed'"
+                class="flex h-[--el-menu-item-height] items-center py-4"
+                :class="[isCollapsed ? 'w-[64px] justify-center px-0' : 'w-[250px] justify-between px-5', isCollapsed && 'is-collapsed']"
             >
                 <img
                     v-if="!isCollapsed"
@@ -98,6 +98,7 @@ const logoListeners = {
                     alt="Cash Org"
                 >
                 <ElButton
+                    class="menu-collapse-button"
                     link
                     type="primary"
                     @click="toggleMenu"
@@ -162,7 +163,8 @@ const logoListeners = {
         </div>
         <div class="shrink-0 border-t border-[#e2e3e6] p-3">
             <ElButton
-                :class="isCollapsed ? 'w-10 items-center' : 'w-full items-center'"
+                class="logout-button"
+                :class="isCollapsed ? 'logout-button--collapsed' : 'w-full'"
                 type="danger"
                 :icon="SwitchButton"
                 :circle="isCollapsed"
@@ -188,11 +190,35 @@ const logoListeners = {
   }
 }
 
-.is-collapsed {
-  width: 0;
-}
-
 :deep(.el-icon) {
     color: #009ae0
+}
+
+:deep(.el-menu--collapse .el-menu-item),
+:deep(.el-menu--collapse .el-sub-menu__title) {
+  justify-content: center;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+:deep(.el-menu--collapse .el-icon) {
+  margin-right: 0;
+}
+
+.menu-collapse-button,
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-button :deep(.el-icon) {
+  margin: 0;
+}
+
+.logout-button--collapsed {
+  width: 40px;
+  height: 40px;
+  padding: 0;
 }
 </style>

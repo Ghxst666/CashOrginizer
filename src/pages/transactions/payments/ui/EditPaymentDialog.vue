@@ -87,6 +87,8 @@ const formData = ref<PaymentEditFormData>({
   category: null,
   project: null,
 })
+const originalSourceCurrency = ref<string | null>(null)
+const originalDestinationCurrency = ref<string | null>(null)
 const splits = ref<SplitEditFormData[]>([])
 const deletedSplitIds = ref<number[]>([])
 
@@ -114,16 +116,32 @@ const isTransferBetweenDifferentCurrencies = computed(() => (
   formData.value.type === 'transfers'
   && sourceAccount.value !== null
   && destinationAccount.value !== null
-  && sourceAccount.value.currency !== destinationAccount.value.currency
+  && currencyValue(sourceAccount.value.currency) !== currencyValue(destinationAccount.value.currency)
 ))
+const isPaymentCurrencyChanged = computed(() => {
+  if (sourceAccount.value === null) return false
+
+  const sourceCurrencyChanged = originalSourceCurrency.value !== null
+    && currencyValue(sourceAccount.value.currency) !== originalSourceCurrency.value
+
+  if (formData.value.type !== 'transfers') return sourceCurrencyChanged
+  if (destinationAccount.value === null) return sourceCurrencyChanged
+
+  return sourceCurrencyChanged
+    || (
+      originalDestinationCurrency.value !== null
+      && currencyValue(destinationAccount.value.currency) !== originalDestinationCurrency.value
+    )
+})
 const isExchangeRateRequired = computed(() => (
   isTransferBetweenDifferentCurrencies.value
-  || (formData.value.type !== 'transfers' && sourceAccount.value?.currency === 'USD')
+  || isPaymentCurrencyChanged.value
+  || (formData.value.type !== 'transfers' && currencyValue(sourceAccount.value?.currency) === 'USD')
 ))
 const hasExchangeRateValue = computed(() => formData.value.exchangeRate.trim() !== '')
 const isExchangeRateFieldVisible = computed(() => (
   isExchangeRateRequired.value
-  || (sourceAccount.value === null && hasExchangeRateValue.value)
+  || hasExchangeRateValue.value
 ))
 const categoryOptions = computed(() => (
   flattenCategoryOptions((categories.value?.rows ?? []) as PaymentCategoryOptionNode[])
@@ -240,6 +258,8 @@ watch(
       category: payment.category_id || null,
       project: payment.project_id || null,
     }
+    originalSourceCurrency.value = currencyValue(payment.account_currency)
+    originalDestinationCurrency.value = currencyValue(payment.to_account_currency)
   },
   { immediate: true },
 )
@@ -365,6 +385,10 @@ function selectedOptionLabel(id: number | null, options: PickerOption[], emptyLa
 function exchangeRateToPayload(value: string): number | null {
   const rate = Number(value.replace(',', '.'))
   return Number.isFinite(rate) && rate > 0 ? rate : null
+}
+
+function currencyValue(currency?: string | null) {
+  return currency?.toUpperCase() || null
 }
 
 function handlePurposeSelection(purposeId: number | null) {

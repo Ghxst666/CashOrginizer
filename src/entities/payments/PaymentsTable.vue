@@ -4,14 +4,17 @@ import EditPaymentDialog from '@/pages/transactions/payments/ui/EditPaymentDialo
 import { filterRowsBySearch } from '@/shared/lib/search'
 import { useHeaderSearchStore } from '@/shared/store/header-search.store'
 import {
-    usePaymentsFilteredInfiniteScrollQuery,
+    usePaymentsFilteredByAccountInfiniteScrollQuery,
+    usePaymentsFilteredByCategoryInfiniteScrollQuery,
+    usePaymentsFilteredByGroupInfiniteScrollQuery,
+    usePaymentsFilteredByProjectInfiniteScrollQuery,
+    usePaymentsFilteredByPurposeInfiniteScrollQuery,
     usePaymentsInfiniteScrollQuery,
     usePaymentsQuery,
 } from '@/entities/transaction/payments'
 import { useAccountsQuery } from '@/entities/transaction/invoices'
 import type { PaymentListItemResponse, PaymentType } from '@/entities/transaction/payments/types/payments.types'
 import type { PaymentsFilter } from '@/pages/transactions/payments/payments-filter'
-import type { PaymentsRemoteFilterType } from '@/entities/transaction/payments/composables/payments.queries'
 
 const props = defineProps<{
     filter: PaymentsFilter
@@ -25,23 +28,16 @@ const headerSearchStore = useHeaderSearchStore()
 const isAllPayments = computed(() => props.filter.type === 'all')
 const isSelectionFilter = computed(() => props.filter.type === 'selection')
 const isRemoteFilter = computed(() => isPaymentRemoteFilter(props.filter))
-const remoteFilterType = computed<PaymentsRemoteFilterType>(() => {
-    if (props.filter.type === 'group') return 'group'
-    if (props.filter.type === 'purpose') return 'purpose'
-    if (props.filter.type === 'project') return 'project'
-    if (props.filter.type === 'category') return 'category'
-
-    return 'account'
-})
-const remoteFilterId = computed(() => {
-    if (props.filter.type === 'account') return props.filter.accountId
-    if (props.filter.type === 'group') return props.filter.groupId
-    if (props.filter.type === 'purpose') return props.filter.purposeId
-    if (props.filter.type === 'project') return props.filter.projectId
-    if (props.filter.type === 'category') return props.filter.categoryId
-
-    return 0
-})
+const isAccountFilter = computed(() => props.filter.type === 'account')
+const isGroupFilter = computed(() => props.filter.type === 'group')
+const isPurposeFilter = computed(() => props.filter.type === 'purpose')
+const isProjectFilter = computed(() => props.filter.type === 'project')
+const isCategoryFilter = computed(() => props.filter.type === 'category')
+const accountFilterId = computed(() => props.filter.type === 'account' ? props.filter.accountId : 0)
+const groupFilterId = computed(() => props.filter.type === 'group' ? props.filter.groupId : 0)
+const purposeFilterId = computed(() => props.filter.type === 'purpose' ? props.filter.purposeId : 0)
+const projectFilterId = computed(() => props.filter.type === 'project' ? props.filter.projectId : 0)
+const categoryFilterId = computed(() => props.filter.type === 'category' ? props.filter.categoryId : 0)
 const shouldLoadAllPayments = computed(() => isSelectionFilter.value || (isAllPayments.value && Boolean(headerSearchStore.debouncedQuery)))
 
 const {
@@ -52,11 +48,39 @@ const {
 } = usePaymentsInfiniteScrollQuery(30, isAllPayments)
 
 const {
-    data: remotePaymentsData,
-    target: remoteTarget,
-    isLoading: isRemotePaymentsLoading,
-    isFetchingNextPage: isFetchingRemoteNextPage,
-} = usePaymentsFilteredInfiniteScrollQuery(remoteFilterType, remoteFilterId, 30, isRemoteFilter)
+    data: accountPaymentsData,
+    target: accountTarget,
+    isLoading: isAccountPaymentsLoading,
+    isFetchingNextPage: isFetchingAccountNextPage,
+} = usePaymentsFilteredByAccountInfiniteScrollQuery(accountFilterId, 30, isAccountFilter)
+
+const {
+    data: groupPaymentsData,
+    target: groupTarget,
+    isLoading: isGroupPaymentsLoading,
+    isFetchingNextPage: isFetchingGroupNextPage,
+} = usePaymentsFilteredByGroupInfiniteScrollQuery(groupFilterId, 30, isGroupFilter)
+
+const {
+    data: purposePaymentsData,
+    target: purposeTarget,
+    isLoading: isPurposePaymentsLoading,
+    isFetchingNextPage: isFetchingPurposeNextPage,
+} = usePaymentsFilteredByPurposeInfiniteScrollQuery(purposeFilterId, 30, isPurposeFilter)
+
+const {
+    data: projectPaymentsData,
+    target: projectTarget,
+    isLoading: isProjectPaymentsLoading,
+    isFetchingNextPage: isFetchingProjectNextPage,
+} = usePaymentsFilteredByProjectInfiniteScrollQuery(projectFilterId, 30, isProjectFilter)
+
+const {
+    data: categoryPaymentsData,
+    target: categoryTarget,
+    isLoading: isCategoryPaymentsLoading,
+    isFetchingNextPage: isFetchingCategoryNextPage,
+} = usePaymentsFilteredByCategoryInfiniteScrollQuery(categoryFilterId, 30, isCategoryFilter)
 
 const allPaymentsSearchQuery = usePaymentsQuery(shouldLoadAllPayments)
 const { data: accounts } = useAccountsQuery(true, isSelectionFilter)
@@ -65,7 +89,11 @@ const selectedPayment = ref<PaymentListItemResponse | null>(null)
 const isOpenEdit = ref(false)
 
 const tableData = computed(() => {
-    if (isRemoteFilter.value) return remotePaymentsData.value?.pages.flat() ?? []
+    if (props.filter.type === 'account') return accountPaymentsData.value?.pages.flat() ?? []
+    if (props.filter.type === 'group') return groupPaymentsData.value?.pages.flat() ?? []
+    if (props.filter.type === 'purpose') return purposePaymentsData.value?.pages.flat() ?? []
+    if (props.filter.type === 'project') return projectPaymentsData.value?.pages.flat() ?? []
+    if (props.filter.type === 'category') return categoryPaymentsData.value?.pages.flat() ?? []
     if (isSelectionFilter.value) return allPaymentsSearchQuery.data.value ?? []
     if (headerSearchStore.debouncedQuery && allPaymentsSearchQuery.data.value) return allPaymentsSearchQuery.data.value
 
@@ -89,13 +117,25 @@ const filteredTableData = computed(() => filterRowsBySearch(
 ))
 
 const isLoading = computed(() => {
-    if (isRemoteFilter.value) return isRemotePaymentsLoading.value
+    if (props.filter.type === 'account') return isAccountPaymentsLoading.value
+    if (props.filter.type === 'group') return isGroupPaymentsLoading.value
+    if (props.filter.type === 'purpose') return isPurposePaymentsLoading.value
+    if (props.filter.type === 'project') return isProjectPaymentsLoading.value
+    if (props.filter.type === 'category') return isCategoryPaymentsLoading.value
     if (shouldLoadAllPayments.value && allPaymentsSearchQuery.isLoading.value) return true
 
     return isAllPaymentsLoading.value
 })
 
-function isPaymentRemoteFilter(filter: PaymentsFilter): filter is Extract<PaymentsFilter, { type: PaymentsRemoteFilterType }> {
+const isFetchingRemoteNextPage = computed(() => (
+    isFetchingAccountNextPage.value
+    || isFetchingGroupNextPage.value
+    || isFetchingPurposeNextPage.value
+    || isFetchingProjectNextPage.value
+    || isFetchingCategoryNextPage.value
+))
+
+function isPaymentRemoteFilter(filter: PaymentsFilter): filter is Exclude<PaymentsFilter, { type: 'all' } | { type: 'selection' }> {
     return filter.type === 'account'
         || filter.type === 'group'
         || filter.type === 'purpose'
@@ -177,8 +217,28 @@ function paymentTypeTextType(type?: PaymentType | null) {
                     class="h-px"
                 />
                 <div
-                    v-if="isRemoteFilter"
-                    ref="remoteTarget"
+                    v-if="isAccountFilter"
+                    ref="accountTarget"
+                    class="h-px"
+                />
+                <div
+                    v-if="isGroupFilter"
+                    ref="groupTarget"
+                    class="h-px"
+                />
+                <div
+                    v-if="isPurposeFilter"
+                    ref="purposeTarget"
+                    class="h-px"
+                />
+                <div
+                    v-if="isProjectFilter"
+                    ref="projectTarget"
+                    class="h-px"
+                />
+                <div
+                    v-if="isCategoryFilter"
+                    ref="categoryTarget"
                     class="h-px"
                 />
                 <div
