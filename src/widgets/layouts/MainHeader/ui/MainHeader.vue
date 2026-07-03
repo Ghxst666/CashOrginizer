@@ -248,7 +248,7 @@ function formatConflictValue(value: unknown): string {
 </script>
 
 <template>
-    <div class="flex flex-row items-center justify-between w-full bg-[#009ae0]">
+    <div class="main-header flex flex-row items-center justify-between w-full bg-[#009ae0]">
         <input
             ref="qifFileInput"
             class="hidden"
@@ -262,7 +262,7 @@ function formatConflictValue(value: unknown): string {
             @command="handleMainMenuCommand"
         >
             <ElButton
-                class="!size-10 !px-8"
+                class="main-header__menu-button !size-10 !px-8"
                 link
                 :loading="isCreatingBackup"
             >
@@ -291,13 +291,14 @@ function formatConflictValue(value: unknown): string {
             </template>
         </ElDropdown>
 
-        <div class="flex flex-row items-center">
-            <div class="flex items-center gap-2 px-3 py-2">
+        <div class="main-header__actions flex flex-row items-center">
+            <div class="main-header__sync flex items-center gap-2 px-3 py-2">
                 <ElTooltip
                     placement="bottom"
                     :content="syncStatusText"
                 >
                     <ElTag
+                        class="main-header__sync-tag"
                         :type="syncStatusType"
                         effect="dark"
                     >
@@ -336,7 +337,7 @@ function formatConflictValue(value: unknown): string {
                     </ElButton>
                 </ElTooltip>
             </div>
-            <div class="max-w-60 w-full flex items-center px-3 py-2">
+            <div class="main-header__search max-w-60 w-full flex items-center px-3 py-2">
                 <ElInput
                     v-model="headerSearchStore.query"
                     clearable
@@ -349,13 +350,13 @@ function formatConflictValue(value: unknown): string {
                     </template>
                 </ElInput>
             </div>
-            <div class="max-w-60 w-full flex items-center px-3 py-2 border-l-[#831919] border-1">
+            <div class="main-header__database max-w-60 w-full flex items-center px-3 py-2 border-l-[#831919] border-1">
                 <ElDropdown
                     class="w-full"
                     trigger="click"
                     @command="handleHeaderCommand"
                 >
-                    <ElButton class="w-full">
+                    <ElButton class="main-header__database-button w-full">
                         Моя база данных
                         <ElIcon class="ml-2">
                             <ArrowDown />
@@ -462,3 +463,85 @@ function formatConflictValue(value: unknown): string {
         </ElDialog>
     </div>
 </template>
+
+<style scoped>
+.main-header {
+  min-height: 56px;
+  gap: 8px;
+}
+
+.main-header__sync-tag {
+  max-width: min(42vw, 360px);
+}
+
+.main-header__sync-tag :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .main-header {
+    min-height: auto;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0;
+    padding: 6px 8px 8px;
+  }
+
+  .main-header__menu-button {
+    width: 44px !important;
+    height: 40px !important;
+    padding-inline: 0 !important;
+  }
+
+  .main-header__actions {
+    min-width: 0;
+    flex: 1 1 calc(100% - 52px);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .main-header__sync {
+    order: 1;
+    max-width: calc(100vw - 64px);
+    padding: 0 0 6px;
+  }
+
+  .main-header__sync-tag {
+    max-width: calc(100vw - 172px);
+  }
+
+  .main-header__search {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
+    padding: 0;
+  }
+
+  .main-header__database {
+    order: 2;
+    width: auto;
+    max-width: none;
+    padding: 0 0 6px 6px;
+    border-left: 0;
+  }
+
+  .main-header__database-button {
+    width: 42px !important;
+    padding-inline: 0 !important;
+  }
+
+  .main-header__database-button :deep(span) {
+    display: none;
+  }
+
+  .main-header__database-button :deep(.el-icon) {
+    margin-left: 0;
+  }
+
+  :deep(.el-dialog .grid.grid-cols-2) {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

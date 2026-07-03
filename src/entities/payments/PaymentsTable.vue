@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import EditPaymentDialog from '@/pages/transactions/payments/ui/EditPaymentDialog.vue'
 import { filterRowsBySearch } from '@/shared/lib/search'
 import { useHeaderSearchStore } from '@/shared/store/header-search.store'
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 }>()
 
 const headerSearchStore = useHeaderSearchStore()
+const isMobile = useMediaQuery('(max-width: 768px)')
 const isAllPayments = computed(() => props.filter.type === 'all')
 const isSelectionFilter = computed(() => props.filter.type === 'selection')
 const isRemoteFilter = computed(() => isPaymentRemoteFilter(props.filter))
@@ -174,6 +176,10 @@ function paymentTypeTextType(type?: PaymentType | null) {
 
     return 'success'
 }
+
+function paymentTitle(payment: PaymentListItemResponse) {
+    return payment.purpose_title || payment.project_title || payment.category_title || payment.note || payment.number || formatedTypeName(payment.type)
+}
 </script>
 
 <template>
@@ -185,7 +191,78 @@ function paymentTypeTextType(type?: PaymentType | null) {
             :payment="selectedPayment"
         />
 
+        <div
+            v-if="isMobile"
+            v-loading="isLoading"
+            class="payments-mobile-list"
+        >
+            <button
+                v-for="payment in filteredTableData"
+                :key="payment.id"
+                type="button"
+                class="payments-mobile-card"
+                @click="handleRowClick(payment)"
+                @dblclick="handleOpenEditPayment(payment)"
+            >
+                <span class="payments-mobile-card__top">
+                    <span class="payments-mobile-card__date">{{ payment.payment_date || '-' }}</span>
+                    <ElText :type="paymentTypeTextType(payment.type)">
+                        {{ formatedTypeName(payment.type) }}
+                    </ElText>
+                </span>
+                <strong>{{ paymentTitle(payment) }}</strong>
+                <span class="payments-mobile-card__meta">
+                    <span>{{ payment.account_title || payment.to_account_title || 'Счет не задан' }}</span>
+                    <span>{{ payment.type === 'transfers' && payment.to_amount !== null && payment.to_amount !== undefined ? payment.to_amount : payment.amount }} {{ payment.account_currency === 'RUB' ? '₽' : '$' }}</span>
+                </span>
+                <span
+                    v-if="payment.note"
+                    class="payments-mobile-card__note"
+                >
+                    {{ payment.note }}
+                </span>
+            </button>
+
+            <div
+                v-if="isAllPayments"
+                ref="target"
+                class="h-px"
+            />
+            <div
+                v-if="isAccountFilter"
+                ref="accountTarget"
+                class="h-px"
+            />
+            <div
+                v-if="isGroupFilter"
+                ref="groupTarget"
+                class="h-px"
+            />
+            <div
+                v-if="isPurposeFilter"
+                ref="purposeTarget"
+                class="h-px"
+            />
+            <div
+                v-if="isProjectFilter"
+                ref="projectTarget"
+                class="h-px"
+            />
+            <div
+                v-if="isCategoryFilter"
+                ref="categoryTarget"
+                class="h-px"
+            />
+            <div
+                v-if="(isAllPayments && isFetchingNextPage) || (isRemoteFilter && isFetchingRemoteNextPage)"
+                class="py-2 text-center text-sm text-gray-500"
+            >
+                Загрузка...
+            </div>
+        </div>
+
         <ElTable
+            v-else
             v-loading="isLoading"
             height="100%"
             border
@@ -251,3 +328,68 @@ function paymentTypeTextType(type?: PaymentType | null) {
         </ElTable>
     </div>
 </template>
+
+<style scoped>
+.payments-mobile-list {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f4f7f9;
+}
+
+.payments-mobile-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  color: #1f2937;
+  text-align: left;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 6%);
+}
+
+.payments-mobile-card__top,
+.payments-mobile-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.payments-mobile-card__date,
+.payments-mobile-card__note {
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payments-mobile-card strong {
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payments-mobile-card__meta {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.payments-mobile-card__meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

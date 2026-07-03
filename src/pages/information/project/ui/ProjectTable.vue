@@ -3,6 +3,7 @@ import { projectCreateData, projectsResponseData, projectsRowData } from '@/enti
 import { filterTreeRowsBySearch } from '@/shared/lib/search';
 import { useHeaderSearchStore } from '@/shared/store/header-search.store';
 import EditProject from '@/shared/ui/edit/EditProject.vue';
+import { useMediaQuery } from '@vueuse/core';
 import { ElText } from 'element-plus';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const headerSearchStore = useHeaderSearchStore()
+const isMobile = useMediaQuery('(max-width: 768px)')
 const selectedRow = ref<projectCreateData>()
 const selectedId = ref<number>()
 const isOpenEdit = ref(false)
@@ -85,7 +87,39 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
         :update-data="selectedRow"
     />
     <div class="h-full w-full">
+        <div
+            v-if="isMobile"
+            class="project-mobile-list"
+        >
+            <button
+                v-for="row in tableRows"
+                :key="row.id"
+                type="button"
+                class="project-mobile-card"
+                @click="handleRowClick(row)"
+                @dblclick="handleRowDblClick(row)"
+            >
+                <span class="project-mobile-card__top">
+                    <strong>{{ row.title }}</strong>
+                    <span
+                        v-if="row.status === 'closed'"
+                        class="project-mobile-card__closed"
+                    >
+                        Закрыт
+                    </span>
+                </span>
+                <span class="project-mobile-card__amount">{{ row.total_formatted }}</span>
+                <ElButton
+                    size="small"
+                    @click.stop="handleUpdate(row)"
+                >
+                    Редактировать
+                </ElButton>
+            </button>
+        </div>
+
         <ElTable 
+            v-else
             height="100%"
             border 
             :data="tableRows"
@@ -124,6 +158,57 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
 </template>
 
 <style scoped>
+.project-mobile-list {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f4f7f9;
+}
+
+.project-mobile-card {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  color: #1f2937;
+  text-align: left;
+  gap: 8px 12px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 6%);
+}
+
+.project-mobile-card__top {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-mobile-card strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-mobile-card__closed {
+  flex: 0 0 auto;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.project-mobile-card__amount {
+  color: #0f766e;
+  font-weight: 700;
+}
+
 .context-menu {
   position: fixed;
   z-index: 3000;

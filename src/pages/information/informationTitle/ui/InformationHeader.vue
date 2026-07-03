@@ -73,8 +73,8 @@ function applyCustomDates() {
 </script>
 
 <template>
-    <div class="bg-[#ffffff] border-b border-[#e2e3e6] py-3 px-4 w-full flex justify-between items-center">
-        <div class="flex gap-2 items-center">
+    <div class="page-toolbar">
+        <div class="page-toolbar__group">
             <ElDropdown @command="handlePeriodCommand">
                 <ElButton plain>{{ selectedPeriodTitle }}
                     <ElIcon class="ml-2">

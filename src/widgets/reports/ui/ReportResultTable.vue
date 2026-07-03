@@ -87,6 +87,16 @@ function formatDate(value: string) {
   min-height: 0;
 }
 
+@media (max-width: 768px) {
+  .report-table-wrap {
+    overflow-x: auto;
+  }
+
+  .report-table-wrap :deep(.el-table) {
+    min-width: 640px;
+  }
+}
+
 .money-negative {
   color: #d81e06;
 }

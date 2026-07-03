@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { purposesResponseData, purposesRowData } from '@/entities/purposes/types/purposes.types';
+import { useMediaQuery } from '@vueuse/core';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     data: purposesResponseData
 }>()
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 const emit = defineEmits<{
     edit: [purpose: purposesRowData]
@@ -63,7 +65,32 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
 
 <template>
     <div class="h-full w-full">
+        <div
+            v-if="isMobile"
+            class="purpose-mobile-list"
+        >
+            <button
+                v-for="row in props.data.rows"
+                :key="row.id"
+                type="button"
+                class="purpose-mobile-card"
+                @click="handleRowClick(row)"
+                @dblclick="handleRowDblClick(row)"
+            >
+                <strong>{{ row.title }}</strong>
+                <span>{{ row.note || 'Примечания нет' }}</span>
+                <ElButton
+                    v-if="row.title !== 'Без названия'"
+                    size="small"
+                    @click.stop="handleUpdate(row)"
+                >
+                    Редактировать
+                </ElButton>
+            </button>
+        </div>
+
         <ElTable 
+            v-else
             height="100%"
             border 
             :data="props.data.rows"
@@ -89,6 +116,48 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
 </template>
 
 <style scoped>
+.purpose-mobile-list {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f4f7f9;
+}
+
+.purpose-mobile-card {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  color: #1f2937;
+  text-align: left;
+  gap: 8px 12px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 6%);
+}
+
+.purpose-mobile-card strong,
+.purpose-mobile-card span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purpose-mobile-card strong {
+  font-size: 15px;
+}
+
+.purpose-mobile-card span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
 .context-menu {
   position: fixed;
   z-index: 3000;

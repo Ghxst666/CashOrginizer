@@ -92,8 +92,8 @@ function handleSettingsCommand(command: string) {
 </script>
 
 <template>
-  <div class="flex justify-between bg-[#ffffff] border-b border-[#e2e3e6] py-3 px-4">
-    <div class="flex gap-2">
+  <div class="page-toolbar">
+    <div class="page-toolbar__group">
       <ElDropdown ref="dropdownRef" trigger="click" :hide-on-click="false" @visible-change="handleDropdownVisibleChange">
         <ElButton class="h-[40px]">
           {{ selectedFilterTitle }} <ElIcon class="ml-2"><ArrowDown /></ElIcon>
@@ -114,7 +114,7 @@ function handleSettingsCommand(command: string) {
       </ElDropdown>
       <ElButton :icon="Plus" class="h-[40px]" type="primary" round @click="emits('newInvoice')">Новый счет</ElButton>
     </div>
-    <div class="flex gap-2">
+    <div class="page-toolbar__actions">
       <ElDropdown @command="handleFilterCommand">
         <ElButton class="h-[40px]"><ElIcon size="18"><Filter /></ElIcon></ElButton>
         <template #dropdown><ElDropdownMenu>

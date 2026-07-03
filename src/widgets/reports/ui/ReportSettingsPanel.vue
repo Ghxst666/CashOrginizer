@@ -173,4 +173,25 @@ function formatDate(value: string) {
   display: flex;
   gap: 8px;
 }
+
+@media (max-width: 768px) {
+  .settings-row {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .settings-row > span {
+    text-align: left;
+  }
+
+  .settings-row > strong,
+  .settings-control {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+}
 </style>

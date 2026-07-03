@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import {
   accountsResponse,
   accountsSortedByGroupsResponse,
@@ -13,6 +14,7 @@ const props = defineProps<{
 }>()
 
 const groups = computed(() => props.data)
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 const emit = defineEmits<{
   edit: [row: accountsResponse]
@@ -66,7 +68,30 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
     >
       <h3 class="mb-2 text-lg font-semibold">{{ group.title }}</h3>
 
+      <div
+        v-if="isMobile"
+        class="grouped-accounts-mobile-list"
+      >
+        <button
+          v-for="account in group.accounts"
+          :key="account.id"
+          type="button"
+          class="grouped-accounts-mobile-card"
+          @click="handleRowClick(account)"
+        >
+          <strong>{{ account.title }}</strong>
+          <span>{{ Number(account.amount).toLocaleString('ru-RU') }} {{ account.currency }}</span>
+          <ElButton
+            size="small"
+            @click.stop="emit('edit', account)"
+          >
+            Редактировать
+          </ElButton>
+        </button>
+      </div>
+
       <ElTable
+        v-else
         :data="group.accounts"
         border
         @row-click="handleRowClick"
@@ -107,6 +132,42 @@ onBeforeUnmount(() => window.removeEventListener('click', closeContextMenu))
   border-radius: 6px;
   background: #fff;
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.grouped-accounts-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grouped-accounts-mobile-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  color: #1f2937;
+  text-align: left;
+  gap: 8px 12px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 6%);
+}
+
+.grouped-accounts-mobile-card strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grouped-accounts-mobile-card > span {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.grouped-accounts-mobile-card .el-button {
+  grid-column: 2;
 }
 
 .context-menu button {

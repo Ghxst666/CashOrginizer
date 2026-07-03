@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Sortable from 'sortablejs'
+import { useMediaQuery } from '@vueuse/core'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { accountsResponse } from '../transaction/invoices/types/invoices.types'
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const tableRef = ref<{ $el: HTMLElement } | null>(null)
+const isMobile = useMediaQuery('(max-width: 768px)')
 const tableData = ref<accountsResponse[]>([])
 const tableBody = ref<HTMLElement | null>(null)
 const contextMenu = ref({
@@ -166,7 +168,36 @@ watch(
 
 <template>
   <div class="h-full min-h-0 min-w-0 flex overflow-hidden">
+    <div
+      v-if="isMobile"
+      class="invoices-mobile-list"
+    >
+      <button
+        v-for="account in tableData"
+        :key="account.id"
+        type="button"
+        class="invoices-mobile-card"
+        @click="handleRowClick(account)"
+        @dblclick="handleRowDblClick(account)"
+      >
+        <span class="invoices-mobile-card__top">
+          <strong>{{ account.title }}</strong>
+          <span>{{ account.currency || 'RUB' }}</span>
+        </span>
+        <span class="invoices-mobile-card__amount">{{ account.amount }} {{ account.currency }}</span>
+        <span class="invoices-mobile-card__meta">{{ account.type || 'Тип не задан' }}</span>
+        <ElButton
+          class="invoices-mobile-card__edit"
+          size="small"
+          @click.stop="emit('edit', account)"
+        >
+          Редактировать
+        </ElButton>
+      </button>
+    </div>
+
     <ElTable
+      v-else
       ref="tableRef"
       height="100%"
       border
@@ -238,6 +269,63 @@ watch(
 
 :deep(.sortable-chosen) {
   cursor: grabbing;
+}
+
+.invoices-mobile-list {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f4f7f9;
+}
+
+.invoices-mobile-card {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  color: #1f2937;
+  text-align: left;
+  gap: 8px 12px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 6%);
+}
+
+.invoices-mobile-card__top {
+  display: contents;
+}
+
+.invoices-mobile-card strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invoices-mobile-card__amount {
+  color: #0f766e;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.invoices-mobile-card__meta {
+  min-width: 0;
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invoices-mobile-card__edit {
+  justify-self: end;
 }
 
 .context-menu {

@@ -56,8 +56,8 @@ function resetSelection() {
 </script>
 
 <template>
-  <div class="flex justify-between bg-[#ffffff] border-b border-[#e2e3e6] py-3 px-4">
-    <div class="flex gap-2">
+  <div class="page-toolbar">
+    <div class="page-toolbar__group">
       <ElDropdown ref="dropdownRef" trigger="click" :hide-on-click="false" @visible-change="handleDropdownVisibleChange">
         <ElButton class="h-[40px]">{{ selectedFilterTitle }} <ElIcon class="ml-2"><ArrowDown /></ElIcon></ElButton>
         <template #dropdown>
@@ -84,7 +84,10 @@ function resetSelection() {
       </ElDropdown>
       <ElButton :icon="Plus" class="h-[40px]" type="primary" round @click="emits('openDialog')">Новый платеж</ElButton>
     </div>
-    <ElDropdown @command="command => command === 'show-properties' && emits('showProperties')">
+    <ElDropdown
+      class="page-toolbar__actions"
+      @command="command => command === 'show-properties' && emits('showProperties')"
+    >
       <ElButton class="h-[40px]"><ElIcon size="18"><Setting /></ElIcon></ElButton>
       <template #dropdown><ElDropdownMenu><ElDropdownItem command="show-properties">Показать свойства</ElDropdownItem></ElDropdownMenu></template>
     </ElDropdown>

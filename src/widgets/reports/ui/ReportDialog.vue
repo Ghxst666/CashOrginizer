@@ -319,4 +319,57 @@ function toggleOption(id: number | string) {
     grid-template-columns: minmax(0, 1fr) 280px;
   }
 }
+
+@media (max-width: 768px) {
+  .report-dialog__header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  .report-dialog__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .report-window {
+    height: calc(100dvh - 128px);
+    grid-template-columns: 1fr;
+    overflow: hidden;
+  }
+
+  .report-main {
+    min-height: 0;
+    border-right: 0;
+  }
+
+  .report-toolbar {
+    flex-wrap: wrap;
+    min-height: auto;
+    padding: 8px;
+  }
+
+  .report-toolbar .el-button {
+    flex: 1 1 120px;
+    margin-left: 0;
+  }
+
+  .report-search {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .report-blue-band {
+    min-height: 54px;
+    padding: 8px 10px;
+  }
+
+  .report-settings-side {
+    min-height: 180px;
+    max-height: 32dvh;
+    border-top: 1px solid #d7dde5;
+  }
+}
 </style>

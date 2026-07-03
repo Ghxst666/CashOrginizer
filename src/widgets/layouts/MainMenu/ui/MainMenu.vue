@@ -8,6 +8,7 @@ import logoUrl from '@/shared/assets/logo.svg'
 import { useAuthStore } from '@/shared/store/auth.store'
 
 const BREAKPOINT_COLLAPSE = 1327
+const BREAKPOINT_MOBILE = 768
 
 const router = useRouter()
 const route = useRoute()
@@ -15,6 +16,11 @@ const authStore = useAuthStore()
 const activeMenuItem = computed(() => String(route.name ?? ''))
 
 const isCollapsed = ref<boolean>(window.innerWidth <= BREAKPOINT_COLLAPSE)
+const isMobile = ref<boolean>(window.innerWidth <= BREAKPOINT_MOBILE)
+const mobileNavItems = computed(() => menuItems.flatMap(item => item.children
+  ? item.children.map(child => ({ ...child, icon: child.icon ?? item.icon }))
+  : [item],
+))
 
 function toggleMenu() {
   isCollapsed.value = !isCollapsed.value
@@ -31,7 +37,10 @@ function handleLogout() {
 }
 
 function updateWidth() {
-  isCollapsed.value = window.innerWidth <= BREAKPOINT_COLLAPSE
+  const width = window.innerWidth
+
+  isMobile.value = width <= BREAKPOINT_MOBILE
+  isCollapsed.value = isMobile.value || width <= BREAKPOINT_COLLAPSE
 }
 
 
@@ -81,7 +90,10 @@ const logoListeners = {
 </script>
 
 <template>
-    <div class="flex shrink-0 flex-col overflow-hidden bg-[#ffffff] border-r border-[#e2e3e6]">
+    <div
+        v-if="!isMobile"
+        class="flex shrink-0 flex-col overflow-hidden bg-[#ffffff] border-r border-[#e2e3e6]"
+    >
         <Transition
             mode="out-in"
             v-bind="logoListeners"
@@ -174,6 +186,37 @@ const logoListeners = {
             </ElButton>
         </div>
     </div>
+
+    <nav
+        v-else
+        class="mobile-bottom-nav"
+        aria-label="Навигация"
+    >
+        <button
+            v-for="item in mobileNavItems"
+            :key="item.id"
+            class="mobile-bottom-nav__item"
+            :class="{ 'mobile-bottom-nav__item--active': activeMenuItem === item.pageName }"
+            type="button"
+            @click="handleGoTo(item.pageName)"
+        >
+            <ElIcon size="21">
+                <component :is="item.icon" />
+            </ElIcon>
+            <span>{{ item.title }}</span>
+        </button>
+
+        <button
+            class="mobile-bottom-nav__item mobile-bottom-nav__item--logout"
+            type="button"
+            @click="handleLogout"
+        >
+            <ElIcon size="21">
+                <SwitchButton />
+            </ElIcon>
+            <span>Выйти</span>
+        </button>
+    </nav>
 </template>
 
 <style lang="scss" scoped>
@@ -220,5 +263,59 @@ const logoListeners = {
   width: 40px;
   height: 40px;
   padding: 0;
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  display: grid;
+  grid-auto-columns: minmax(72px, 1fr);
+  grid-auto-flow: column;
+  height: calc(68px + env(safe-area-inset-bottom));
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  border-top: 1px solid #d7dde5;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 -8px 28px rgb(15 23 42 / 12%);
+  gap: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.mobile-bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-bottom-nav__item {
+  display: inline-flex;
+  min-width: 72px;
+  height: 56px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #5f6b7a;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.1;
+  gap: 4px;
+}
+
+.mobile-bottom-nav__item :deep(.el-icon) {
+  color: currentcolor;
+}
+
+.mobile-bottom-nav__item--active {
+  background: #e6f6fd;
+  color: #008fcb;
+}
+
+.mobile-bottom-nav__item--logout {
+  color: #c2413a;
 }
 </style>

@@ -48,12 +48,12 @@ function handleDeviceConnected(syncCompleted: boolean) {
 </script>
 
 <template>
-    <div class="flex w-full h-screen items-center justify-center bg-blue-300">
+    <div class="auth-page flex w-full h-screen items-center justify-center bg-blue-300">
         <ElCard
-            body-class="flex flex-col gap-8 p-8"
-            class="rounded-2xl"
+            body-class="auth-card__body flex flex-col gap-8 p-8"
+            class="auth-card rounded-2xl"
         >
-            <h1 class="text-[57px] leading-none text-purple">
+            <h1 class="auth-title text-[57px] leading-none text-purple">
                 Добро пожаловать
             </h1>
             <ElForm
@@ -111,3 +111,37 @@ function handleDeviceConnected(syncCompleted: boolean) {
         />
     </div>
 </template>
+
+<style scoped>
+.auth-card {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.auth-title {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .auth-page {
+    align-items: flex-start;
+    height: 100dvh;
+    padding: max(18px, env(safe-area-inset-top)) 10px max(18px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
+  .auth-card {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  :deep(.auth-card__body) {
+    gap: 20px;
+    padding: 22px 16px;
+  }
+
+  .auth-title {
+    font-size: 34px;
+    line-height: 1.05;
+  }
+}
+</style>
